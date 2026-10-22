@@ -51,8 +51,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   if (!isOpen) return null;
 
   const validatePhone = (value: string): boolean => {
-    const cleaned = value.replace(/[\s\-\(\)]/g, '');
-    if (!/^\d{8,12}$/.test(cleaned)) {
+    const cleaned = value.replace(/[\s\-().]/g, '');
+    if (!/^\+?\d{8,15}$/.test(cleaned)) {
       setPhoneError(dict.orderModal.phoneError);
       return false;
     }
