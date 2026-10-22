@@ -313,15 +313,6 @@ export default function Landing() {
             <h2>{t.reviewsTitle}</h2>
             <p className="lead">{t.reviewsLead}</p>
 
-
-            {/* TODO: photo/video of gift reaction (name + city) — owner to supply */}
-            <div className="review-gift-slot" aria-label="Отзыв о вручении подарка">
-              <span>
-                {lang === "ru"
-                  ? "Фото или видео с реакцией на подарок — здесь (TODO)"
-                  : "Fotografie sau video cu reacția la cadou — aici (TODO)"}
-              </span>
-            </div>
             <div className="reviews-wall occ-rail" aria-label={t.reviewsTitle}>
               {reviewShots.map((shot) => (
                 <figure key={shot.src} className="review-shot">
@@ -441,8 +432,6 @@ export default function Landing() {
             <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
               Telegram
             </a>
-            {/* TODO: Viber / WhatsApp links — owner to supply */}
-            <span className="small muted">Viber / WhatsApp — TODO</span>
             <a href="#builder">{t.seeBrelok}</a>
           </div>
         </div>
