@@ -99,14 +99,14 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   const methodCardClass = (m: DeliveryMethod) =>
     `w-full text-left px-4 py-3 rounded-xl border-2 transition-colors flex items-center justify-between gap-3 ${
       method === m
-        ? 'border-[#FFC400] bg-[#FFC400]/10'
-        : 'border-zinc-700 bg-zinc-950 hover:border-zinc-500'
+        ? 'border-[#191715] bg-[#FFC400]/35'
+        : 'border-[#D9D0BF] bg-white hover:border-[#191715]'
     }`;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#191715]/70 p-4 overflow-y-auto" onClick={onClose}>
       <div
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full max-w-md shadow-2xl relative my-8"
+        className="bg-[#FFFDF8] border-2 border-[#191715] rounded-2xl p-8 w-full max-w-md shadow-2xl relative my-8"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -114,18 +114,18 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
+          className="absolute top-4 right-4 text-[#7A7368] hover:text-[#191715] text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F5F1E8] transition-colors"
           aria-label={dict.orderModal.close}
         >
           ✕
         </button>
 
-        <h2 id="order-modal-title" className="text-2xl font-bold text-white mb-2">{dict.orderModal.title}</h2>
-        <p className="text-zinc-400 mb-6 text-sm">{dict.orderModal.subtitle}</p>
+        <h2 id="order-modal-title" className="text-2xl font-bold text-[#191715] mb-2">{dict.orderModal.title}</h2>
+        <p className="text-[#5C564E] mb-6 text-sm">{dict.orderModal.subtitle}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="customer-name" className="block text-zinc-400 text-sm mb-1">{dict.orderModal.nameLabel}</label>
+            <label htmlFor="customer-name" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.nameLabel}</label>
             <input
               id="customer-name"
               ref={nameRef}
@@ -133,13 +133,13 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+              className="w-full bg-white border border-[#D9D0BF] rounded-lg px-4 py-3 text-[#191715] focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
               placeholder={dict.orderModal.namePlaceholder}
             />
           </div>
 
           <div>
-            <label htmlFor="customer-phone" className="block text-zinc-400 text-sm mb-1">{dict.orderModal.phoneLabel}</label>
+            <label htmlFor="customer-phone" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.phoneLabel}</label>
             <input
               id="customer-phone"
               type="tel"
@@ -147,115 +147,115 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
               value={phone}
               onChange={(e) => { setPhone(e.target.value); setPhoneError(''); }}
               onBlur={() => phone && validatePhone(phone)}
-              className={`w-full bg-zinc-950 border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 ${
+              className={`w-full bg-white border rounded-lg px-4 py-3 text-[#191715] focus:outline-none focus:ring-1 ${
                 phoneError
-                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                  : 'border-zinc-700 focus:border-[#FFC400] focus:ring-[#FFC400]'
+                  ? 'border-[#B42318] focus:border-[#B42318] focus:ring-[#B42318]'
+                  : 'border-[#D9D0BF] focus:border-[#191715] focus:ring-[#FFC400]'
               }`}
               placeholder={dict.orderModal.phonePlaceholder}
             />
             {phoneError && (
-              <p className="text-red-400 text-xs mt-1">{phoneError}</p>
+              <p className="text-[#B42318] text-xs mt-1">{phoneError}</p>
             )}
           </div>
 
           {/* Способ получения */}
           <div>
-            <label className="block text-zinc-400 text-sm mb-2">{d.label}</label>
+            <label className="block text-[#3D3832] text-sm mb-2">{d.label}</label>
             <div className="flex flex-col gap-2">
               <button type="button" onClick={() => selectMethod('posta')} className={methodCardClass('posta')}>
-                <span className="text-white font-medium text-sm">{d.posta}</span>
-                <span className="text-zinc-400 text-xs whitespace-nowrap">{d.postaPrice}</span>
+                <span className="text-[#191715] font-medium text-sm">{d.posta}</span>
+                <span className="text-[#7A7368] text-xs whitespace-nowrap">{d.postaPrice}</span>
               </button>
 
               {method === 'posta' && (
                 <div className="pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 animate-in fade-in duration-200">
                   <div>
-                    <label htmlFor="surname" className="block text-zinc-500 text-xs mb-1">{d.surnameLabel}</label>
+                    <label htmlFor="surname" className="block text-[#5C564E] text-xs mb-1">{d.surnameLabel}</label>
                     <input
                       id="surname"
                       type="text"
                       value={surname}
                       onChange={(e) => setSurname(e.target.value)}
                       placeholder={d.surnamePlaceholder}
-                      className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="postal-code" className="block text-zinc-500 text-xs mb-1">{d.postalCodeLabel}</label>
+                      <label htmlFor="postal-code" className="block text-[#5C564E] text-xs mb-1">{d.postalCodeLabel}</label>
                       <input
                         id="postal-code"
                         type="text"
                         value={postalCode}
                         onChange={(e) => setPostalCode(e.target.value)}
                         placeholder={d.postalCodePlaceholder}
-                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                        className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                       />
                     </div>
                     <div>
-                      <label htmlFor="district" className="block text-zinc-500 text-xs mb-1">{d.districtLabel}</label>
+                      <label htmlFor="district" className="block text-[#5C564E] text-xs mb-1">{d.districtLabel}</label>
                       <input
                         id="district"
                         type="text"
                         value={district}
                         onChange={(e) => setDistrict(e.target.value)}
                         placeholder={d.districtPlaceholder}
-                        className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                        className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                       />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="city" className="block text-zinc-500 text-xs mb-1">{d.cityLabel}</label>
+                    <label htmlFor="city" className="block text-[#5C564E] text-xs mb-1">{d.cityLabel}</label>
                     <input
                       id="city"
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder={d.cityPlaceholder}
-                      className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                     />
                   </div>
                   <div>
-                    <label htmlFor="street" className="block text-zinc-500 text-xs mb-1">{d.streetLabel}</label>
+                    <label htmlFor="street" className="block text-[#5C564E] text-xs mb-1">{d.streetLabel}</label>
                     <input
                       id="street"
                       type="text"
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
                       placeholder={d.streetPlaceholder}
-                      className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                     />
                   </div>
                 </div>
               )}
 
               <button type="button" onClick={() => selectMethod('novapost')} className={methodCardClass('novapost')}>
-                <span className="text-white font-medium text-sm">{d.novapost}</span>
-                <span className="text-zinc-400 text-xs whitespace-nowrap">{d.novapostPrice}</span>
+                <span className="text-[#191715] font-medium text-sm">{d.novapost}</span>
+                <span className="text-[#7A7368] text-xs whitespace-nowrap">{d.novapostPrice}</span>
               </button>
 
               {method === 'novapost' && (
                 <div className="pl-1 pr-1 pt-1 pb-2 animate-in fade-in duration-200">
-                  <label htmlFor="novapost-branch" className="block text-zinc-500 text-xs mb-1">{d.branchLabel}</label>
+                  <label htmlFor="novapost-branch" className="block text-[#5C564E] text-xs mb-1">{d.branchLabel}</label>
                   <input
                     id="novapost-branch"
                     type="text"
                     value={novaPostBranch}
                     onChange={(e) => setNovaPostBranch(e.target.value)}
                     placeholder={d.branchPlaceholder}
-                    className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                    className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                   />
                 </div>
               )}
 
               <button type="button" onClick={() => selectMethod('pickup')} className={methodCardClass('pickup')}>
-                <span className="text-white font-medium text-sm">{d.pickup}</span>
+                <span className="text-[#191715] font-medium text-sm">{d.pickup}</span>
                 <span className="text-green-500 text-xs whitespace-nowrap font-semibold">{d.pickupPrice}</span>
               </button>
 
               {method === 'pickup' && (
-                <div className="pl-1 pr-1 pt-1 pb-2 text-xs text-zinc-400 leading-relaxed animate-in fade-in duration-200">
+                <div className="pl-1 pr-1 pt-1 pb-2 text-xs text-[#5C564E] leading-relaxed animate-in fade-in duration-200">
                   📍 {d.pickupAddress}<br />
                   🕒 {d.pickupHours}
                 </div>
@@ -271,8 +271,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
             disabled={!canSubmit}
               className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all ${
                 !canSubmit
-                  ? "bg-zinc-700 text-zinc-400 cursor-not-allowed"
-                  : "bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] active:scale-[0.98] shadow-lg shadow-[#FFC400]/35"
+                  ? "bg-[#E8E0D0] text-[#7A7368] cursor-not-allowed"
+                  : "bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] border-2 border-[#191715] active:scale-[0.98] shadow-lg shadow-[#FFC400]/35"
               }`}
           >
             {isSubmitting ? dict.orderModal.submitting : dict.orderModal.submit}
