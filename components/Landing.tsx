@@ -60,8 +60,6 @@ const exampleMeta = [
   { src: "/images/card-achievement.jpg", alt: "Брелок с фото выпускников / Breloc absolvire" },
 ];
 
-const tgOrder = telegramLink("Здравствуйте! Хочу брелок.");
-
 export default function Landing() {
   const { lang, setLang } = useLanguage();
   const { occasion, setOccasion } = useOccasion();
@@ -69,6 +67,7 @@ export default function Landing() {
   const faq = faqCopy[lang];
   const occasions = occasionCopy[lang];
   const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number[]>([0, 1, 3]);
   const builderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -106,7 +105,7 @@ export default function Landing() {
             </a>
             <a
               className="btn btn-primary btn-sm hd-order"
-              href={tgOrder}
+              href="#builder"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -368,23 +367,23 @@ export default function Landing() {
           <div className="wrap-narrow">
             <h2>{t.faqTitle}</h2>
             {faq.map((item, i) => {
-              const isOpen = i < 2 || /не понравится|nu-mi place/i.test(item.q);
+              const isOpen = openFaq.includes(i);
               return (
                 <div className="faq-item" key={item.q}>
                   <button
                     type="button"
                     className="faq-q"
                     aria-expanded={isOpen}
-                    onClick={(e) => {
-                      const btn = e.currentTarget;
-                      const panel = btn.nextElementSibling as HTMLElement | null;
-                      const open = btn.getAttribute("aria-expanded") === "true";
-                      btn.setAttribute("aria-expanded", open ? "false" : "true");
-                      if (panel) panel.hidden = open;
-                    }}
+                    onClick={() =>
+                      setOpenFaq((current) =>
+                        current.includes(i)
+                          ? current.filter((index) => index !== i)
+                          : [...current, i]
+                      )
+                    }
                   >
                     <span>{item.q}</span>
-                    <span aria-hidden="true">{isOpen ? "–" : "+"}</span>
+                    <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
                   </button>
                   <div className="faq-a" hidden={!isOpen}>
                     <p>{item.a}</p>
