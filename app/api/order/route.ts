@@ -207,7 +207,7 @@ export async function POST(request: Request) {
     });
 
     const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
-    const langNote = lang === "ro" ? "\\n🌐 Клиент оформлял на румынском (по возможности говорите по-румынски)" : "";
+    const langNote = lang === "ro" ? "\n🌐 Клиент оформлял на румынском (по возможности говорите по-румынски)" : "";
 
     let deliveryText: string;
     if (method === "posta") {
@@ -215,14 +215,14 @@ export async function POST(request: Request) {
       const city = cleanText(deliveryData.city, 80);
       const district = cleanText(deliveryData.district, 80);
       const street = cleanText(deliveryData.street, 100);
-      deliveryText = `🚚 Способ получения: Poșta Moldovei — 30 лей\\n📮 Индекс: ${postalCode}\\n🏘 ${city}, р-н ${district}${street ? `\\n🏠 Улица: ${street}` : ""}`;
+      deliveryText = `🚚 Способ получения: Poșta Moldovei — 30 лей\n📮 Индекс: ${postalCode}\n🏘 ${city}, р-н ${district}${street ? `\n🏠 Улица: ${street}` : ""}`;
     } else if (method === "novapost") {
-      deliveryText = `🚚 Способ получения: Nova Poshta — 55 лей\\n📦 Отделение №${cleanText(deliveryData.novaPostBranch, 40)}`;
+      deliveryText = `🚚 Способ получения: Nova Poshta — 55 лей\n📦 Отделение №${cleanText(deliveryData.novaPostBranch, 40)}`;
     } else {
-      deliveryText = "🚚 Способ получения: Самовывоз — бесплатно\\n📍 A. Bernardazzi 64, Кишинёв (12:00–22:00)";
+      deliveryText = "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (12:00–22:00)";
     }
 
-    const captionText = `🔥 Новый заказ #${orderId}\\n👤 Клиент: ${safeName}\\n📞 Тел: ${safePhone}\\n📸 Фотографий: ${numPhotos} шт.\\n${deliveryText}${langNote}`;
+    const captionText = `🔥 Новый заказ #${orderId}\n👤 Клиент: ${safeName}\n📞 Тел: ${safePhone}\n📸 Фотографий: ${numPhotos} шт.\n${deliveryText}${langNote}`;
 
     let deliveredToAtLeastOne = false;
     for (const chatId of chatIds) {
