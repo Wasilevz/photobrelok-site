@@ -60,8 +60,6 @@ const exampleMeta = [
   { src: "/images/card-achievement.jpg", alt: "Брелок с фото выпускников / Breloc absolvire" },
 ];
 
-const tgOrder = telegramLink("Здравствуйте! Хочу брелок.");
-
 export default function Landing() {
   const { lang, setLang } = useLanguage();
   const { occasion, setOccasion } = useOccasion();
