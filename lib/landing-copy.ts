@@ -84,7 +84,7 @@ export const landingCopy = {
     footerLoc: "Мы находимся в центре Кишинёва:",
     seeBrelok: "Собрать плёнку",
     mobilePriceNote: "платите при получении",
-    mobileCtaLead: "Собрать плёнку",
+    mobileCtaButton: "Выбрать фото",
   },
   ro: {
     howNav: "Cum comanzi",
@@ -168,7 +168,7 @@ export const landingCopy = {
     footerLoc: "Suntem în centrul Chișinăului:",
     seeBrelok: "Compune filmul",
     mobilePriceNote: "plătești la livrare",
-    mobileCtaLead: "Compune filmul",
+    mobileCtaButton: "Alege pozele",
   },
 } as const;
 
