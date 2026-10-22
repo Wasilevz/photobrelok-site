@@ -81,6 +81,8 @@ export default function PhotoConstructor() {
   const handleCropDone = (croppedImageUrl: string) => {
     const current = cropQueue[0];
     if (current) {
+      // The cropper creates a new object URL; release the original upload URL.
+      revokeOldUrl(current.url);
       setSlots((prev) => {
         const newSlots = [...prev];
         revokeOldUrl(newSlots[current.slotIndex]);
