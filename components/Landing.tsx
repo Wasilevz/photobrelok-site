@@ -170,6 +170,13 @@ export default function Landing() {
                 height={900}
                 priority
               />
+              <div className="hero-image-note" aria-label={lang === "ru" ? "Цена и условия заказа" : "Preț și condiții de comandă"}>
+                <span className="hero-image-price">{t.priceChip}</span>
+                <span className="hero-image-detail">
+                  <strong>{lang === "ru" ? "Макет бесплатно" : "Machetă gratuită"}</strong>
+                  {lang === "ru" ? "Оплата при получении" : "Plată la livrare"}
+                </span>
+              </div>
             </div>
           </div>
         </section>
