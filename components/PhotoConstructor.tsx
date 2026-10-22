@@ -136,7 +136,7 @@ export default function PhotoConstructor() {
     }
   };
 
-  const startLongPress = (index: number, e: React.PointerEvent) => {
+  const startLongPress = (index: number) => {
     if (!slots[index]) return;
     clearLongPress();
     longPressRef.current = window.setTimeout(() => {
@@ -315,7 +315,7 @@ export default function PhotoConstructor() {
                     }}
                     onPointerDown={(e) => {
                       if (e.button !== undefined && e.button !== 0) return;
-                      startLongPress(index, e);
+                      startLongPress(index);
                     }}
                     onPointerMove={(e) => {
                       if (!draggingRef.current && longPressRef.current !== null) {
