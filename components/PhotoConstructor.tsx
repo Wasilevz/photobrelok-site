@@ -26,10 +26,6 @@ export default function PhotoConstructor() {
   const [canScrollRight, setCanScrollRight] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showError, setShowError] = useState<string | null>(null);
-  const [wantSecond, setWantSecond] = useState(false);
-  const [lowQuality, setLowQuality] = useState<Record<string, boolean>>({});
-  const [contact, setContact] = useState("");
-  const [submitState, setSubmitState] = useState<"idle"|"loading"|"error"|"success">("idle");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Батч-загрузка: очередь фото, ожидающих обрезки, каждое привязано к своему слоту
@@ -85,6 +81,8 @@ export default function PhotoConstructor() {
   const handleCropDone = (croppedImageUrl: string) => {
     const current = cropQueue[0];
     if (current) {
+      // The cropper creates a new object URL; release the original upload URL.
+      revokeOldUrl(current.url);
       setSlots((prev) => {
         const newSlots = [...prev];
         revokeOldUrl(newSlots[current.slotIndex]);
@@ -104,15 +102,10 @@ export default function PhotoConstructor() {
     
     const rest = cropQueue.slice(1);
     
-    // Если пользователь отменяет, очищаем ссылки для всей оставшейся очереди
-    if (rest.length > 0) {
-      rest.forEach((item) => revokeOldUrl(item.url));
-      setCropQueue([]);
-      setTotalInBatch(0);
-    } else {
-      setCropQueue([]);
-      setTotalInBatch(0);
-    }
+    // Cancel the rest of this batch and release its temporary object URLs.
+    rest.forEach((item) => revokeOldUrl(item.url));
+    setCropQueue([]);
+    setTotalInBatch(0);
   };
 
   const handleCarouselScroll = () => {
@@ -145,18 +138,14 @@ export default function PhotoConstructor() {
     }
   };
 
-  const startLongPress = (index: number, e: React.PointerEvent) => {
+  const startLongPress = (index: number) => {
     if (!slots[index]) return;
     clearLongPress();
-    const x = e.clientX;
-    const y = e.clientY;
     longPressRef.current = window.setTimeout(() => {
       draggingRef.current = true;
       setDragIndex(index);
       setOverIndex(index);
       vibrate(35);
-      void x;
-      void y;
     }, 420);
   };
 
@@ -328,7 +317,7 @@ export default function PhotoConstructor() {
                     }}
                     onPointerDown={(e) => {
                       if (e.button !== undefined && e.button !== 0) return;
-                      startLongPress(index, e);
+                      startLongPress(index);
                     }}
                     onPointerMove={(e) => {
                       if (!draggingRef.current && longPressRef.current !== null) {
@@ -442,21 +431,10 @@ export default function PhotoConstructor() {
               : `Mai adaugă ${6 - slots.filter(Boolean).length} poze — apoi trimiți pentru machetă`}
           </p>
         )}
-                {Object.keys(lowQuality).length > 0 && (
-          <p className="text-center text-[12px] text-amber-700 mt-2" role="status">
-            {lang === "ru"
-              ? "Фото может быть нечётким на плёнке"
-              : "Poza poate ieși neclară pe film"}
-          </p>
-        )}
-                <p className="text-center text-[12px] text-gray-600 mt-2">
-          {submitState === "loading"
-            ? lang === "ru"
-              ? "Отправляем…"
-              : "Trimitem…"
-            : lang === "ru"
-              ? "Макет бесплатно. Платите при получении."
-              : "Machetă gratuită. Plătești la livrare."}
+        <p className="text-center text-[12px] text-gray-600 mt-2">
+          {lang === "ru"
+            ? "Макет бесплатно. Платите при получении."
+            : "Machetă gratuită. Plătești la livrare."}
         </p>
       </div>
 

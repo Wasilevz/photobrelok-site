@@ -50,9 +50,7 @@ function ThankYouContent() {
       const res = await fetch('/api/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `🔥 <b>АПСЕЛЛ! Заказ #${orderId}</b>\nКлиент добавил ВТОРОЙ брелок (-40%).\nПоложите 2 шт. в посылку.`
-        })
+        body: JSON.stringify({ orderId })
       });
       if (!res.ok) throw new Error('Не получилось передать менеджеру');
       setStatus('accepted');

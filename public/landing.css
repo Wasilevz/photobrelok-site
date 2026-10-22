@@ -2540,3 +2540,194 @@ button, input, select, textarea { font: inherit; color: inherit; }
   height: 100%;
   max-height: none;
 }
+
+
+/* Premium editorial pass — warmer Kodak palette, less playful UI */
+:root {
+  --bg: #F5F0E6;
+  --ink: #242019;
+  --accent: #D7A62D;
+  --accent-press: #BD8F20;
+  --surface: #FFFCF6;
+  --surface-2: #EAE1D2;
+  --muted: #70685E;
+  --line: #D7CBBB;
+  --line-strong: #332B20;
+  --shadow: 0 12px 36px rgba(36, 32, 25, 0.08);
+}
+
+.pb h1, .pb h2, .pb h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.pb h1 {
+  font-size: clamp(42px, 6.4vw, 68px);
+  line-height: 1.02;
+}
+
+.pb h2 {
+  font-size: clamp(32px, 4.5vw, 48px);
+  line-height: 1.08;
+}
+
+.pb h3 {
+  font-size: clamp(22px, 2.7vw, 28px);
+  line-height: 1.14;
+}
+
+.pb .logo {
+  font-family: var(--font);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+.pb .logo span { color: var(--ink); }
+
+.pb .hd {
+  background: rgba(245, 240, 230, 0.94);
+  border-bottom-color: rgba(215, 203, 187, 0.8);
+}
+
+.pb .btn {
+  border-radius: 12px;
+  border-width: 1px;
+  font-weight: 600;
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pb .btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #211D16;
+  box-shadow: none;
+}
+
+.pb .btn-primary:hover {
+  background: var(--accent-press);
+  border-color: var(--accent-press);
+  box-shadow: 0 5px 16px rgba(189, 143, 32, 0.18);
+}
+
+.pb .btn-primary:active { box-shadow: none; }
+
+.pb .hero {
+  background: radial-gradient(ellipse at 82% 12%, rgba(215, 166, 45, 0.12), transparent 36%);
+}
+
+.pb .hero-visual .photo-main {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(36, 32, 25, 0.14);
+}
+
+.pb .examples {
+  background: #EEE6D8;
+  border-color: var(--line);
+}
+
+.pb .gallery figure {
+  border: 1px solid rgba(51, 43, 32, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(36, 32, 25, 0.07);
+}
+
+.pb .gallery figure:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(36, 32, 25, 0.12);
+}
+
+.pb .gallery figcaption,
+.pb .gallery figcaption > div {
+  background: var(--surface);
+}
+
+.pb .gallery figcaption::before { background: var(--accent); }
+
+.pb .builder {
+  background: #EDE5D8;
+}
+
+.pb .builder-shell {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgba(36, 32, 25, 0.08);
+}
+
+.pb .builder-top { background: #F1E9DC; }
+
+.pb .product-stage {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(215,166,45,0.13), transparent 45%),
+    linear-gradient(180deg, #E9E0D2 0%, #F7F2E8 100%);
+}
+
+.pb .trust-line {
+  background: #F7EED6;
+  border-color: #E5D3A1;
+}
+
+.pb .occasion-chip,
+.pb .step-num {
+  background: #E8D19A;
+  border-color: #C9A34C;
+}
+
+.pb .trust-badge {
+  border-color: var(--line);
+  background: var(--surface);
+  font-weight: 500;
+}
+
+.pb .memories {
+  background: #E9E0D2 !important;
+}
+
+.pb .memories-rail {
+  border-radius: 14px !important;
+  box-shadow: 0 12px 30px rgba(36, 32, 25, 0.12);
+}
+
+.pb .reviews-sec { background: var(--bg); }
+
+.pb .review-gift-slot { display: none; }
+
+.pb .reviews-wall.occ-rail figure {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(36, 32, 25, 0.08);
+}
+
+.pb .faq-item { border-bottom-color: var(--line); }
+
+.pb .faq-q { font-size: 16px; }
+
+.pb .urgency-banner {
+  background: #28231B;
+  color: #E8C56C;
+  border-bottom-color: rgba(232, 197, 108, 0.25);
+}
+
+.pb .mobile-cta {
+  background: rgba(255, 252, 246, 0.97);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -8px 28px rgba(36, 32, 25, 0.08);
+}
+
+@media (max-width: 767px) {
+  .pb section { padding: 48px 0; }
+  .pb .hero { padding: 28px 0 40px; }
+  .pb .hero h1 { max-width: 12ch; }
+  .pb .hero-actions { gap: 10px; }
+  .pb .hero-actions .btn-primary { width: 100%; }
+  .pb .hero-actions .btn-quiet { width: 100%; }
+  .pb .builder-main,
+  .pb .builder-side { padding: 20px 16px 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb .gallery figure:hover { transform: none; }
+}

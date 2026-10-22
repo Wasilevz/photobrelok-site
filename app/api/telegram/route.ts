@@ -1,58 +1,58 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-// Функция экранирования спецсимволов для безопасной отправки parse_mode: 'HTML'
-function escapeHtml(text: string): string {
-  if (!text) return "";
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > 1024) {
+      return NextResponse.json({ error: "Слишком большой запрос" }, { status: 413 });
+    }
 
-    if (!message || typeof message !== "string" || message.trim().length === 0) {
-      return NextResponse.json({ error: "Сообщение обязательно" }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Некорректный JSON" }, { status: 400 });
+    }
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+    }
+
+    const orderId = (body as Record<string, unknown>).orderId;
+    if (typeof orderId !== "string" || !ORDER_ID_PATTERN.test(orderId)) {
+      return NextResponse.json({ error: "Некорректный номер заказа" }, { status: 400 });
     }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatIdsRaw = process.env.TELEGRAM_CHAT_ID;
-
-    if (!botToken || !chatIdsRaw) {
-      return NextResponse.json({ error: 'Ключи Telegram не найдены' }, { status: 500 });
+    const chatIds = (process.env.TELEGRAM_CHAT_ID || "").split(",").map((id) => id.trim()).filter(Boolean);
+    if (!botToken || chatIds.length === 0) {
+      return NextResponse.json({ error: "Telegram не настроен" }, { status: 500 });
     }
 
-    // Поддержка нескольких получателей через запятую — как в /api/order
-    const chatIds = chatIdsRaw.split(",").map((id) => id.trim()).filter(Boolean);
-
-    // Применяем экранирование к тексту
-    const safeMessage = escapeHtml(message);
-
-    const results = await Promise.all(
-      chatIds.map((chatId) =>
-        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: safeMessage, // Передаем очищенный текст
-            parse_mode: 'HTML',
-          }),
-        })
-      )
+    // Never forward arbitrary user-supplied text to the internal Telegram chat.
+    const message = `🔥 <b>АПСЕЛЛ! Заказ #${orderId}</b>\nКлиент добавил второй брелок со скидкой 40%.\nПоложите 2 шт. в посылку.`;
+    const results = await Promise.allSettled(
+      chatIds.map(async (chatId) => {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (!response.ok) throw new Error(`Telegram returned ${response.status}`);
+      }),
     );
 
-    const allFailed = results.every((r) => !r.ok);
-    if (allFailed) {
-      throw new Error('Сбой на стороне Telegram: ни один получатель не подтвердил доставку');
+    if (!results.some((result) => result.status === "fulfilled")) {
+      console.error("Upsell notification could not be delivered to Telegram");
+      return NextResponse.json({ error: "Не удалось передать добавление менеджеру" }, { status: 502 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Неизвестная ошибка";
-    console.error("Ошибка TG:", error);
-    return NextResponse.json({ error: msg }, { status: 500 });
+  } catch (error) {
+    console.error("Upsell notification failed:", error);
+    return NextResponse.json({ error: "Не удалось передать добавление менеджеру" }, { status: 500 });
   }
 }
