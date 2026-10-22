@@ -3137,3 +3137,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
     font-size: 13px;
   }
 }
+
+/* Unified button shape across the PhotoBrelok UI.
+   Keep visual hierarchy through color, not inconsistent corner radii. */
+.pb .btn,
+.pb .btn-primary,
+.pb .btn-ghost,
+.pb .btn-quiet,
+.pb .btn-sm,
+.pb .mobile-cta .btn,
+.pb .gallery figcaption .btn {
+  border-radius: 12px !important;
+}
