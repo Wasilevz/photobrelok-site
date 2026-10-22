@@ -2731,3 +2731,339 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .pb .gallery figure:hover { transform: none; }
 }
+
+
+/* Conversion and accessibility polish — Oct 2026 */
+:root {
+  --bg: #F7F3EB;
+  --ink: #211D18;
+  --accent: #F7BD18;
+  --accent-press: #E5A900;
+  --surface: #FFFEFA;
+  --surface-2: #EEE6D8;
+  --muted: #625A50;
+  --line: #D8CDBB;
+  --line-strong: #211D18;
+  --shadow: 0 12px 32px rgba(33, 29, 24, 0.09);
+}
+
+.pb h1,
+.pb h2,
+.pb h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.pb h1 {
+  font-size: clamp(38px, 5.2vw, 62px);
+  line-height: 1.04;
+  max-width: 13ch;
+}
+
+.pb h2 {
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.1;
+}
+
+.pb h3 {
+  font-size: clamp(20px, 2.2vw, 25px);
+}
+
+.pb .logo,
+.pb .hand,
+.pb .price .big,
+.pb .hero-visual .photo-badge {
+  font-family: var(--hand);
+  letter-spacing: 0;
+}
+
+.pb .btn {
+  min-height: 48px;
+  font-weight: 700;
+  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.pb .btn-primary {
+  background: var(--accent);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.pb .btn-primary:hover {
+  background: var(--accent-press);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.pb .btn-primary:active {
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.pb .btn-ghost {
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  background: rgba(255, 254, 250, 0.5);
+}
+
+.pb .btn-quiet {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration-thickness: 1.5px;
+}
+
+.pb .hd {
+  background: rgba(247, 243, 235, 0.96);
+  border-bottom-color: rgba(33, 29, 24, 0.12);
+}
+
+.pb .hd .logo {
+  color: var(--ink);
+  font-size: 27px;
+}
+
+.pb .hd .logo span {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 4px;
+  text-underline-offset: 3px;
+}
+
+.pb .hero {
+  padding-top: clamp(30px, 4vw, 56px);
+}
+
+.pb .hero-copy .eyebrow {
+  color: #51483D;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.pb .hero .lead {
+  max-width: 31em;
+  line-height: 1.6;
+}
+
+.pb .hero-meta strong {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+}
+
+.pb .hero-terms,
+.pb .hero-cta-note,
+.pb .urgency-daily {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.pb .hero-visual .photo-main {
+  border-radius: 18px;
+  border: 1px solid rgba(33, 29, 24, 0.18);
+  box-shadow: 12px 12px 0 rgba(247, 189, 24, 0.22);
+}
+
+.pb .examples {
+  background: #F0E8DA;
+}
+
+.pb .gallery figure,
+.pb .memories-rail figure {
+  border: 1px solid rgba(33, 29, 24, 0.16);
+  box-shadow: 0 8px 24px rgba(33, 29, 24, 0.08);
+}
+
+.pb .gallery figure:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(33, 29, 24, 0.12);
+}
+
+.pb .gallery figcaption::before {
+  border: 0;
+}
+
+.pb .builder-shell {
+  box-shadow: 0 14px 36px rgba(33, 29, 24, 0.1);
+}
+
+.pb .price {
+  border-radius: 22px;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.pb .price .btn-primary {
+  background: var(--ink);
+  color: var(--accent);
+  box-shadow: 3px 3px 0 rgba(33, 29, 24, 0.3);
+}
+
+.pb .price .btn-primary:hover {
+  background: #383027;
+}
+
+.pb .faq-item {
+  border-bottom: 1px solid var(--line);
+}
+
+.pb .faq-q {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 600 16px/1.45 var(--font);
+  cursor: pointer;
+}
+
+.pb .faq-q > span:last-child {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 20px;
+}
+
+.pb .faq-q:focus-visible {
+  outline: 3px solid var(--accent-press);
+  outline-offset: 3px;
+}
+
+.pb .faq-a {
+  padding: 0 42px 16px 0;
+  color: var(--muted);
+}
+
+.pb .faq-a p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.pb .mobile-cta {
+  background: rgba(255, 254, 250, 0.98);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -8px 28px rgba(33, 29, 24, 0.1);
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.pb .mobile-cta .btn-primary {
+  min-height: 48px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.pb :is(a, button, input, select, textarea):focus-visible {
+  outline-color: var(--accent-press);
+}
+
+.pb .step,
+.pb .radio-card,
+.pb .summary-box {
+  border-color: var(--line);
+}
+
+.pb .dropzone {
+  border-color: #9A8B75;
+}
+
+.pb .dropzone:hover,
+.pb .dropzone:focus-visible,
+.pb .dropzone.drag {
+  border-color: var(--ink);
+}
+
+@media (max-width: 639px) {
+  .pb {
+    padding-bottom: 86px;
+  }
+
+  .pb .hero {
+    padding-top: 24px;
+    padding-bottom: 36px;
+  }
+
+  .pb .hero-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .pb .hero-copy,
+  .pb .hero-visual {
+    width: 100%;
+  }
+
+  .pb .hero h1 {
+    max-width: 15ch;
+    font-size: clamp(36px, 10vw, 48px);
+  }
+
+  .pb .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .pb .hero-actions .btn-primary {
+    width: 100%;
+    min-height: 56px;
+  }
+
+  .pb .hero-actions .btn-quiet {
+    justify-self: center;
+  }
+
+  .pb .hero-visual {
+    margin-top: 0;
+  }
+
+  .pb .hero-visual .photo-main {
+    max-height: 500px;
+    object-position: center;
+  }
+
+  .pb .hd-actions {
+    gap: 6px;
+  }
+
+  .pb .hd .btn-sm {
+    padding-inline: 11px;
+  }
+
+  .pb .mobile-cta {
+    gap: 12px;
+  }
+
+  .pb .mobile-cta .price-wrap .small {
+    font-size: 12px;
+  }
+
+  .pb .mobile-cta .btn-primary {
+    min-width: 132px;
+    padding-inline: 14px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .pb .faq-q {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 900px) {
+  .pb .hero-grid {
+    gap: clamp(36px, 5vw, 64px);
+  }
+}
