@@ -39,20 +39,8 @@ export function UrgencyBanner() {
   const name = lang === "ro" ? holiday.ro : holiday.name;
   const dateStr = formatDeadline(deadline, lang);
 
-  // >14 days: static text only
-  if (daysLeft > 14) {
-    return (
-      <div className="urgency-banner" role="status">
-        <div className="wrap urgency-banner-inner">
-          <span className="urgency-text">
-            {lang === "ru"
-              ? `Заказы к ${name} — до ${dateStr}`
-              : `Comenzi pentru ${name} — până pe ${dateStr}`}
-          </span>
-        </div>
-      </div>
-    );
-  }
+  // Keep the hero focused: show deadline messaging only when it is genuinely near.
+  if (daysLeft > 14) return null;
 
   const { d, h, m, s } = splitDuration(ms);
   return (
