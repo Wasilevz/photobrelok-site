@@ -1,69 +1,169 @@
+import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
 
+const MIN_PHOTOS = 6;
+const MAX_PHOTOS = 10;
+const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
+const PHOTO_FETCH_TIMEOUT_MS = 15_000;
+
 function generateOrderId(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let id = "";
-  for (let i = 0; i < 6; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  return Array.from({ length: 6 }, () => chars[randomInt(chars.length)]).join("");
+}
+
+function cleanText(value: unknown, maxLength = 100): string {
+  return typeof value === "string"
+    ? value.replace(/[^\p{L}\p{N}\s\-.,/#@+]/gu, "").replace(/\s+/g, " ").trim().slice(0, maxLength)
+    : "";
+}
+
+function getCloudinaryPhotoUrl(value: unknown): string | null {
+  if (typeof value !== "string" || value.length > 2048) return null;
+
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) return null;
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com") return null;
+    if (url.username || url.password || url.port || url.search || url.hash) return null;
+
+    const expectedPrefix = `/${cloudName}/image/upload/`;
+    if (!url.pathname.startsWith(expectedPrefix)) return null;
+
+    // Use Cloudinary's JPEG conversion so jsPDF receives a predictable image format.
+    url.pathname = url.pathname.replace(
+      `/${cloudName}/image/upload/`,
+      `/${cloudName}/image/upload/f_jpg,q_auto:good/`,
+    );
+    return url.toString();
+  } catch {
+    return null;
   }
-  return id;
+}
+
+async function fetchPhotoAsBase64(url: string): Promise<string> {
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(PHOTO_FETCH_TIMEOUT_MS),
+    redirect: "error",
+  });
+
+  if (!response.ok) throw new Error(`Photo fetch failed: ${response.status}`);
+
+  const contentType = response.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+  if (contentType !== "image/jpeg") throw new Error("Cloudinary did not return a JPEG");
+
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > MAX_PHOTO_BYTES) throw new Error("Photo exceeds size limit");
+
+  if (!response.body) throw new Error("Photo response is empty");
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_PHOTO_BYTES) {
+        await reader.cancel();
+        throw new Error("Photo exceeds size limit");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (totalBytes === 0) throw new Error("Photo response is empty");
+  const buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
+  return buffer.toString("base64");
 }
 
 export async function POST(request: Request) {
   try {
-    const { name, phone, photoUrls, lang, delivery } = await request.json();
+    const contentLength = Number(request.headers.get("content-length") || 0);
+    if (contentLength > 32 * 1024) {
+      return NextResponse.json({ error: "Слишком большой запрос" }, { status: 413 });
+    }
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Некорректный JSON" }, { status: 400 });
+    }
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Некорректные данные заказа" }, { status: 400 });
+    }
+
+    const { name, phone, photoUrls, lang, delivery } = body as Record<string, unknown>;
+
+    if (typeof name !== "string" || !name.trim() || name.length > 120) {
       return NextResponse.json({ error: "Имя клиента обязательно" }, { status: 400 });
     }
-    if (!phone || typeof phone !== "string" || phone.trim().length === 0) {
+    if (typeof phone !== "string" || !phone.trim() || phone.length > 40) {
       return NextResponse.json({ error: "Телефон обязателен" }, { status: 400 });
     }
-    if (!Array.isArray(photoUrls) || photoUrls.length < 1) {
-      return NextResponse.json({ error: "Нужно минимум 1 фото" }, { status: 400 });
+    if (!Array.isArray(photoUrls) || photoUrls.length < MIN_PHOTOS || photoUrls.length > MAX_PHOTOS) {
+      return NextResponse.json({ error: `Нужно от 6 до 10 фото` }, { status: 400 });
     }
-    if (!delivery || typeof delivery !== "object" || typeof delivery.method !== "string") {
+
+    const cloudinaryUrls = photoUrls.map(getCloudinaryPhotoUrl);
+    if (cloudinaryUrls.some((url) => url === null)) {
+      return NextResponse.json({ error: "Одно или несколько фото имеют некорректный адрес. Загрузите их повторно." }, { status: 400 });
+    }
+
+    if (!delivery || typeof delivery !== "object" || Array.isArray(delivery) || typeof (delivery as Record<string, unknown>).method !== "string") {
       return NextResponse.json({ error: "Не выбран способ получения" }, { status: 400 });
     }
-    if (delivery.method === "posta") {
-      if (!delivery.postalCode?.trim() || !delivery.city?.trim() || !delivery.district?.trim()) {
+    const deliveryData = delivery as Record<string, unknown>;
+    const method = deliveryData.method;
+
+    if (method === "posta") {
+      if (
+        typeof deliveryData.postalCode !== "string" || !deliveryData.postalCode.trim() ||
+        typeof deliveryData.city !== "string" || !deliveryData.city.trim() ||
+        typeof deliveryData.district !== "string" || !deliveryData.district.trim()
+      ) {
         return NextResponse.json({ error: "Заполните адрес для Poșta Moldovei (индекс, город/село, район)" }, { status: 400 });
       }
-    } else if (delivery.method === "novapost") {
-      if (!delivery.novaPostBranch?.trim()) {
+    } else if (method === "novapost") {
+      if (typeof deliveryData.novaPostBranch !== "string" || !deliveryData.novaPostBranch.trim()) {
         return NextResponse.json({ error: "Укажите номер отделения Nova Poshta" }, { status: 400 });
       }
-    } else if (delivery.method !== "pickup") {
+    } else if (method !== "pickup") {
       return NextResponse.json({ error: "Некорректный способ получения" }, { status: 400 });
     }
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    if (!token) {
-      return NextResponse.json({ error: "Telegram token не настроен" }, { status: 500 });
+    const chatIds = (process.env.TELEGRAM_CHAT_ID || "").split(",").map((id) => id.trim()).filter(Boolean);
+    if (!token || chatIds.length === 0) {
+      console.error("Order delivery is not configured: missing Telegram token or chat ID");
+      return NextResponse.json({ error: "Не удалось принять заказ. Попробуйте позже или свяжитесь с нами напрямую." }, { status: 500 });
     }
 
     const orderId = generateOrderId();
-    const safeName = name.replace(/[^\p{L}\p{N}\s]/gu, "").slice(0, 50);
+    const safeName = cleanText(name, 50);
+    const safePhone = cleanText(phone, 40);
+    const numPhotos = cloudinaryUrls.length;
 
     const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-
     const photoSize = 25.5;
     const gap = 1.7;
-    const numPhotos = photoUrls.length;
-
     const leftOffset = 11.3;
     const rightOffset = 15;
     const stripHeight = 35;
-
-    const stripWidth = leftOffset + (numPhotos * photoSize) + (Math.max(0, numPhotos - 1) * gap) + rightOffset;
-
+    const stripWidth = leftOffset + numPhotos * photoSize + Math.max(0, numPhotos - 1) * gap + rightOffset;
     const startX = (297 - stripWidth) / 2;
     const startY = (210 - stripHeight) / 2;
 
     pdf.setFillColor(0, 0, 0);
     pdf.rect(startX, startY, stripWidth, stripHeight, "F");
-
     pdf.setDrawColor(200, 200, 200);
     pdf.setLineWidth(0.1);
     pdf.line(startX - 3, startY, startX + stripWidth + 3, startY);
@@ -73,113 +173,90 @@ export async function POST(request: Request) {
 
     pdf.setFillColor(255, 255, 255);
     const circleRadius = 5.3 / 2;
-    const circleX = startX + 2 + circleRadius;
-    const circleY = startY + (stripHeight / 2);
-    pdf.circle(circleX, circleY, circleRadius, "F");
+    pdf.circle(startX + 2 + circleRadius, startY + stripHeight / 2, circleRadius, "F");
 
     const holeW = 2;
     const holeH = 2.5;
     const cornerR = 0.5;
     const step = 4.75;
     const holeMarginY = 1.125;
-    const startPerfOffset = step * 2;
-
-    for (let i = startPerfOffset; i < stripWidth - holeW; i += step) {
-        const currentX = startX + i;
-        pdf.roundedRect(currentX, startY + holeMarginY, holeW, holeH, cornerR, cornerR, "F");
-        pdf.roundedRect(currentX, startY + stripHeight - holeMarginY - holeH, holeW, holeH, cornerR, cornerR, "F");
+    for (let i = step * 2; i < stripWidth - holeW; i += step) {
+      const currentX = startX + i;
+      pdf.roundedRect(currentX, startY + holeMarginY, holeW, holeH, cornerR, cornerR, "F");
+      pdf.roundedRect(currentX, startY + stripHeight - holeMarginY - holeH, holeW, holeH, cornerR, cornerR, "F");
     }
 
-    let failedPhotos = 0;
+    const photoResults = await Promise.allSettled(
+      (cloudinaryUrls as string[]).map((url) => fetchPhotoAsBase64(url)),
+    );
+    const failedPhotos = photoResults.filter((result) => result.status === "rejected").length;
 
-    // --- НАЧАЛО БЛОКА ПАРАЛЛЕЛЬНОЙ ЗАГРУЗКИ ---
-    const photoPromises = photoUrls.map(async (url: string, index: number) => {
-      try {
-        const safeUrl = url.replace("/upload/", "/upload/f_jpg,q_auto:best/");
-        const res = await fetch(safeUrl);
-        if (!res.ok) {
-          console.error(`Не удалось загрузить фото ${index + 1}: ${res.status} ${res.statusText}`);
-          return null;
-        }
-        const buffer = await res.arrayBuffer();
-        return Buffer.from(buffer).toString('base64');
-      } catch (err) {
-        console.error(`Сбой fetch для URL: ${url}`, err);
-        return null;
-      }
+    if (failedPhotos > 0) {
+      console.error(`Order ${orderId}: ${failedPhotos} of ${numPhotos} photos could not be downloaded`);
+      return NextResponse.json(
+        { error: "Не удалось подготовить все фотографии. Пожалуйста, отправьте заказ ещё раз." },
+        { status: 502 },
+      );
+    }
+
+    photoResults.forEach((result, index) => {
+      if (result.status !== "fulfilled") return;
+      const xPos = startX + leftOffset + index * (photoSize + gap);
+      const yPos = startY + (stripHeight - photoSize) / 2;
+      pdf.addImage(`data:image/jpeg;base64,${result.value}`, "JPEG", xPos, yPos, photoSize, photoSize);
     });
 
-    const fetchedImages = await Promise.all(photoPromises);
-
-    fetchedImages.forEach((base64Img, i) => {
-      if (!base64Img) {
-        failedPhotos++;
-        return;
-      }
-      const xPos = startX + leftOffset + (i * (photoSize + gap));
-      const yPos = startY + ((stripHeight - photoSize) / 2);
-      pdf.addImage(`data:image/jpeg;base64,${base64Img}`, "JPEG", xPos, yPos, photoSize, photoSize);
-    });
-    // --- КОНЕЦ БЛОКА ПАРАЛЛЕЛЬНОЙ ЗАГРУЗКИ ---
-
-    const pdfOutput = pdf.output("arraybuffer");
-    const buffer = Buffer.from(pdfOutput);
-
-    const chatIds = process.env.TELEGRAM_CHAT_ID?.split(",") || [];
-    const langNote = lang === "ro" ? `\n🌐 Клиент оформлял на румынском (говорите по-румынски при звонке)` : '';
-
-    const clean = (v: unknown) => (typeof v === "string" ? v.replace(/[^\p{L}\p{N}\s\-.,/]/gu, "").slice(0, 100).trim() : "");
+    const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
+    const langNote = lang === "ro" ? "\\n🌐 Клиент оформлял на румынском (по возможности говорите по-румынски)" : "";
 
     let deliveryText: string;
-    if (delivery.method === "posta") {
-      const postalCode = clean(delivery.postalCode);
-      const city = clean(delivery.city);
-      const district = clean(delivery.district);
-      const street = clean(delivery.street);
-      deliveryText = `🚚 Способ получения: Poșta Moldovei — 30 лей\n📮 Индекс: ${postalCode}\n🏘 ${city}, р-н ${district}${street ? `\n🏠 Улица: ${street}` : ''}`;
-    } else if (delivery.method === "novapost") {
-      const branch = clean(delivery.novaPostBranch);
-      deliveryText = `🚚 Способ получения: Nova Poshta — 55 лей\n📦 Отделение №${branch}`;
+    if (method === "posta") {
+      const postalCode = cleanText(deliveryData.postalCode, 20);
+      const city = cleanText(deliveryData.city, 80);
+      const district = cleanText(deliveryData.district, 80);
+      const street = cleanText(deliveryData.street, 100);
+      deliveryText = `🚚 Способ получения: Poșta Moldovei — 30 лей\\n📮 Индекс: ${postalCode}\\n🏘 ${city}, р-н ${district}${street ? `\\n🏠 Улица: ${street}` : ""}`;
+    } else if (method === "novapost") {
+      deliveryText = `🚚 Способ получения: Nova Poshta — 55 лей\\n📦 Отделение №${cleanText(deliveryData.novaPostBranch, 40)}`;
     } else {
-      deliveryText = `🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (12:00–22:00)`;
+      deliveryText = "🚚 Способ получения: Самовывоз — бесплатно\\n📍 A. Bernardazzi 64, Кишинёв (12:00–22:00)";
     }
 
-    const captionText = `🔥 Новый заказ #${orderId}\n👤 Клиент: ${safeName}\n📞 Тел: ${phone}\n📸 Фотографий: ${numPhotos} шт.\n${deliveryText}${failedPhotos > 0 ? `\n⚠️ НЕ загрузилось фото: ${failedPhotos} — проверьте макет перед печатью!` : ''}${langNote}`;
+    const captionText = `🔥 Новый заказ #${orderId}\\n👤 Клиент: ${safeName}\\n📞 Тел: ${safePhone}\\n📸 Фотографий: ${numPhotos} шт.\\n${deliveryText}${langNote}`;
 
     let deliveredToAtLeastOne = false;
-
     for (const chatId of chatIds) {
-      const cleanId = chatId.trim();
-      if (!cleanId) continue;
-
       const tgFormData = new FormData();
-      tgFormData.append("chat_id", cleanId);
-      tgFormData.append("document", new Blob([buffer], { type: "application/pdf" }), `Brelok_${orderId}_${safeName}.pdf`);
+      tgFormData.append("chat_id", chatId);
+      tgFormData.append("document", new Blob([pdfBuffer], { type: "application/pdf" }), `Brelok_${orderId}.pdf`);
       tgFormData.append("caption", captionText);
 
-      const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
-        method: "POST",
-        body: tgFormData,
-      });
-
-      if (tgRes.ok) {
-        deliveredToAtLeastOne = true;
-      } else {
-        console.error(`Не удалось отправить заказ #${orderId} в чат ${cleanId}: ${tgRes.status}`);
+      try {
+        const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+          method: "POST",
+          body: tgFormData,
+          signal: AbortSignal.timeout(15_000),
+        });
+        if (tgRes.ok) {
+          deliveredToAtLeastOne = true;
+        } else {
+          console.error(`Telegram delivery failed for order ${orderId}: ${tgRes.status}`);
+        }
+      } catch (error) {
+        console.error(`Telegram request failed for order ${orderId}`, error);
       }
     }
 
     if (!deliveredToAtLeastOne) {
       return NextResponse.json(
-        { error: "Заказ создан, но не удалось уведомить менеджера. Свяжитесь с нами напрямую." },
-        { status: 502 }
+        { error: "Заказ не удалось передать менеджеру. Попробуйте ещё раз или свяжитесь с нами напрямую." },
+        { status: 502 },
       );
     }
 
     return NextResponse.json({ success: true, orderId });
-
   } catch (error) {
-    console.error("Ошибка при сборке макета:", error);
-    return NextResponse.json({ error: "Генерация не удалась" }, { status: 500 });
+    console.error("Order generation failed:", error);
+    return NextResponse.json({ error: "Не удалось подготовить заказ. Попробуйте ещё раз." }, { status: 500 });
   }
 }
