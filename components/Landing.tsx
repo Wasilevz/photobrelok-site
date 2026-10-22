@@ -409,15 +409,9 @@ export default function Landing() {
             <h2>{t.finalTitle}</h2>
             <p className="lead">{t.finalLead}</p>
             <div className="hero-actions" style={{ justifyContent: "center" }}>
-              <a
-                className="btn btn-primary"
-                href={tgOrder}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => track("telegram_click", { from: "final" })}
-              >
+              <button type="button" className="btn btn-primary" onClick={scrollToBuilder}>
                 {t.finalTg}
-              </a>
+              </button>
               <a
                 className="btn btn-ghost"
                 style={{ borderColor: "var(--accent)", color: "var(--accent)" }}

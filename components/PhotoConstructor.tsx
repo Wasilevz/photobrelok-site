@@ -442,41 +442,14 @@ export default function PhotoConstructor() {
               : `Mai adaugă ${6 - slots.filter(Boolean).length} poze — apoi trimiți pentru machetă`}
           </p>
         )}
-        <label className="flex items-start gap-2 mt-4 text-left text-[13px] text-gray-700 cursor-pointer">
-          <input
-            type="checkbox"
-            className="mt-1 accent-[#FFC400] w-5 h-5"
-            checked={wantSecond}
-            onChange={(e) => setWantSecond(e.target.checked)}
-          />
-          <span>
-            {lang === "ru"
-              ? "Добавить второй брелок с теми же фото — −40%"
-              : "Adaugă al doilea breloc cu aceleași poze — −40%"}
-          </span>
-        </label>
-        {Object.keys(lowQuality).length > 0 && (
+                {Object.keys(lowQuality).length > 0 && (
           <p className="text-center text-[12px] text-amber-700 mt-2" role="status">
             {lang === "ru"
               ? "Фото может быть нечётким на плёнке"
               : "Poza poate ieși neclară pe film"}
           </p>
         )}
-        <label className="block text-left text-[13px] text-gray-700 mt-4">
-          <span className="font-semibold">
-            {lang === "ru" ? "Telegram @ или телефон" : "Telegram @ sau telefon"}
-          </span>
-          <input
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            placeholder={lang === "ru" ? "@username или 60 123 456" : "@username sau 60 123 456"}
-            className="w-full mt-1 px-3 py-3 rounded-xl border border-gray-300 text-[16px]"
-          />
-        </label>
-        <p className="text-center text-[12px] text-gray-600 mt-2">
+                <p className="text-center text-[12px] text-gray-600 mt-2">
           {submitState === "loading"
             ? lang === "ru"
               ? "Отправляем…"
