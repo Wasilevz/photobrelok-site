@@ -1,0 +1,12 @@
+node_modules
+.next
+.env.local
+.DS_Store
+.vercel
+
+server.out.log
+server.err.log
+tunnel.log
+tunnel.log.err
+start-server.bat
+cloudflared.exe
