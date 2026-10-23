@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle2, Timer, Package, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, Package, ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from "@/context/LanguageContext";
 
 function ThankYouContent() {
@@ -10,38 +10,9 @@ function ThankYouContent() {
   const orderId = searchParams.get('orderId') || '';
   const { dict } = useLanguage();
 
-  const [timeLeft, setTimeLeft] = useState(600);
   const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined' | 'expired'>('pending');
+  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>('pending');
   const [upsellError, setUpsellError] = useState<string | null>(null);
-  const timeLeftRef = useRef(timeLeft);
-
-  useEffect(() => {
-    timeLeftRef.current = timeLeft;
-  }, [timeLeft]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (timeLeftRef.current <= 0) {
-        clearInterval(interval);
-        return;
-      }
-      setTimeLeft(prev => {
-        const next = prev - 1;
-        if (next <= 0) {
-          setStatus((s) => (s === 'pending' ? 'expired' : s));
-        }
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
 
   const handleUpsell = async () => {
     setIsLoading(true);
@@ -82,7 +53,7 @@ function ThankYouContent() {
         </p>
       </div>
 
-      {/* 2. Оффер-апселл */}
+      {/* 2. Оффер-апселл — без таймера и ложной срочности */}
       {status === 'pending' ? (
         <div className="max-w-md w-full bg-[#FFFDF8] border-[3px] border-[#191715] rounded-[40px] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
           <div className="absolute top-0 right-0 bg-[#FFC400] text-white px-6 py-2 rounded-bl-3xl font-black text-xs uppercase tracking-widest">
@@ -112,17 +83,6 @@ function ThankYouContent() {
             <div className="flex justify-between items-center">
               <span className="font-bold text-black">{dict.thanks.discountPrice}</span>
               <span className="text-3xl font-black text-[#FFC400]">150 {dict.thanks.currency}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between mb-6 px-2">
-            <div className="flex items-center gap-2 text-[#FFC400] font-mono font-bold text-2xl">
-              <Timer className="w-6 h-6" />
-              {formatTime(timeLeft)}
-            </div>
-            <div className="text-right leading-none">
-              <div className="text-[10px] font-black uppercase text-[#7A7368]">{dict.thanks.youSave}</div>
-              <div className="text-lg font-black text-[#191715]">{dict.thanks.saveAmount}</div>
             </div>
           </div>
 
@@ -174,11 +134,7 @@ function ThankYouContent() {
             <CheckCircle2 className="w-8 h-8 text-[#B8B0A4]" />
           </div>
           <h2 className="text-xl font-bold">{dict.thanks.neutralTitle}</h2>
-          <p className="text-[#7A7368] mt-2 text-sm">
-            {status === 'expired'
-              ? dict.thanks.neutralExpired
-              : dict.thanks.neutralDeclined}
-          </p>
+          <p className="text-[#7A7368] mt-2 text-sm">{dict.thanks.neutralDeclined}</p>
         </div>
       )}
 

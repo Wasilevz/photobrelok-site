@@ -8,12 +8,10 @@ import OrderModal from "@/components/OrderModal";
 import type { DeliveryData } from "@/components/OrderModal";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from "@/context/LanguageContext";
-import { useOccasion } from "@/lib/occasion-store";
 
 export default function PhotoConstructor() {
   const router = useRouter();
   const { lang, dict } = useLanguage();
-  const { occasion } = useOccasion();
   const [slots, setSlots] = useState<(string | null)[]>(Array(10).fill(null));
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -276,7 +274,7 @@ export default function PhotoConstructor() {
           <button
             onClick={() => scrollCarousel('right')}
             aria-label={lang === 'ru' ? 'Прокрутить вправо' : 'Derulează la dreapta'}
-            className="absolute right-[120px] sm:right-[150px] top-2 z-[60] w-9 h-9 rounded-full bg-black/70 hover:bg-black/90 text-white text-lg flex items-center justify-center shadow-lg transition-colors animate-pulse"
+            className="absolute right-[80px] sm:right-[150px] top-2 z-[60] w-9 h-9 rounded-full bg-black/70 hover:bg-black/90 text-white text-lg flex items-center justify-center shadow-lg transition-colors animate-pulse"
           >
             ›
           </button>
@@ -294,7 +292,7 @@ export default function PhotoConstructor() {
               .no-scrollbar::-webkit-scrollbar { display: none !important; }
             `}</style>
 
-            <div className="relative bg-[#111] h-[150px] sm:h-[168px] flex items-center rounded-l-[42px] pl-[56px] sm:pl-[64px] gap-[10px] shrink-0 pr-[110px] sm:pr-[130px] min-w-full overflow-hidden" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2218%22 height=%2211%22%3E%3Crect x=%222%22 y=%221%22 width=%228%22 height=%229%22 rx=%222.2%22 fill=%22%23f0ebe1%22/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2218%22 height=%2211%22%3E%3Crect x=%222%22 y=%221%22 width=%228%22 height=%229%22 rx=%222.2%22 fill=%22%23f0ebe1%22/%3E%3C/svg%3E")', backgroundSize: '18px 11px, 18px 11px', backgroundPosition: '0 9px, 0 calc(100% - 9px)', backgroundRepeat: 'repeat-x, repeat-x' }}>
+            <div className="relative bg-[#111] h-[150px] sm:h-[168px] flex items-center rounded-l-[42px] pl-[40px] sm:pl-[64px] gap-[8px] sm:gap-[10px] shrink-0 pr-[72px] sm:pr-[130px] min-w-full overflow-hidden" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2218%22 height=%2211%22%3E%3Crect x=%222%22 y=%221%22 width=%228%22 height=%229%22 rx=%222.2%22 fill=%22%23f0ebe1%22/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2218%22 height=%2211%22%3E%3Crect x=%222%22 y=%221%22 width=%228%22 height=%229%22 rx=%222.2%22 fill=%22%23f0ebe1%22/%3E%3C/svg%3E")', backgroundSize: '18px 11px, 18px 11px', backgroundPosition: '0 9px, 0 calc(100% - 9px)', backgroundRepeat: 'repeat-x, repeat-x' }}>
 
               <div className="absolute left-[14px] top-1/2 -translate-y-1/2 w-[38px] h-[38px] z-10 rounded-full overflow-hidden pointer-events-none">
                 <Image
@@ -331,7 +329,7 @@ export default function PhotoConstructor() {
                     onPointerLeave={() => {
                       if (!draggingRef.current) clearLongPress();
                     }}
-                    className={`w-[104px] h-[104px] sm:w-[116px] sm:h-[116px] border-2 border-dashed rounded-md flex items-center justify-center relative overflow-hidden shrink-0 group transition-all duration-200 ${
+                    className={`w-[88px] h-[88px] xs:w-[104px] xs:h-[104px] sm:w-[116px] sm:h-[116px] border-2 border-dashed rounded-md flex items-center justify-center relative overflow-hidden shrink-0 group transition-all duration-200 ${
                       url
                         ? 'bg-zinc-800 border-zinc-600 cursor-pointer hover:border-gray-400'
                         : 'bg-zinc-800 border-zinc-600 cursor-pointer hover:border-zinc-400 hover:bg-zinc-700'
@@ -380,13 +378,13 @@ export default function PhotoConstructor() {
 
           {/* Dark end-cap: film visually continues under the canister */}
           <div
-            className="absolute right-0 w-[120px] sm:w-[136px] h-[150px] sm:h-[168px] bg-[#111] pointer-events-none z-10"
+            className="absolute right-0 w-[72px] sm:w-[136px] h-[150px] sm:h-[168px] bg-[#111] pointer-events-none z-10"
             style={{ top: "50%", transform: "translateY(-50%)" }}
           />
 
           {/* Canister covers the film end completely */}
           <div
-            className="absolute right-[-20px] sm:right-[-28px] w-[150px] sm:w-[172px] h-[220px] sm:h-[236px] pointer-events-none z-20 flex items-center justify-center"
+            className="absolute right-[-8px] sm:right-[-28px] w-[110px] sm:w-[172px] h-[170px] sm:h-[236px] pointer-events-none z-20 flex items-center justify-center"
             style={{ top: "50%", transform: "translateY(-50%)" }}
           >
             <Image
@@ -403,16 +401,15 @@ export default function PhotoConstructor() {
       <div className="max-w-xs sm:max-w-md mx-auto mt-12 px-4">
         <div className="text-center mb-3">
           <span className="text-sm text-gray-700 font-medium" aria-live="polite">
-            {`${slots.filter(Boolean).length} из 6 · можно до 10`}
-            {slots.filter(Boolean).length > 0 && slots.filter(Boolean).length < 6
-              ? ` · ещё ${6 - slots.filter(Boolean).length}`
-              : ""}
+            {lang === "ru"
+              ? `Добавлено ${slots.filter(Boolean).length} · нужно от 6 до 10`
+              : `Adăugate ${slots.filter(Boolean).length} · trebuie de la 6 la 10`}
           </span>
         </div>
         <button
           type="button"
           onClick={() => {
-            if (slots.filter(Boolean).length < 6) {
+            if (slots.filter(Boolean).length === 0) {
               fileInputRef.current?.click();
             } else {
               setIsModalOpen(true);
@@ -420,15 +417,22 @@ export default function PhotoConstructor() {
           }}
           className="w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg relative z-50 bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] active:bg-[#D4A000] shadow-[#FFC400]/40"
         >
-          {slots.filter(Boolean).length < 6
+          {slots.filter(Boolean).length === 0
             ? dict.home.ctaUpload
             : dict.home.ctaOrder}
         </button>
-        {slots.filter(Boolean).length < 6 && (
+        {slots.filter(Boolean).length === 0 && (
           <p className="text-center text-[12px] text-gray-600 mt-2" aria-live="polite">
             {lang === "ru"
-              ? `Добавьте ещё ${6 - slots.filter(Boolean).length} фото — и можно отправлять на макет`
-              : `Mai adaugă ${6 - slots.filter(Boolean).length} poze — apoi trimiți pentru machetă`}
+              ? "Начните с 1 фото — остальные можно прислать менеджеру в чат"
+              : "Începe cu 1 poză — restul le trimiți managerului în chat"}
+          </p>
+        )}
+        {slots.filter(Boolean).length > 0 && slots.filter(Boolean).length < 6 && (
+          <p className="text-center text-[12px] text-gray-600 mt-2" aria-live="polite">
+            {lang === "ru"
+              ? `Можно добавить ещё ${6 - slots.filter(Boolean).length} фото — или отправить сейчас, остальные пришлёте в чат`
+              : `Poți adăuga încă ${6 - slots.filter(Boolean).length} poze — sau trimite acum, restul în chat`}
           </p>
         )}
         <p className="text-center text-[12px] text-gray-600 mt-2">

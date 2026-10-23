@@ -6,14 +6,15 @@ export const landingCopy = {
     reviewsNav: "Отзывы",
     orderNav: "Заказать",
     eyebrow: "Ретро-брелки из катушек Kodak",
-    heroTitle: "Подарите не вещь, а день, который захочется пережить снова",
+    heroTitle: "Откроет катушку — а там ваш самый тёплый день",
     heroLead:
-      "Брелок из настоящей катушки Kodak с 6–10 вашими фото на плёнке. Макет бесплатно: платите, когда увидели и улыбнулись.",
+      "Брелок из настоящей катушки Kodak с 6–10 вашими фото на плёнке. Персонализированный подарок. Макет бесплатно, оплата при получении.",
     priceChip: "250 лей",
     termChip: "1–2 дня",
     mockupChip: "Макет до оплаты",
     heroCta: "Собрать плёнку из моих фото",
     heroCtaNote: "2 минуты · оплата не нужна",
+    trustLine: "Работаем в Кишинёве с 2023 года · более 1000 готовых подарков",
     termsLine: "Макет бесплатно — завтра утром · Брелок — 1–2 дня · Оплата при получении",
     occasionSelected: "Повод",
     occasionChange: "изменить",
@@ -21,7 +22,7 @@ export const landingCopy = {
     secondBrelok: "Добавить второй брелок с теми же фото — −40%",
     contactLabel: "Telegram @ или телефон",
     contactPlaceholder: "@username или 60 123 456",
-    submitTo: "Отправить на макет",
+    submitTo: "Получить бесплатный макет",
         heroSecondary: "Как это работает",
     painTitle: "Лучшие кадры лежат между скриншотами и чеками",
     painHand: "Галерея — склад. Плёнка — витрина.",
@@ -34,16 +35,16 @@ export const landingCopy = {
       "Он или она достанет плёнку, найдёт первый кадр, и вы услышите тихое: «Это же тот самый день…» А потом весь вечер будете вспоминать остальные.",
     builderTitle: "Увидьте свой брелок до заказа",
     builderLead:
-      "Добавьте 6–10 фото: они лягут в ленту прямо здесь. Пока вы собираете плёнку, фото остаются на вашем телефоне — нам они уходят только когда вы нажмёте кнопку отправки.",
+      "Примерьте ваши фото на плёнку. Выберите от 1 до 10 кадров. Не знаете, какие взять? Загрузите любые — на макете подскажем, что заменить. Фото остаются на телефоне до отправки заявки.",
     howTitle: "Как заказать",
     step1: "Выберите 6–10 моментов.",
     step1t:
-      "Не знаете, какие? Пришлите больше — подскажем, какие кадры лучше смотрятся на плёнке.",
+      "Не знаете, какие? Пришлите больше — подскажем, какие кадры лучше смотрятся на плёнке. Можно начать и с 1 фото.",
     step2: "Скажите «да» макету.",
     step2t:
       "Соберите плёнку выше — макет уйдёт нам автоматически. Платите только после того, как макет понравился.",
     step3: "Получите брелок за 1–2 дня.",
-    step3t: "Срочные заказы — в день обращения.",
+    step3t: "Срочные заказы — в день обращения. Оплата при получении.",
     priceTitle: "Стоимость",
     priceBig: "250 лей",
     priceText:
@@ -57,6 +58,13 @@ export const landingCopy = {
       "2 жвачки Love is",
       "Бесплатный макет до оплаты",
     ],
+    deliveryTitle: "Доставка и оплата",
+    deliveryPickup: "Самовывоз в Кишинёве (ул. Bernardazzi 64) — бесплатно",
+    deliveryPosta: "Poșta Moldovei — 30 MDL (2–4 дня, оплата при получении)",
+    deliveryNova: "Nova Poshta — 60 MDL (2–3 дня)",
+    deliveryNote: "Оплата при получении — без предоплат. Макет бесплатный.",
+    privacyNote:
+      "Фото хранятся 7 дней для печати и затем удаляются. Макет бесплатный: если не понравится — вы ничего не должны.",
     pairOffer:
       "Хотите подарить паре? Второй такой же брелок с теми же фото — со скидкой 40%. Предложим после отправки фото, упакуем вместе.",
     payBadge: "Оплата при получении",
@@ -91,14 +99,15 @@ export const landingCopy = {
     reviewsNav: "Recenzii",
     orderNav: "Comandă",
     eyebrow: "Brelocuri retro din casete Kodak",
-    heroTitle: "Dăruiește nu un obiect, ci o zi pe care ai vrea să o retrăiești",
+    heroTitle: "Deschide rola — și găsește ziua voastră cea mai frumoasă",
     heroLead:
-      "Breloc dintr-o casetă Kodak reală, cu 6–10 poze ale tale pe film. Machetă gratuită: plătești când ai văzut și ai zâmbit.",
+      "Breloc dintr-o casetă Kodak reală, cu 6–10 poze ale tale pe film. Cadou personalizat. Machetă gratuită, plata la primire.",
     priceChip: "250 lei",
     termChip: "1–2 zile",
     mockupChip: "Machetă înainte de plată",
     heroCta: "Compune filmul din pozele mele",
     heroCtaNote: "2 minute · fără plată acum",
+    trustLine: "Lucrăm în Chișinău din 2023 · peste 1000 de cadouri gata",
     termsLine: "Machetă gratuită — mâine dimineață · Breloc — 1–2 zile · Plată la livrare",
     occasionSelected: "Prilej",
     occasionChange: "schimbă",
@@ -119,7 +128,7 @@ export const landingCopy = {
       "Ea sau el va scoate filmul, va găsi primul cadru, și vei auzi în șoaptă: „Ăsta e chiar ziua aia…” Apoi toată seara veți aminti restul.",
     builderTitle: "Vezi-ți brelocul înainte de comandă",
     builderLead:
-      "Adaugă 6–10 poze: intră în film chiar aici. Cât compui filmul, pozele rămân pe telefon — la noi ajung abia când apeși butonul de trimitere.",
+      "Încearcă pozele tale pe film. Alege de la 1 la 10 cadre. Nu știi ce să alegi? Încarcă oricare — pe machetă îți spunem ce să schimbi. Pozele rămân pe telefon până la trimitere.",
     howTitle: "Cum comanzi",
     step1: "Alege 6–10 momente.",
     step1t: "Nu știi care? Trimite mai multe — îți spunem ce cadre se văd mai bine pe film.",
@@ -141,6 +150,13 @@ export const landingCopy = {
       "2 gume Love is",
       "Machetă gratuită înainte de plată",
     ],
+    deliveryTitle: "Livrare și plată",
+    deliveryPickup: "Ridicare personală în Chișinău (str. Bernardazzi 64) — gratuit",
+    deliveryPosta: "Poșta Moldovei — 30 MDL (2–4 zile, plata la primire)",
+    deliveryNova: "Nova Poshta — 60 MDL (2–3 zile)",
+    deliveryNote: "Plata la primire — fără avans. Macheta e gratuită.",
+    privacyNote:
+      "Pozele se păstrează 7 zile pentru tipar și apoi se șterg. Macheta e gratuită: dacă nu îți place — nu datorezi nimic.",
     pairOffer:
       "Vrei să dăruiești unui cuplu? Al doilea breloc identic, cu aceleași poze — cu 40% reducere. Îl propunem după ce trimiți pozele, le ambalăm împreună.",
     payBadge: "Plată la livrare",
@@ -184,23 +200,27 @@ export const faqCopy = {
     },
     {
       q: "Как быстро?",
-      a: "1–2 дня, срочные заказы — в день обращения.",
+      a: "Бесплатный PDF-макет готовим за 24 часа. Брелок — 1–2 дня, срочные заказы — в день обращения.",
     },
     {
       q: "А если не понравится?",
-      a: "Решаете вы, а не мы. Макет бесплатный, платите при получении, когда брелок уже в руках.",
+      a: "Решаете вы, а не мы. Макет бесплатный — если результат не понравится, вы ничего не должны. Платите при получении, когда брелок уже в руках.",
     },
     {
       q: "А если у меня мало фото?",
-      a: "Шесть кадров — уже история. Не знаете, какие выбрать? Пришлите больше, подскажем, какие лучше смотрятся на плёнке.",
+      a: "Можно начать с 1 фото — остальные пришлёте менеджеру в чат. Шесть кадров — уже история. Не знаете, какие выбрать? Пришлите больше, подскажем.",
     },
     {
       q: "Можно ли два одинаковых брелка?",
-      a: "Да. После отправки фото вы увидите предложение: второй такой же брелок с теми же фото со скидкой 40%. Упакуем вместе.",
+      a: "Да. Второй такой же брелок с теми же фото — со скидкой 40% (150 MDL вместо 250 MDL). Упакуем вместе.",
     },
     {
       q: "Как получить брелок?",
-      a: "Мы в центре Кишинёва: ул. Alexander Bernardazzi, 64. По доставке напишите нам в Telegram, подскажем.",
+      a: "Самовывоз в центре Кишинёва: ул. Alexander Bernardazzi, 64 — бесплатно. Poșta Moldovei — 30 MDL (2–4 дня, оплата при получении). Nova Poshta — 60 MDL (2–3 дня).",
+    },
+    {
+      q: "Что с доставкой и оплатой?",
+      a: "Самовывоз — 0 MDL. Poșta Moldovei — 30 MDL (2–4 дня, оплата при получении). Nova Poshta — 60 MDL (2–3 дня). Без предоплат.",
     },
     {
       q: "Как пользоваться брелком?",
@@ -218,23 +238,27 @@ export const faqCopy = {
     },
     {
       q: "Cât de repede?",
-      a: "1–2 zile, comenzi urgente — în ziua solicitării.",
+      a: "Macheta PDF gratuită e gata în 24 de ore. Brelocul — 1–2 zile, comenzi urgente — în ziua solicitării.",
     },
     {
       q: "Dacă nu-mi place?",
-      a: "Decizi tu, nu noi. Macheta e gratuită, plătești la livrare, când brelocul e deja în mâini.",
+      a: "Decizi tu, nu noi. Macheta e gratuită — dacă rezultatul nu îți place, nu datorezi nimic. Plătești la livrare, când brelocul e deja în mâini.",
     },
     {
       q: "Dacă am puține poze?",
-      a: "Șase cadre — deja e o poveste. Nu știi ce să alegi? Trimite mai multe, îți spunem ce se vede mai bine pe film.",
+      a: "Poți începe cu 1 poză — restul le trimiți managerului în chat. Șase cadre — deja e o poveste. Nu știi ce să alegi? Trimite mai multe, îți spunem.",
     },
     {
       q: "Pot comanda două brelocuri identice?",
-      a: "Da. După ce trimiți pozele vezi oferta: al doilea breloc la fel, cu aceleași poze, cu 40% reducere. Le ambalăm împreună.",
+      a: "Da. Al doilea breloc la fel, cu aceleași poze — cu 40% reducere (150 MDL în loc de 250 MDL). Le ambalăm împreună.",
     },
     {
       q: "Cum ridic brelocul?",
-      a: "Suntem în centrul Chișinăului: str. Alexander Bernardazzi, 64. Pentru livrare scrie-ne pe Telegram.",
+      a: "Ridicare personală în centrul Chișinăului: str. Alexander Bernardazzi, 64 — gratuit. Poșta Moldovei — 30 MDL (2–4 zile, plata la primire). Nova Poshta — 60 MDL (2–3 zile).",
+    },
+    {
+      q: "Ce e cu livrarea și plata?",
+      a: "Ridicare personală — 0 MDL. Poșta Moldovei — 30 MDL (2–4 zile, plata la primire). Nova Poshta — 60 MDL (2–3 zile). Fără avans.",
     },
     {
       q: "Cum folosești brelocul?",

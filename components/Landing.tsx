@@ -7,10 +7,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import {
   ADDRESS,
   EMAIL,
-  PRICE_MDL,
   TELEGRAM_PHONE,
   TELEGRAM_PHONE_DISPLAY,
   TELEGRAM_URL,
+  VIBER_URL,
+  WHATSAPP_URL,
+  INSTAGRAM_URL,
+  WORK_HOURS,
   telegramLink,
 } from "@/lib/contacts";
 import { track } from "@/lib/analytics";
@@ -67,7 +70,8 @@ export default function Landing() {
   const faq = faqCopy[lang];
   const occasions = occasionCopy[lang];
   const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
-  const [openFaq, setOpenFaq] = useState<number[]>([0, 1, 3]);
+  // Open delivery + timing FAQs by default so key terms are visible without a tap
+  const [openFaq, setOpenFaq] = useState<number[]>([2, 6, 7]);
   const builderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -106,8 +110,6 @@ export default function Landing() {
             <a
               className="btn btn-primary btn-sm hd-order"
               href="#builder"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               {t.orderNav}
             </a>
@@ -151,12 +153,12 @@ export default function Landing() {
                 </a>
               </div>
               <p className="hero-cta-note">{t.heroCtaNote}</p>
+              <p className="hero-cta-note" style={{ opacity: 0.8 }}>{t.trustLine}</p>
               <DailyCutoff />
               <SlotsLeft />
             </div>
 
             <div className="hero-visual">
-              {/* TODO: hero video loop 5–8s (muted, playsinline, poster ≤150KB WebP) — owner to supply */}
               <Image
                 className="photo-main"
                 src="/images/hero-keychain.jpg"
@@ -264,6 +266,20 @@ export default function Landing() {
                   <span className="trust-badge">✓ {t.payBadge}</span>
                   <span className="trust-badge">✓ {lang === "ru" ? "1000 сворачиваний" : "1000 de răsuciri"}</span>
                 </div>
+
+                <div className="include-title" style={{ marginTop: 18 }}>{t.deliveryTitle}</div>
+                <ul className="include-list">
+                  <li>{t.deliveryPickup}</li>
+                  <li>{t.deliveryPosta}</li>
+                  <li>{t.deliveryNova}</li>
+                </ul>
+                <p className="guar" style={{ marginTop: 10 }}>
+                  <strong>{t.deliveryNote}</strong>
+                </p>
+                <p className="guar" style={{ marginTop: 8, opacity: 0.85 }}>
+                  {t.privacyNote}
+                </p>
+
                 <p className="pair-offer">{t.pairOffer}</p>
               </div>
               <a
@@ -424,6 +440,11 @@ export default function Landing() {
             <p style={{ margin: 0 }}>
               {t.footerLoc} {ADDRESS}.
             </p>
+            <p style={{ margin: "8px 0 0", opacity: 0.85 }}>
+              {lang === "ru"
+                ? `На связи ежедневно с ${WORK_HOURS}. Работаем в Кишинёве с 2023 года.`
+                : `Suntem online zilnic ${WORK_HOURS}. Lucrăm în Chișinău din 2023.`}
+            </p>
           </div>
           <div className="stack-2">
             <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
@@ -431,6 +452,13 @@ export default function Landing() {
             <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
               Telegram
             </a>
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              Instagram
+            </a>
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+              WhatsApp
+            </a>
+            <a href={VIBER_URL}>Viber</a>
             <a href="#builder">{t.seeBrelok}</a>
           </div>
         </div>
@@ -439,10 +467,12 @@ export default function Landing() {
       <div className={`mobile-cta ${mobileCtaHidden ? "hidden" : ""}`}>
         <div className="mobile-cta-price">
           <div className="mobile-cta-amount">{t.priceChip}</div>
-          <div className="mobile-cta-note">{t.mobilePriceNote}</div>
+          <div className="mobile-cta-note">
+            {lang === "ru" ? "Макет бесплатно" : "Machetă gratuită"}
+          </div>
         </div>
         <button type="button" className="btn btn-primary mobile-cta-button" onClick={scrollToBuilder}>
-          {t.mobileCtaButton}
+          {t.priceCta}
         </button>
       </div>
     </div>

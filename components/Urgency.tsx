@@ -17,9 +17,12 @@ import { useLanguage } from "@/context/LanguageContext";
 function useNow(tickMs = 1000) {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
-    setNow(new Date());
     const id = window.setInterval(() => setNow(new Date()), tickMs);
-    return () => window.clearInterval(id);
+    const seed = window.setTimeout(() => setNow(new Date()), 0);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(seed);
+    };
   }, [tickMs]);
   return now;
 }
@@ -28,11 +31,11 @@ function useNow(tickMs = 1000) {
 export function UrgencyBanner() {
   const { lang } = useLanguage();
   const now = useNow(1000);
-  const holiday = now ? nextHoliday(now) : nextHoliday();
-  if (!holiday) return null;
+  const holiday = now ? nextHoliday(now) : null;
+  if (!holiday || !now) return null;
 
   const deadline = holidayDeadline(holiday);
-  const ms = deadline.getTime() - (now?.getTime() ?? Date.now());
+  const ms = deadline.getTime() - now.getTime();
   if (ms <= 0) return null;
 
   const daysLeft = ms / 86400000;

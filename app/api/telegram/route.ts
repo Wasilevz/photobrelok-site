@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     // Never forward arbitrary user-supplied text to the internal Telegram chat.
-    const message = `🔥 <b>АПСЕЛЛ! Заказ #${orderId}</b>\nКлиент добавил второй брелок со скидкой 40%.\nПоложите 2 шт. в посылку.`;
+    const message = `🔥 <b>АПСЕЛЛ! Заявка #${orderId}</b>\nКлиент добавил второй брелок со скидкой 40%.\nПоложите 2 шт. в заказ.`;
     const results = await Promise.allSettled(
       chatIds.map(async (chatId) => {
         const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {

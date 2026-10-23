@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description:
     "Подарите день, который захочется пережить снова: брелок из катушки Kodak с 6–10 вашими фото. Макет бесплатно, оплата при получении, 1–2 дня.",
   openGraph: {
-    title: "PHOTOBRELOK — пять кадров вашей истории",
+    title: "PHOTOBRELOK — 6–10 кадров вашей истории",
     description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 MDL, макет до оплаты.",
     images: ["/opengraph-image.png"],
   },

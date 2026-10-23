@@ -93,7 +93,7 @@ export default function ImageCropper({ imageSrc, onCropDone, onCancel, currentIn
           <button
             onClick={onCancel}
             disabled={isProcessing}
-            className="flex-1 py-3 px-4 bg-zinc-800 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors disabled:opacity-50"
+            className="flex-1 py-3 px-4 bg-zinc-800 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors disabled:opacity-50 border border-zinc-500"
           >
             {total !== undefined && total > 1 ? dict.cropper.skip : dict.cropper.cancel}
           </button>
