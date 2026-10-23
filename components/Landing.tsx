@@ -234,14 +234,6 @@ export default function Landing() {
           <div className="wrap">
             <h2>{t.builderTitle}</h2>
             <p className="lead">{t.builderLead}</p>
-            {occasion ? (
-              <div className="occasion-chip" role="status">
-                {t.occasionSelected}: {occasion}
-                <button type="button" className="occasion-chip-x" onClick={() => setOccasion("")}>
-                  · {t.occasionChange}
-                </button>
-              </div>
-            ) : null}
           </div>
           <PhotoConstructor />
         </section>
@@ -402,11 +394,7 @@ export default function Landing() {
               <button type="button" className="btn btn-primary" onClick={scrollToBuilder}>
                 {t.finalTg}
               </button>
-              <a
-                className="btn btn-ghost"
-                style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
-                href={`tel:${TELEGRAM_PHONE}`}
-              >
+              <a className="final-phone-link" href={`tel:${TELEGRAM_PHONE}`}>
                 {t.finalCall} {TELEGRAM_PHONE_DISPLAY}
               </a>
             </div>
