@@ -251,7 +251,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
 
               <button type="button" onClick={() => selectMethod('pickup')} className={methodCardClass('pickup')}>
                 <span className="text-[#191715] font-medium text-sm">{d.pickup}</span>
-                <span className="text-green-500 text-xs whitespace-nowrap font-semibold">{d.pickupPrice}</span>
+                <span className="text-[#067647] text-xs whitespace-nowrap font-semibold">{d.pickupPrice}</span>
               </button>
 
               {method === 'pickup' && (
@@ -262,7 +262,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
               )}
             </div>
             {deliveryTouched && !method && (
-              <p className="text-red-400 text-xs mt-2">{d.chooseMethod}</p>
+              <p className="text-[#B42318] text-xs mt-2">{d.chooseMethod}</p>
             )}
           </div>
 
