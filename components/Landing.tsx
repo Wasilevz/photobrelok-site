@@ -437,14 +437,12 @@ export default function Landing() {
       </footer>
 
       <div className={`mobile-cta ${mobileCtaHidden ? "hidden" : ""}`}>
-        <div className="price-wrap">
-          <div className="price">{t.mobileCtaLead}</div>
-          <div className="small muted">
-            {t.priceChip} · {t.mobilePriceNote}
-          </div>
+        <div className="mobile-cta-price">
+          <div className="mobile-cta-amount">{t.priceChip}</div>
+          <div className="mobile-cta-note">{t.mobilePriceNote}</div>
         </div>
-        <button type="button" className="btn btn-primary" onClick={scrollToBuilder}>
-          {t.seeBrelok}
+        <button type="button" className="btn btn-primary mobile-cta-button" onClick={scrollToBuilder}>
+          {t.mobileCtaButton}
         </button>
       </div>
     </div>
