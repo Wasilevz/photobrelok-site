@@ -62,7 +62,7 @@ const exampleMeta = [
 
 export default function Landing() {
   const { lang, setLang } = useLanguage();
-  const { occasion, setOccasion } = useOccasion();
+  const { setOccasion } = useOccasion();
   const t = landingCopy[lang];
   const faq = faqCopy[lang];
   const occasions = occasionCopy[lang];
