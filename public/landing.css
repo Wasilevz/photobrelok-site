@@ -55,7 +55,10 @@ html {
 
 img { max-width: 100%; display: block; }
 a { color: inherit; }
-button, input, select, textarea { font: inherit; color: inherit; }
+/* в @layer base — иначе правило перебивает утилиты text-* из Tailwind (кнопки становились «невидимыми») */
+@layer base {
+  button, input, select, textarea { font: inherit; color: inherit; }
+}
 
 .pb {
   min-height: 100vh;

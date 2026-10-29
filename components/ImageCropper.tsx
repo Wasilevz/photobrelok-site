@@ -107,7 +107,7 @@ export default function ImageCropper({ imageSrc, onCropDone, onSkip, onCancel, c
           <button
             onClick={() => (isBatch ? onSkip?.() : onCancel())}
             disabled={isProcessing}
-            className="flex-1 py-3 px-4 bg-zinc-800 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors disabled:opacity-50 border border-zinc-500"
+            className="flex-1 py-3 px-4 bg-white/10 text-white rounded-lg font-semibold hover:bg-white/20 transition-colors disabled:opacity-60 border-2 border-white/80"
           >
             {isBatch ? dict.cropper.skip : dict.cropper.cancel}
           </button>
