@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
+import { sendCapiEvents } from "@/lib/meta-capi";
 
 const MIN_PHOTOS = 6;
 const MAX_PHOTOS = 10;
@@ -255,6 +256,27 @@ export async function POST(request: Request) {
         { status: 502 },
       );
     }
+
+    // Meta Conversions API: серверное событие с тем же event_id, что и пиксель
+    const rawIds = (body as Record<string, unknown>).metaEventIds;
+    const pickId = (v: unknown) =>
+      typeof v === "string" && v.length > 0 && v.length <= 64 ? v : undefined;
+    const eventIds =
+      rawIds && typeof rawIds === "object" && !Array.isArray(rawIds)
+        ? {
+            lead: pickId((rawIds as Record<string, unknown>).lead),
+            purchase: pickId((rawIds as Record<string, unknown>).purchase),
+          }
+        : {};
+    await sendCapiEvents({
+      orderId,
+      name: safeName,
+      phone: safePhone,
+      eventIds,
+      sourceUrl: request.headers.get("origin") || "https://photobrelok-site.vercel.app",
+      clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined,
+      userAgent: request.headers.get("user-agent") || undefined,
+    });
 
     return NextResponse.json({ success: true, orderId });
   } catch (error) {

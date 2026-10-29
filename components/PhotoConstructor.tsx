@@ -9,7 +9,7 @@ import type { DeliveryData } from "@/components/OrderModal";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from "@/context/LanguageContext";
 import { telegramLink } from "@/lib/contacts";
-import { track } from "@/lib/analytics";
+import { metaEventId, track } from "@/lib/analytics";
 
 const MAX_SLOTS = 10;
 
@@ -270,6 +270,7 @@ export default function PhotoConstructor() {
         photoUrls.push(...urls);
       }
 
+      const metaEventIds = { lead: metaEventId(), purchase: metaEventId() };
       const apiRes = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -279,6 +280,7 @@ export default function PhotoConstructor() {
           photoUrls,
           lang,
           delivery: userData.delivery,
+          metaEventIds,
         }),
       });
 
@@ -288,7 +290,12 @@ export default function PhotoConstructor() {
       }
 
       const { orderId } = await apiRes.json();
-      track("order_api_success", { orderId });
+      track("order_api_success", {
+        orderId,
+        name: userData.name,
+        phone: userData.phone,
+        metaEventIds,
+      });
 
       slots.forEach(revokeOldUrl);
       setSlots(Array(MAX_SLOTS).fill(null));

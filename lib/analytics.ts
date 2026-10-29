@@ -1,3 +1,5 @@
+import { META_PIXEL_ID } from "@/lib/meta";
+
 export type AnalyticsEvent =
   | "hero_view"
   | "view_hero"
@@ -22,7 +24,11 @@ export type AnalyticsEvent =
   | "video_mute"
   | "video_unmute";
 
-type Payload = Record<string, string | number | boolean | null | undefined>;
+type MetaEventIds = { lead?: string; purchase?: string };
+type Payload = Record<
+  string,
+  string | number | boolean | null | undefined | MetaEventIds
+>;
 
 declare global {
   interface Window {
@@ -43,18 +49,46 @@ const META_EVENTS: Partial<Record<AnalyticsEvent, string>> = {
 
 const PRODUCT = { content_name: "photobrelok", currency: "MDL", value: 250 };
 
+/** id события для дедупликации пикселя и Conversions API */
+export function metaEventId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
+  return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function trackMeta(event: AnalyticsEvent, payload: Payload) {
   const fbq = window.fbq;
   if (!fbq) return;
-  const params = { ...PRODUCT, ...payload };
+
+  const { metaEventIds, name, phone, orderId, ...rest } = payload as Payload & {
+    metaEventIds?: { lead?: string; purchase?: string };
+    name?: string;
+    phone?: string;
+    orderId?: string;
+  };
+  const params: Record<string, unknown> = { ...PRODUCT, ...rest };
+  if (orderId) params.content_ids = [String(orderId)];
+
   if (event === "order_api_success") {
-    // заказ размещён (оплата при получении) — главная конверсия
-    fbq("track", "Lead", params);
-    fbq("track", "Purchase", params);
+    // продвинутое сопоставление: передаём контакт клиента, fbq хеширует сам
+    // (external_id сюда не отдаём — его хеширует сервер в Conversions API)
+    const userData: Record<string, string> = {};
+    if (phone) userData.ph = String(phone);
+    if (name) {
+      const [fn, ...lnParts] = String(name).trim().split(/\s+/);
+      if (fn) userData.fn = fn;
+      if (lnParts.length) userData.ln = lnParts.join(" ");
+    }
+    if (Object.keys(userData).length) fbq("init", META_PIXEL_ID, userData);
+
+    // заказ размещён (оплата при получении) — главная конверсия;
+    // eventID совпадает с серверным CAPI-событием, Meta дедуплицирует
+    fbq("track", "Lead", params, { eventID: metaEventIds?.lead || metaEventId() });
+    fbq("track", "Purchase", params, { eventID: metaEventIds?.purchase || metaEventId() });
     return;
   }
-  const name = META_EVENTS[event];
-  if (name) fbq("track", name, params);
+
+  const metaName = META_EVENTS[event];
+  if (metaName) fbq("track", metaName, params, { eventID: metaEventId() });
 }
 
 export function track(event: AnalyticsEvent, payload: Payload = {}) {
