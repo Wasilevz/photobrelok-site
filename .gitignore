@@ -10,3 +10,6 @@ tunnel.log
 tunnel.log.err
 start-server.bat
 cloudflared.exe
+
+*.tsbuildinfo
+.tools/
