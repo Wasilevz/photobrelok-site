@@ -9,25 +9,31 @@ import { useLanguage } from "@/context/LanguageContext";
 interface ImageCropperProps {
   imageSrc: string;
   onCropDone: (croppedImageUrl: string) => void;
+  onSkip?: () => void;
   onCancel: () => void;
   currentIndex?: number;
   total?: number;
 }
 
-export default function ImageCropper({ imageSrc, onCropDone, onCancel, currentIndex, total }: ImageCropperProps) {
+export default function ImageCropper({ imageSrc, onCropDone, onSkip, onCancel, currentIndex, total }: ImageCropperProps) {
   const { dict } = useLanguage();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cropError, setCropError] = useState<string | null>(null);
+  const isBatch = total !== undefined && total > 1 && !!onSkip;
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
+      if (e.key !== 'Escape') return;
+      // В пачке Escape = пропустить текущий кадр, не сбрасывать всю очередь
+      if (isBatch) onSkip?.();
+      else onCancel();
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [onCancel]);
+  }, [onCancel, onSkip, isBatch]);
 
   const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -37,6 +43,7 @@ export default function ImageCropper({ imageSrc, onCropDone, onCancel, currentIn
     if (!croppedAreaPixels) return;
 
     setIsProcessing(true);
+    setCropError(null);
     try {
       const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
       if (croppedImageBlob) {
@@ -45,6 +52,7 @@ export default function ImageCropper({ imageSrc, onCropDone, onCancel, currentIn
       }
     } catch (e) {
       console.error("Ошибка при обрезке:", e);
+      setCropError(dict.errors.unknown);
     } finally {
       setIsProcessing(false);
     }
@@ -89,13 +97,19 @@ export default function ImageCropper({ imageSrc, onCropDone, onCancel, currentIn
           />
         </div>
 
+        {cropError && (
+          <p className="w-full max-w-md text-red-400 text-xs text-center" role="alert">
+            {cropError}
+          </p>
+        )}
+
         <div className="flex gap-4 w-full max-w-md">
           <button
-            onClick={onCancel}
+            onClick={() => (isBatch ? onSkip?.() : onCancel())}
             disabled={isProcessing}
             className="flex-1 py-3 px-4 bg-zinc-800 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors disabled:opacity-50 border border-zinc-500"
           >
-            {total !== undefined && total > 1 ? dict.cropper.skip : dict.cropper.cancel}
+            {isBatch ? dict.cropper.skip : dict.cropper.cancel}
           </button>
           <button
             onClick={handleCrop}

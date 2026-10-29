@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
+import MetaPixel from "@/components/MetaPixel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,6 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://photobrelok.md"
+  ),
   title: "PHOTOBRELOK — подарок с вашими фото на плёнке Kodak",
   description:
     "Подарите день, который захочется пережить снова: брелок из катушки Kodak с 6–10 вашими фото. Макет бесплатно, оплата при получении, 1–2 дня.",
@@ -38,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <head>
+        <MetaPixel />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

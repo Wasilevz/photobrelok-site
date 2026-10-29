@@ -84,12 +84,11 @@ export function DailyCutoff() {
   }
 
   if (!isWorkday(now) || !isBeforeCutoff(now)) {
-    const when = nextMockupLabel(lang, now);
     return (
       <p className="urgency-daily">
         {lang === "ru"
-          ? `Пришлите фото сейчас — макет покажем ${when}.`
-          : `Trimite pozele acum — îți arătăm macheta ${when}.`}
+          ? "Пришлите фото сейчас — макет получите в течение часа."
+          : "Trimite pozele acum — primești macheta în decurs de o oră."}
       </p>
     );
   }

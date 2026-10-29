@@ -86,7 +86,7 @@ async function fetchPhotoAsBase64(url: string): Promise<string> {
 export async function POST(request: Request) {
   try {
     const contentLength = Number(request.headers.get("content-length") || 0);
-    if (contentLength > 32 * 1024) {
+    if (contentLength > 64 * 1024) {
       return NextResponse.json({ error: "Слишком большой запрос" }, { status: 413 });
     }
 
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Телефон обязателен" }, { status: 400 });
     }
     if (!Array.isArray(photoUrls) || photoUrls.length < MIN_PHOTOS || photoUrls.length > MAX_PHOTOS) {
-      return NextResponse.json({ error: `Нужно от 6 до 10 фото` }, { status: 400 });
+      return NextResponse.json({ error: `Нужно от 1 до 10 фото` }, { status: 400 });
     }
 
     const cloudinaryUrls = photoUrls.map(getCloudinaryPhotoUrl);
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       if (typeof deliveryData.novaPostBranch !== "string" || !deliveryData.novaPostBranch.trim()) {
         return NextResponse.json({ error: "Укажите номер отделения Nova Poshta" }, { status: 400 });
       }
-    } else if (method !== "pickup") {
+    } else if (method !== "pickup" && method !== "later") {
       return NextResponse.json({ error: "Некорректный способ получения" }, { status: 400 });
     }
 
@@ -217,9 +217,11 @@ export async function POST(request: Request) {
       const street = cleanText(deliveryData.street, 100);
       deliveryText = `🚚 Способ получения: Poșta Moldovei — 30 лей\n📮 Индекс: ${postalCode}\n🏘 ${city}, р-н ${district}${street ? `\n🏠 Улица: ${street}` : ""}`;
     } else if (method === "novapost") {
-      deliveryText = `🚚 Способ получения: Nova Poshta — 55 лей\n📦 Отделение №${cleanText(deliveryData.novaPostBranch, 40)}`;
+      deliveryText = `🚚 Способ получения: Nova Poshta — 60 лей\n📦 Отделение №${cleanText(deliveryData.novaPostBranch, 40)}`;
+    } else if (method === "pickup") {
+      deliveryText = "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (09:00–23:00)";
     } else {
-      deliveryText = "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (12:00–22:00)";
+      deliveryText = "🚚 Способ получения: клиент уточнит после макета";
     }
 
     const captionText = `🔥 Новый заказ #${orderId}\n👤 Клиент: ${safeName}\n📞 Тел: ${safePhone}\n📸 Фотографий: ${numPhotos} шт.\n${deliveryText}${langNote}`;

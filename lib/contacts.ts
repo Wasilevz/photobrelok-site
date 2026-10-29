@@ -4,7 +4,7 @@ export const TELEGRAM_PHONE_DISPLAY = "078 238 455";
 export const EMAIL = "fotobrelokmd@gmail.com";
 export const ADDRESS = "ул. Alexander Bernardazzi, 64, Кишинёв";
 export const PRICE_MDL = 250;
-export const MIN_PHOTOS = 6;
+export const MIN_PHOTOS = 1;
 export const MAX_PHOTOS = 10;
 export const LEAD_TIME = "1–2 дня";
 export const WORK_HOURS = "09:00–23:00";
@@ -43,6 +43,9 @@ export function formatDelivery(delivery: {
   }
   if (delivery.method === "novapost") {
     return `Nova Poshta (60 лей), отделение №${delivery.novaPostBranch}`;
+  }
+  if (delivery.method === "later") {
+    return "Способ получения — уточнит после макета";
   }
   return "Самовывоз — A. Bernardazzi 64, Кишинёв (бесплатно)";
 }

@@ -10,16 +10,109 @@ import {
   TELEGRAM_PHONE,
   TELEGRAM_PHONE_DISPLAY,
   TELEGRAM_URL,
-  VIBER_URL,
-  WHATSAPP_URL,
   INSTAGRAM_URL,
-  WORK_HOURS,
   telegramLink,
 } from "@/lib/contacts";
 import { track } from "@/lib/analytics";
 import { landingCopy, faqCopy, occasionCopy } from "@/lib/landing-copy";
 import { UrgencyBanner, DailyCutoff, SlotsLeft } from "@/components/Urgency";
 import { useOccasion } from "@/lib/occasion-store";
+
+function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      video.removeAttribute("autoplay");
+      video.pause();
+      return;
+    }
+    video.play().then(() => track("video_play")).catch(() => {
+      /* autoplay blocked — user can tap play */
+    });
+  }, []);
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setMuted(video.muted);
+    if (!video.muted) video.play().catch(() => {});
+    track(video.muted ? "video_mute" : "video_unmute");
+  };
+
+  if (failed) {
+    return (
+      <Image
+        className="photo-main"
+        src="/images/hero-keychain.jpg"
+        alt={
+          lang === "ru"
+            ? "Брелок-катушка Kodak с фото на красном шарфе"
+            : "Breloc-casetă Kodak cu poze pe eșarfă roșie"
+        }
+        width={600}
+        height={900}
+        priority
+      />
+    );
+  }
+
+  return (
+    <div className="hero-video-wrap">
+      <video
+        ref={videoRef}
+        className="hero-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/media/hero-product.jpg"
+        onError={() => setFailed(true)}
+        aria-label={
+          lang === "ru"
+            ? "Видео: как выглядит брелок-катушка с вашими фото"
+            : "Video: cum arată brelocul-casetă cu pozele tale"
+        }
+      >
+        <source src="/media/hero-product.mp4" type="video/mp4" />
+      </video>
+      <button
+        type="button"
+        className="hero-video-mute"
+        onClick={toggleMute}
+        aria-label={
+          muted
+            ? lang === "ru"
+              ? "Включить звук"
+              : "Pornește sunetul"
+            : lang === "ru"
+              ? "Выключить звук"
+              : "Oprește sunetul"
+        }
+      >
+        {muted ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 5L6 9H3v6h3l5 4V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 5L6 9H3v6h3l5 4V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
+      <span className="hero-video-badge">{lang === "ru" ? "Живой вид" : "În direct"}</span>
+    </div>
+  );
+}
 
 const memories = [
   { src: "/images/gallery-1.jpg", alt: "Брелки на красной ткани со свечами / Brelocuri pe pânză roșie" },
@@ -70,6 +163,7 @@ export default function Landing() {
   const faq = faqCopy[lang];
   const occasions = occasionCopy[lang];
   const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
+  const [photoCount, setPhotoCount] = useState(0);
   // Open delivery + timing FAQs by default so key terms are visible without a tap
   const [openFaq, setOpenFaq] = useState<number[]>([2, 6, 7]);
   const builderRef = useRef<HTMLElement>(null);
@@ -83,7 +177,16 @@ export default function Landing() {
       { threshold: 0.15 }
     );
     io.observe(el);
-    return () => io.disconnect();
+
+    const onSlots = (e: Event) => {
+      const detail = (e as CustomEvent<number>).detail;
+      if (typeof detail === "number") setPhotoCount(detail);
+    };
+    window.addEventListener("photobrelok_slots", onSlots);
+    return () => {
+      io.disconnect();
+      window.removeEventListener("photobrelok_slots", onSlots);
+    };
   }, []);
 
   const scrollToBuilder = () => {
@@ -96,23 +199,11 @@ export default function Landing() {
   return (
     <div className="pb">
       <header className="hd">
-        <div className="wrap">
+        <div className="wrap hd-bar">
           <a className="logo" href="#top">
             PHOTO<span>BRELOK</span>
           </a>
-          <nav className="hd-actions" aria-label={lang === "ru" ? "Меню" : "Meniu"}>
-            <a className="btn btn-ghost btn-sm hd-nav" href="#how">
-              {t.howNav}
-            </a>
-            <a className="btn btn-ghost btn-sm hd-nav" href="#reviews">
-              {t.reviewsNav}
-            </a>
-            <a
-              className="btn btn-primary btn-sm hd-order"
-              href="#builder"
-            >
-              {t.orderNav}
-            </a>
+          <nav className="hd-actions" aria-label={lang === "ru" ? "Язык" : "Limbă"}>
             <button
               type="button"
               className="lang-btn"
@@ -122,9 +213,9 @@ export default function Landing() {
                 e.stopPropagation();
                 setLang(lang === "ru" ? "ro" : "ru");
               }}
-              aria-label={lang === "ru" ? "Schimbă limba în română" : "Переключить на русский"}
+              aria-label={lang === "ru" ? "Переключить на румынский" : "Comută pe rusă"}
             >
-              {lang === "ru" ? "RO" : "RU"}
+              {lang === "ru" ? "Румынский" : "Русский"}
             </button>
           </nav>
         </div>
@@ -133,44 +224,70 @@ export default function Landing() {
 
       <main id="top">
         <section className="hero">
-          <div className="wrap hero-grid">
-            <div className="hero-copy">
-              <p className="eyebrow">{t.eyebrow}</p>
-              <h1>{t.heroTitle}</h1>
-              <p className="lead">{t.heroLead}</p>
-              <ul className="hero-meta">
-                <li>
-                  <strong>{t.priceChip}</strong>
-                </li>
-              </ul>
-              <p className="hero-terms">{t.termsLine}</p>
-              <div className="hero-actions">
-                <button type="button" className="btn btn-primary" onClick={scrollToBuilder}>
-                  {t.heroCta}
+          <div className="wrap">
+            <div className="hero-card hero-unified">
+              <div className="hero-unified-copy">
+                <p className="eyebrow">
+                  <span className="eyebrow-dot" aria-hidden="true" />
+                  {t.eyebrow}
+                </p>
+                <h1>{t.heroTitle}</h1>
+                <p className="lead">{t.heroLead}</p>
+                <div className="hero-price-block">
+                  <div className="hero-price">{t.heroPrice}</div>
+                  <p className="hero-price-note">{t.heroPriceNote}</p>
+                </div>
+                <div className="offer-divider" />
+                <ul className="offer-list offer-list-plain hero-feats">
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.heroFeat1Title}</strong>
+                      <span>{t.heroFeat1Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.heroFeat2Title}</strong>
+                      <span>{t.heroFeat2Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="2.5" y="6" width="19" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M6 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.heroFeat3Title}</strong>
+                      <span>{t.heroFeat3Text}</span>
+                    </div>
+                  </li>
+                </ul>
+                <button type="button" className="hero-cta-btn" onClick={scrollToBuilder}>
+                  <span>{photoCount > 0 ? t.priceCta : t.heroCta}</span>
+                  <span aria-hidden="true">→</span>
                 </button>
-                <a className="btn btn-quiet" href="#how">
-                  {t.heroSecondary}
-                </a>
+                <a className="hero-how-link" href="#how">{t.heroSecondary}</a>
+                <DailyCutoff />
+                <SlotsLeft />
               </div>
-              <p className="hero-cta-note">{t.heroCtaNote}</p>
-              <p className="hero-cta-note" style={{ opacity: 0.8 }}>{t.trustLine}</p>
-              <DailyCutoff />
-              <SlotsLeft />
-            </div>
-
-            <div className="hero-visual">
-              <Image
-                className="photo-main"
-                src="/images/hero-keychain.jpg"
-                alt={
-                  lang === "ru"
-                    ? "Брелок-катушка Kodak с фото на красном шарфе"
-                    : "Breloc-casetă Kodak cu poze pe eșarfă roșie"
-                }
-                width={600}
-                height={900}
-                priority
-              />
+              <div className="hero-unified-media">
+                <HeroProductVideo lang={lang} />
+              </div>
             </div>
           </div>
         </section>
@@ -184,6 +301,41 @@ export default function Landing() {
             </p>
           </div>
         </section>
+
+        <section className="builder" id="builder" ref={builderRef}>
+          <div className="wrap">
+            <h2>{t.builderTitle}</h2>
+            <p className="lead">{t.builderLead}</p>
+            {occasion ? (
+              <div className="occasion-chip" role="status">
+                {t.occasionSelected}: {occasion}
+                <button type="button" className="occasion-chip-x" onClick={() => setOccasion("")}>
+                  · {t.occasionChange}
+                </button>
+              </div>
+            ) : null}
+          </div>
+          <PhotoConstructor />
+        </section>
+
+<section id="reviews" className="reviews-sec">
+          <div className="wrap">
+            <h2>{t.reviewsTitle}</h2>
+            <p className="lead">{t.reviewsLead}</p>
+
+            <div className="reviews-wall occ-rail" aria-label={t.reviewsTitle}>
+              {reviewShots.map((shot) => (
+                <figure key={shot.src} className="review-shot">
+                  <Image src={shot.src} alt={shot.alt} width={1200} height={1800} loading="lazy" />
+                </figure>
+              ))}
+            </div>
+
+            <p className="memories-hint">{t.reviewsHint}</p>
+          </div>
+        </section>
+
+        {/* Video instruction — anchor target for «Как это работает» */}
 
         <section className="examples" id="occasions">
           <div className="wrap">
@@ -232,74 +384,160 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="builder" id="builder" ref={builderRef}>
+        <section id="price" className="offer-sec">
           <div className="wrap">
-            <h2>{t.builderTitle}</h2>
-            <p className="lead">{t.builderLead}</p>
-            {occasion ? (
-              <div className="occasion-chip" role="status">
-                {t.occasionSelected}: {occasion}
-                <button type="button" className="occasion-chip-x" onClick={() => setOccasion("")}>
-                  · {t.occasionChange}
+            <div className="offer-grid">
+              {/* Yellow offer card */}
+              <div className="offer-card">
+                <p className="offer-eyebrow">{t.priceTitle}</p>
+                <div className="offer-price">{t.priceBig}</div>
+                <p className="offer-tagline">{t.priceText}</p>
+                <div className="offer-divider" />
+                <ul className="offer-list">
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.offerItem1Title}</strong>
+                      <span>{t.offerItem1Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 10h16v10H4V10z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                        <path d="M2.5 7h19v3h-19V7zM12 7v13" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                        <path d="M12 7c-2-3-5-3-5 0M12 7c2-3 5-3 5 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.offerItem2Title}</strong>
+                      <span>{t.offerItem2Text}</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Risk-free side */}
+              <div className="offer-side">
+                <h2 className="offer-risk-title">{t.riskTitle}</h2>
+                <ul className="offer-list offer-list-plain">
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" stroke="currentColor" strokeWidth="1.8" />
+                        <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.riskItem1Title}</strong>
+                      <span>{t.riskItem1Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="2.5" y="6" width="19" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M6 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.riskItem2Title}</strong>
+                      <span>{t.riskItem2Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 8h10a4 4 0 010 8H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <path d="M7 5L4 8l3 3M17 19l3-3-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.riskItem3Title}</strong>
+                      <span>{t.riskItem3Text}</span>
+                    </div>
+                  </li>
+                </ul>
+
+                <button
+                  type="button"
+                  className="offer-cta"
+                  onClick={() => {
+                    track("hero_cta");
+                    track("builder_start");
+                    const el = document.getElementById("constructor") || document.getElementById("builder");
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  <span>{t.priceCta}</span>
+                  <span aria-hidden="true">→</span>
                 </button>
               </div>
-            ) : null}
-          </div>
-          <PhotoConstructor />
-        </section>
-        <section>
-          <div className="wrap">
-            <div className="price">
-              <p className="price-label">{t.priceTitle}</p>
-              <div className="big">{t.priceBig}</div>
-              <p className="price-text">{t.priceText}</p>
-              <div className="include-box">
-                <p className="include-title">{t.includeTitle}</p>
-                <p className="include-lead">{t.includeLead}</p>
-                <ul className="include-list">
-                  {t.includeItems.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-                <div className="badge-row">
-                  <span className="trust-badge">✓ {t.mockupBadge}</span>
-                  <span className="trust-badge">✓ {t.payBadge}</span>
-                  <span className="trust-badge">✓ {lang === "ru" ? "1000 сворачиваний" : "1000 de răsuciri"}</span>
+            </div>
+
+            <a
+              className="offer-tg"
+              href={telegramLink(
+                lang === "ru"
+                  ? "Здравствуйте! Хочу такой брелок."
+                  : "Bună ziua! Vreau un astfel de breloc."
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("telegram_click", { source: "price_secondary" })}
+            >
+              {lang === "ru" ? "Написать в Telegram" : "Scrie pe Telegram"}
+            </a>
+
+            <div className="offer-bottom">
+            <div className="offer-delivery">
+              <h2 className="offer-delivery-title">{t.deliveryTitle}</h2>
+              <div className="offer-delivery-row">
+                <div>
+                  <div className="offer-delivery-head">
+                    <strong>{t.deliveryPickup}</strong>
+                    <em>{t.deliveryPickupPrice}</em>
+                  </div>
+                  <p>{t.deliveryPickupPlace}</p>
                 </div>
-
-                <div className="include-title" style={{ marginTop: 18 }}>{t.deliveryTitle}</div>
-                <ul className="include-list">
-                  <li>{t.deliveryPickup}</li>
-                  <li>{t.deliveryPosta}</li>
-                  <li>{t.deliveryNova}</li>
-                </ul>
-                <p className="guar" style={{ marginTop: 10 }}>
-                  <strong>{t.deliveryNote}</strong>
-                </p>
-                <p className="guar" style={{ marginTop: 8, opacity: 0.85 }}>
-                  {t.privacyNote}
-                </p>
-
-                <p className="pair-offer">{t.pairOffer}</p>
               </div>
-              <a
-                className="btn btn-primary"
-                href={telegramLink(
-                  lang === "ru"
-                    ? "Здравствуйте! Хочу такой брелок."
-                    : "Bună ziua! Vreau un astfel de breloc."
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t.priceCta}
-              </a>
-              <p className="guar">
-                <strong>{t.guarPeaceLabel}</strong> {t.guarPeaceText}
+              <div className="offer-delivery-row">
+                <div>
+                  <div className="offer-delivery-head">
+                    <strong>{t.deliveryPosta}</strong>
+                    <em>{t.deliveryPostaPrice}</em>
+                  </div>
+                  <p>{t.deliveryPostaNote}</p>
+                </div>
+              </div>
+              <div className="offer-delivery-row">
+                <div>
+                  <div className="offer-delivery-head">
+                    <strong>{t.deliveryNova}</strong>
+                    <em>{t.deliveryNovaPrice}</em>
+                  </div>
+                  <p>{t.deliveryNovaNote}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="offer-facts">
+              <p className="offer-facts-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M8.5 12l2.5 2.5L15.5 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {t.factsTitle}
               </p>
-              <p className="guar">
-                <strong>{t.guarDurabilityLabel}</strong> {t.guarDurabilityText}
-              </p>
+              <p>{t.factsText1}</p>
+              <p>{t.factsText2}</p>
+            </div>
             </div>
           </div>
         </section>
@@ -323,24 +561,6 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="reviews" className="reviews-sec">
-          <div className="wrap">
-            <h2>{t.reviewsTitle}</h2>
-            <p className="lead">{t.reviewsLead}</p>
-
-            <div className="reviews-wall occ-rail" aria-label={t.reviewsTitle}>
-              {reviewShots.map((shot) => (
-                <figure key={shot.src} className="review-shot">
-                  <Image src={shot.src} alt={shot.alt} width={1200} height={1800} loading="lazy" />
-                </figure>
-              ))}
-            </div>
-
-            <p className="memories-hint">{t.reviewsHint}</p>
-          </div>
-        </section>
-
-        {/* Video instruction — anchor target for «Как это работает» */}
         <section id="how" className="video-sec">
           <div className="wrap center">
             <h2>{t.howUseTitle}</h2>
@@ -410,56 +630,84 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="final" id="order">
-          <div className="wrap center">
-            <h2>{t.finalTitle}</h2>
-            <p className="lead">{t.finalLead}</p>
-            <div className="hero-actions" style={{ justifyContent: "center" }}>
-              <button type="button" className="btn btn-primary" onClick={scrollToBuilder}>
-                {t.finalTg}
-              </button>
-              <a
-                className="btn btn-ghost"
-                style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
-                href={`tel:${TELEGRAM_PHONE}`}
-              >
-                {t.finalCall} {TELEGRAM_PHONE_DISPLAY}
-              </a>
+        <section className="final final-cta" id="order">
+          <div className="wrap final-cta-grid">
+            <div className="final-cta-copy">
+              <p className="final-eyebrow">{t.finalEyebrow}</p>
+              <h2 className="final-title">{t.finalTitle}</h2>
+              <p className="final-lead">{t.finalLead}</p>
             </div>
-            <p className="final-note">{t.finalNote}</p>
+            <div className="final-cta-actions">
+              <button type="button" className="hero-cta-btn final-btn" onClick={scrollToBuilder}>
+                <span>{t.finalTg}</span>
+                <span aria-hidden="true">→</span>
+              </button>
+              <p className="final-phone">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 006 6l1.5-2 4 1.5v3a2 2 0 01-2 2A15.5 15.5 0 014.5 5.5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                </svg>
+                <span>{t.finalCallLabel}</span>
+                <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+              </p>
+              <p className="final-note">{t.finalNote}</p>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer>
-        <div className="wrap foot-grid">
-          <div>
-            <div className="logo" style={{ fontSize: 32, marginBottom: 10 }}>
-              PHOTO<span style={{ color: "var(--accent)" }}>BRELOK</span>
-            </div>
-            <p style={{ margin: 0 }}>
-              {t.footerLoc} {ADDRESS}.
-            </p>
-            <p style={{ margin: "8px 0 0", opacity: 0.85 }}>
-              {lang === "ru"
-                ? `На связи ежедневно с ${WORK_HOURS}. Работаем в Кишинёве с 2023 года.`
-                : `Suntem online zilnic ${WORK_HOURS}. Lucrăm în Chișinău din 2023.`}
-            </p>
+      <footer className="foot">
+        <div className="wrap">
+          <div className="foot-logo">
+            PHOTO<span>BRELOK</span>
           </div>
-          <div className="stack-2">
-            <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-            <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+          <ul className="foot-list">
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 21s7-5.2 7-11a7 7 0 10-14 0c0 5.8 7 11 7 11z" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+              </svg>
+              <span>{ADDRESS} · {lang === "ru" ? "Кишинёв" : "Chișinău"}</span>
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <span>{t.footerHours}</span>
+            </li>
+          </ul>
+          <p className="foot-note">{t.footerNote}</p>
+          <div className="foot-divider" />
+          <ul className="foot-list">
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M3 7l9 7 9-7" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 006 6l1.5-2 4 1.5v3a2 2 0 01-2 2A15.5 15.5 0 014.5 5.5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+            </li>
+          </ul>
+          <div className="foot-social">
             <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
               Telegram
             </a>
             <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="17" cy="7" r="1.2" fill="currentColor" />
+              </svg>
               Instagram
             </a>
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-              WhatsApp
-            </a>
-            <a href={VIBER_URL}>Viber</a>
-            <a href="#builder">{t.seeBrelok}</a>
           </div>
         </div>
       </footer>
@@ -468,11 +716,13 @@ export default function Landing() {
         <div className="mobile-cta-price">
           <div className="mobile-cta-amount">{t.priceChip}</div>
           <div className="mobile-cta-note">
-            {lang === "ru" ? "Макет бесплатно" : "Machetă gratuită"}
+            {photoCount > 0
+              ? (lang === "ru" ? `Фото: ${photoCount} · макет бесплатно` : `Poze: ${photoCount} · machetă gratuită`)
+              : t.mobileCtaNote}
           </div>
         </div>
-        <button type="button" className="btn btn-primary mobile-cta-button" onClick={scrollToBuilder}>
-          {t.priceCta}
+        <button type="button" className="hero-cta-btn mobile-cta-button" onClick={scrollToBuilder}>
+          {photoCount > 0 ? t.priceCta : t.mobileCtaBtn}
         </button>
       </div>
     </div>

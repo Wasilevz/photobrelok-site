@@ -1,5 +1,5 @@
 export type Locale = "ru" | "ro";
-export type DeliveryMethod = "posta" | "novapost" | "pickup";
+export type DeliveryMethod = "posta" | "novapost" | "pickup" | "later";
 
 export interface Dict {
   meta: {
@@ -50,6 +50,8 @@ export interface Dict {
       pickupPrice: string;
       pickupAddress: string;
       pickupHours: string;
+      later: string;
+      laterHint: string;
       postalCodeLabel: string;
       postalCodePlaceholder: string;
       surnameLabel: string;
@@ -116,11 +118,11 @@ export const translations: Record<Locale, Dict> = {
       subtitle:
         "Загрузите от 6 до 10 любимых фото — мы напечатаем их на плёнке и сделаем уникальный брелок",
       priceLine: (price: number) => `${price} лей · Оплата при получении`,
-      slotHint: "нажми",
+      slotHint: "+ фото",
       helperEmpty: "Нажмите на кадр → можно выбрать сразу несколько фото",
       helperMore: (n: number) => `Ещё ${n} фото, чтобы собрать плёнку`,
       helperReady: "Отлично! Можно отправить на макет",
-      ctaUpload: "Собрать плёнку",
+      ctaUpload: "Выбрать фото",
       ctaOrder: "Получить бесплатный макет",
       photoCount: (n: number) => `${n}/10 фото`,
       replace: "Заменить",
@@ -144,7 +146,7 @@ export const translations: Record<Locale, Dict> = {
       namePlaceholder: "Николай",
       phoneLabel: "Номер телефона",
       phonePlaceholder: "60 123 456",
-      phoneError: "Введите номер телефона без кода страны",
+      phoneError: "Формат: 60 123 456",
       submitting: "Отправка...",
       submit: "Получить бесплатный макет",
       close: "Закрыть",
@@ -158,6 +160,8 @@ export const translations: Record<Locale, Dict> = {
         pickupPrice: "Бесплатно",
         pickupAddress: "ул. A. Bernardazzi 64, Кишинёв",
         pickupHours: "Ежедневно с 09:00 до 23:00",
+        later: "Уточню позже",
+        laterHint: "Способ получения согласуем после макета — без обязательств",
         postalCodeLabel: "Почтовый индекс",
         postalCodePlaceholder: "MD-2001",
         surnameLabel: "Фамилия (нужна для почты)",
@@ -225,11 +229,11 @@ export const translations: Record<Locale, Dict> = {
       subtitle:
         "Încarcă de la 6 la 10 poze preferate — le imprimăm pe film și facem un breloc unic",
       priceLine: (price: number) => `${price} lei · Plată la livrare`,
-      slotHint: "apasă",
+      slotHint: "+ poză",
       helperEmpty: "Apasă pe cadru → poți alege mai multe poze deodată",
       helperMore: (n: number) => `Încă ${n} poze până la comandă`,
       helperReady: "Perfect! Poți plasa comanda",
-      ctaUpload: "Compune filmul",
+      ctaUpload: "Alege pozele",
       ctaOrder: "Primește macheta gratuită",
       photoCount: (n: number) => `${n}/10 poze`,
       replace: "Înlocuiește",
@@ -253,7 +257,7 @@ export const translations: Record<Locale, Dict> = {
       namePlaceholder: "Ion",
       phoneLabel: "Număr de telefon",
       phonePlaceholder: "069 123 456",
-      phoneError: "Introdu numărul de telefon fără prefixul țării",
+      phoneError: "Format: 069 123 456",
       submitting: "Se trimite...",
       submit: "Primește macheta gratuită",
       close: "Închide",
@@ -267,6 +271,8 @@ export const translations: Record<Locale, Dict> = {
         pickupPrice: "Gratuit",
         pickupAddress: "str. A. Bernardazzi 64, Chișinău",
         pickupHours: "Zilnic, 09:00–23:00",
+        later: "Spun mai târziu",
+        laterHint: "Metoda o stabilim după machetă — fără obligații",
         postalCodeLabel: "Cod poștal",
         postalCodePlaceholder: "MD-2001",
         surnameLabel: "Numele de familie (necesar pentru poștă)",

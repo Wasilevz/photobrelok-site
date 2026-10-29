@@ -4,6 +4,7 @@ import { DeliveryMethod } from "@/lib/i18n";
 
 export interface DeliveryData {
   method: DeliveryMethod;
+  surname?: string;
   postalCode?: string;
   street?: string;
   city?: string;
@@ -19,14 +20,16 @@ interface OrderModalProps {
 }
 
 export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: OrderModalProps) {
-  const { dict } = useLanguage();
+  const { dict, lang } = useLanguage();
   const d = dict.orderModal.delivery;
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [nameError, setNameError] = useState('');
 
-  const [method, setMethod] = useState<DeliveryMethod | null>(null);
+  // Самовывоз по умолчанию — форма не требует адреса, конверсия выше
+  const [method, setMethod] = useState<DeliveryMethod>('pickup');
   const [surname, setSurname] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [street, setStreet] = useState('');
@@ -68,8 +71,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   const isDeliveryValid = (): boolean => {
     if (method === 'posta') return surname.trim() !== '' && postalCode.trim() !== '' && city.trim() !== '' && district.trim() !== '';
     if (method === 'novapost') return novaPostBranch.trim() !== '';
-    if (method === 'pickup') return true;
-    return false;
+    // pickup и later — без обязательных полей
+    return true;
   };
 
   const canSubmit =
@@ -78,13 +81,17 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setDeliveryTouched(true);
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setNameError(dict.orderModal.delivery.fieldRequired);
+      return;
+    }
+    setNameError('');
     if (!validatePhone(phone)) return;
-    if (!method || !isDeliveryValid()) return;
+    if (!isDeliveryValid()) return;
 
     const delivery: DeliveryData =
       method === 'posta'
-        ? { method, postalCode: postalCode.trim(), street: street.trim(), city: city.trim(), district: district.trim() }
+        ? { method, surname: surname.trim(), postalCode: postalCode.trim(), street: street.trim(), city: city.trim(), district: district.trim() }
         : method === 'novapost'
           ? { method, novaPostBranch: novaPostBranch.trim() }
           : { method };
@@ -108,13 +115,15 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
       <div
         className="bg-[#FFFDF8] border-2 border-[#191715] rounded-2xl p-8 w-full max-w-md shadow-2xl relative my-8"
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="order-modal-title"
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-[#7A7368] hover:text-[#191715] text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F5F1E8] transition-colors"
+          className="absolute top-3 right-3 text-[#7A7368] hover:text-[#191715] text-xl font-bold w-11 h-11 flex items-center justify-center rounded-full hover:bg-[#F5F1E8] transition-colors"
           aria-label={dict.orderModal.close}
         >
           ✕
@@ -128,20 +137,36 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
             <label htmlFor="customer-name" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.nameLabel}</label>
             <input
               id="customer-name"
+              name="name"
+              autoComplete="name"
               ref={nameRef}
               type="text"
               required
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-white border border-[#D9D0BF] rounded-lg px-4 py-3 text-[#191715] focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+              onChange={(e) => { setName(e.target.value); setNameError(''); }}
+              onBlur={() => {
+                if (!name.trim()) setNameError(dict.orderModal.delivery.fieldRequired);
+              }}
+              aria-invalid={!!nameError}
+              className={`w-full bg-white border rounded-lg px-4 py-3 text-[#191715] focus:outline-none focus:ring-1 ${
+                nameError
+                  ? 'border-[#B42318] focus:border-[#B42318] focus:ring-[#B42318]'
+                  : 'border-[#D9D0BF] focus:border-[#FFC400] focus:ring-[#FFC400]'
+              }`}
               placeholder={dict.orderModal.namePlaceholder}
             />
+            {nameError && (
+              <p className="text-[#B42318] text-xs mt-1">{nameError}</p>
+            )}
           </div>
 
           <div>
             <label htmlFor="customer-phone" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.phoneLabel}</label>
             <input
               id="customer-phone"
+              name="phone"
+              autoComplete="tel"
+              inputMode="tel"
               type="tel"
               required
               value={phone}
@@ -169,11 +194,13 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
               </button>
 
               {method === 'posta' && (
-                <div className="pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 animate-in fade-in duration-200">
+                <div className="pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 relative z-10 pointer-events-auto">
                   <div>
                     <label htmlFor="surname" className="block text-[#5C564E] text-xs mb-1">{d.surnameLabel}</label>
                     <input
                       id="surname"
+                      name="surname"
+                      autoComplete="family-name"
                       type="text"
                       value={surname}
                       onChange={(e) => setSurname(e.target.value)}
@@ -186,6 +213,9 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                       <label htmlFor="postal-code" className="block text-[#5C564E] text-xs mb-1">{d.postalCodeLabel}</label>
                       <input
                         id="postal-code"
+                        name="postalCode"
+                        autoComplete="postal-code"
+                        inputMode="numeric"
                         type="text"
                         value={postalCode}
                         onChange={(e) => setPostalCode(e.target.value)}
@@ -197,6 +227,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                       <label htmlFor="district" className="block text-[#5C564E] text-xs mb-1">{d.districtLabel}</label>
                       <input
                         id="district"
+                        name="district"
                         type="text"
                         value={district}
                         onChange={(e) => setDistrict(e.target.value)}
@@ -209,6 +240,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                     <label htmlFor="city" className="block text-[#5C564E] text-xs mb-1">{d.cityLabel}</label>
                     <input
                       id="city"
+                      name="city"
+                      autoComplete="address-level2"
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
@@ -220,6 +253,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                     <label htmlFor="street" className="block text-[#5C564E] text-xs mb-1">{d.streetLabel}</label>
                     <input
                       id="street"
+                      name="street"
+                      autoComplete="street-address"
                       type="text"
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
@@ -240,6 +275,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                   <label htmlFor="novapost-branch" className="block text-[#5C564E] text-xs mb-1">{d.branchLabel}</label>
                   <input
                     id="novapost-branch"
+                    name="novaPostBranch"
+                    inputMode="numeric"
                     type="text"
                     value={novaPostBranch}
                     onChange={(e) => setNovaPostBranch(e.target.value)}
@@ -261,15 +298,18 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                 </div>
               )}
             </div>
-            {deliveryTouched && !method && (
-              <p className="text-[#B42318] text-xs mt-2">{d.chooseMethod}</p>
+            {deliveryTouched && !isDeliveryValid() && method === 'posta' && (
+              <p className="text-[#B42318] text-xs mt-2">{d.fieldRequired}</p>
+            )}
+            {deliveryTouched && !isDeliveryValid() && method === 'novapost' && (
+              <p className="text-[#B42318] text-xs mt-2">{d.fieldRequired}</p>
             )}
           </div>
 
           <button
             type="submit"
             disabled={!canSubmit}
-              className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all ${
+              className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all min-h-[52px] ${
                 !canSubmit
                   ? "bg-[#E8E0D0] text-[#7A7368] cursor-not-allowed"
                   : "bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] border-2 border-[#191715] active:scale-[0.98] shadow-lg shadow-[#FFC400]/35"
@@ -277,6 +317,11 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
           >
             {isSubmitting ? dict.orderModal.submitting : dict.orderModal.submit}
           </button>
+          <p className="text-center text-[12px] text-[#7A7368] -mt-1">
+            {lang === "ru"
+              ? "Макет бесплатно · оплата при получении · без предоплат"
+              : "Machetă gratuită · plata la livrare · fără avans"}
+          </p>
         </form>
       </div>
     </div>
