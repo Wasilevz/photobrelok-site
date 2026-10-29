@@ -34,13 +34,16 @@ function ThankYouContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8] flex flex-col items-center py-12 px-4 text-[#191715] font-sans">
+    <div className="min-h-screen bg-[#F5F1E8] py-12 px-4 text-[#191715] font-sans">
+      <div className="mx-auto w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
       {/* 1. Блок успеха */}
-      <div className="max-w-md w-full text-center space-y-4 mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
-        <div className="flex justify-center relative">
-          <CheckCircle2 className="w-20 h-20 text-[#191715]" />
-          <Sparkles className="absolute -top-2 -right-2 text-[#191715]" />
+      <div className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-1 text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="flex justify-center">
+          <div className="relative inline-flex">
+            <CheckCircle2 className="w-20 h-20 text-[#191715]" />
+            <Sparkles className="absolute -top-2 -right-2 text-[#191715]" />
+          </div>
         </div>
         <h1 className="text-4xl font-bold leading-none">
           {dict.thanks.orderAccepted} <span className="text-[#191715] bg-[#FFC400] px-2 rounded-lg">{dict.thanks.accepted}</span>
@@ -55,7 +58,7 @@ function ThankYouContent() {
 
       {/* 2. Оффер-апселл — без таймера и ложной срочности */}
       {status === 'pending' ? (
-        <div className="max-w-md w-full bg-[#FFFDF8] border-[3px] border-[#191715] rounded-[40px] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFDF8] border-[3px] border-[#191715] rounded-[40px] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
           <div className="absolute top-0 right-0 bg-[#FFC400] text-white px-6 py-2 rounded-bl-3xl font-black text-xs uppercase tracking-widest">
             {dict.thanks.sameOrderBadge}
           </div>
@@ -121,7 +124,7 @@ function ThankYouContent() {
           </button>
         </div>
       ) : status === 'accepted' ? (
-        <div className="max-w-md w-full bg-[#191715] text-[#F5F1E8] rounded-[40px] p-10 text-center animate-in fade-in zoom-in duration-500">
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#191715] text-[#F5F1E8] rounded-[40px] p-10 text-center animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 bg-[#FFC400]/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Package className="w-10 h-10 text-[#FFC400]" />
           </div>
@@ -129,7 +132,7 @@ function ThankYouContent() {
           <p className="text-[#B8B0A4] mt-3">{dict.thanks.acceptedDescLine1} <br />{dict.thanks.acceptedDescLine2}</p>
         </div>
       ) : (
-        <div className="max-w-md w-full bg-[#FFFDF8] border border-[#D9D0BF] rounded-[40px] p-8 text-center">
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFDF8] border border-[#D9D0BF] rounded-[40px] p-8 text-center">
           <div className="w-16 h-16 bg-[#F5F1E8] rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-[#B8B0A4]" />
           </div>
@@ -139,7 +142,7 @@ function ThankYouContent() {
       )}
 
       {/* Инфо */}
-      <div className="max-w-md w-full mt-8 space-y-3">
+      <div className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-2 lg:mt-0 mt-8 space-y-3">
         <div className="bg-[#FFFDF8] p-4 rounded-2xl flex items-center gap-3 border border-[#E5DCCB] shadow-sm">
           <div className="w-10 h-10 bg-[#FFF6D6] rounded-xl flex items-center justify-center text-[#FFC400]">
             <CheckCircle2 className="w-5 h-5" />
@@ -153,10 +156,11 @@ function ThankYouContent() {
 
       <button
         onClick={() => router.push('/')}
-        className="mt-8 w-full max-w-md py-4 bg-white border-2 border-gray-200 text-[#3D3832] font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+        className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-3 lg:mt-0 mt-8 py-4 bg-white border-2 border-gray-200 text-[#3D3832] font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
       >
         {dict.thanks.backToSite}
       </button>
+      </div>
     </div>
   );
 }

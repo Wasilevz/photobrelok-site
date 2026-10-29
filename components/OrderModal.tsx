@@ -104,7 +104,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   };
 
   const methodCardClass = (m: DeliveryMethod) =>
-    `w-full text-left px-4 py-3 rounded-xl border-2 transition-colors flex items-center justify-between gap-3 ${
+    `w-full text-left px-3 py-3 rounded-xl border-2 transition-colors flex items-center justify-between gap-2 min-w-0 ${
       method === m
         ? 'border-[#191715] bg-[#FFC400]/35'
         : 'border-[#D9D0BF] bg-white hover:border-[#191715]'
@@ -113,7 +113,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#191715]/70 p-4 overflow-y-auto" onClick={onClose}>
       <div
-        className="bg-[#FFFDF8] border-2 border-[#191715] rounded-2xl p-8 w-full max-w-md shadow-2xl relative my-8"
+        className="bg-[#FFFDF8] border-2 border-[#191715] rounded-2xl p-8 w-full max-w-2xl shadow-2xl relative my-8"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
@@ -133,6 +133,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
         <p className="text-[#5C564E] mb-6 text-sm">{dict.orderModal.subtitle}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="customer-name" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.nameLabel}</label>
             <input
@@ -183,18 +184,19 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
               <p className="text-[#B42318] text-xs mt-1">{phoneError}</p>
             )}
           </div>
+          </div>
 
           {/* Способ получения */}
           <div>
             <label className="block text-[#3D3832] text-sm mb-2">{d.label}</label>
-            <div className="flex flex-col gap-2">
-              <button type="button" onClick={() => selectMethod('posta')} className={methodCardClass('posta')}>
+            <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:gap-2">
+              <button type="button" onClick={() => selectMethod('posta')} className={`${methodCardClass('posta')} sm:col-start-1 sm:row-start-1`}>
                 <span className="text-[#191715] font-medium text-sm">{d.posta}</span>
-                <span className="text-[#7A7368] text-xs whitespace-nowrap">{d.postaPrice}</span>
+                <span className="text-[#7A7368] text-xs text-right">{d.postaPrice}</span>
               </button>
 
               {method === 'posta' && (
-                <div className="pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 relative z-10 pointer-events-auto">
+                <div className="pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 relative z-10 pointer-events-auto sm:col-span-3 sm:row-start-2">
                   <div>
                     <label htmlFor="surname" className="block text-[#5C564E] text-xs mb-1">{d.surnameLabel}</label>
                     <input
@@ -236,6 +238,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                       />
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label htmlFor="city" className="block text-[#5C564E] text-xs mb-1">{d.cityLabel}</label>
                     <input
@@ -262,16 +265,17 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                       className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                     />
                   </div>
+                  </div>
                 </div>
               )}
 
-              <button type="button" onClick={() => selectMethod('novapost')} className={methodCardClass('novapost')}>
+              <button type="button" onClick={() => selectMethod('novapost')} className={`${methodCardClass('novapost')} sm:col-start-2 sm:row-start-1`}>
                 <span className="text-[#191715] font-medium text-sm">{d.novapost}</span>
-                <span className="text-[#7A7368] text-xs whitespace-nowrap">{d.novapostPrice}</span>
+                <span className="text-[#7A7368] text-xs text-right">{d.novapostPrice}</span>
               </button>
 
               {method === 'novapost' && (
-                <div className="pl-1 pr-1 pt-1 pb-2 animate-in fade-in duration-200">
+                <div className="pl-1 pr-1 pt-1 pb-2 animate-in fade-in duration-200 sm:col-span-3 sm:row-start-2">
                   <label htmlFor="novapost-branch" className="block text-[#5C564E] text-xs mb-1">{d.branchLabel}</label>
                   <input
                     id="novapost-branch"
@@ -286,13 +290,13 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                 </div>
               )}
 
-              <button type="button" onClick={() => selectMethod('pickup')} className={methodCardClass('pickup')}>
+              <button type="button" onClick={() => selectMethod('pickup')} className={`${methodCardClass('pickup')} sm:col-start-3 sm:row-start-1`}>
                 <span className="text-[#191715] font-medium text-sm">{d.pickup}</span>
-                <span className="text-[#067647] text-xs whitespace-nowrap font-semibold">{d.pickupPrice}</span>
+                <span className="text-[#067647] text-xs text-right font-semibold">{d.pickupPrice}</span>
               </button>
 
               {method === 'pickup' && (
-                <div className="pl-1 pr-1 pt-1 pb-2 text-xs text-[#5C564E] leading-relaxed animate-in fade-in duration-200">
+                <div className="pl-1 pr-1 pt-1 pb-2 text-xs text-[#5C564E] leading-relaxed animate-in fade-in duration-200 sm:col-span-3 sm:row-start-2">
                   📍 {d.pickupAddress}<br />
                   🕒 {d.pickupHours}
                 </div>
