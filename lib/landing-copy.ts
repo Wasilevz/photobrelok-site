@@ -31,7 +31,6 @@ export const landingCopy = {
     contactLabel: "Telegram @ или телефон",
     contactPlaceholder: "@username или 60 123 456",
     submitTo: "Получить бесплатный макет",
-        heroSecondary: "Как это работает",
     painTitle: "Лучшие кадры лежат между скриншотами и чеками",
     painHand: "Галерея — склад. Плёнка — витрина.",
     painLead:
@@ -157,7 +156,6 @@ export const landingCopy = {
     contactLabel: "Telegram @ sau telefon",
     contactPlaceholder: "@username sau 60 123 456",
     submitTo: "Trimite pentru machetă",
-        heroSecondary: "Cum funcționează",
     painTitle: "Cele mai bune cadre stau între capturi de ecran și bonuri",
     painHand: "Galeria — depozitul. Filmul — vitrina.",
     painLead:

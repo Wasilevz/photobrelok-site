@@ -2395,39 +2395,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   color: var(--muted);
 }
 
-.pb .urgency-daily {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: var(--muted);
-  min-height: 1.4em;
-}
-
-.pb .urgency-slots-wrap {
-  margin: 10px auto 0;
-  max-width: 280px;
-}
-
-.pb .urgency-slots-bar {
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(25, 23, 21, 0.12);
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.pb .urgency-slots-bar > span {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-  border-radius: inherit;
-}
-
-.pb .urgency-slots {
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .pb .include-lead {
   margin: 0 0 12px;
   font-family: var(--font);
@@ -2931,8 +2898,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 
 .pb .hero-terms,
-.pb .hero-cta-note,
-.pb .urgency-daily {
+.pb .hero-cta-note {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
@@ -3540,23 +3506,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pb .hero-feats strong {
   font-size: 18px;
 }
-.pb .hero-how-link {
-  display: block;
-  margin-top: 16px;
-  text-align: center;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.pb .hero-how-link:hover {
-  opacity: 0.8;
-}
-.pb .hero-how-link:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 3px;
-}
 @media (min-width: 900px) {
   .pb .hero-card {
     padding: 36px 32px 30px;
@@ -3953,8 +3902,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   text-align: left !important;
 }
 .pb .hero-card .lead,
-.pb .hero-price-note,
-.pb .hero-how-link {
+.pb .hero-price-note {
   margin-inline: 0;
   text-align: left;
 }

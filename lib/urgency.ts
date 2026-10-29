@@ -95,30 +95,6 @@ export function splitDuration(ms: number) {
   };
 }
 
-export function isBeforeCutoff(now: Date = new Date()): boolean {
-  const p = zonedParts(now, URGENCY.timezone);
-  if (!URGENCY.workdays.includes(p.wd)) return false;
-  const [ch, cm] = URGENCY.dailyCutoff.split(":").map(Number);
-  return p.h < ch || (p.h === ch && p.mi < cm);
-}
-
-export function isWorkday(now: Date = new Date()): boolean {
-  return URGENCY.workdays.includes(zonedParts(now, URGENCY.timezone).wd);
-}
-
-export function nextMockupLabel(locale: "ru" | "ro", now: Date = new Date()): string {
-  const p = zonedParts(now, URGENCY.timezone);
-  if (isBeforeCutoff(now)) return locale === "ru" ? "сегодня" : "astăzi";
-  for (let i = 1; i <= 7; i++) {
-    const wd = (p.wd + i) % 7;
-    if (URGENCY.workdays.includes(wd)) {
-      if (i === 1) return locale === "ru" ? "завтра утром" : "mâine dimineață";
-      return locale === "ru" ? "в понедельник утром" : "luni dimineață";
-    }
-  }
-  return locale === "ru" ? "утром" : "dimineață";
-}
-
 /**
  * Examples for task A:
  * - 2026-11-01 (33 days to 28.12) → static "Заказы к Новому году — до 28 декабря, 18:00", no timer

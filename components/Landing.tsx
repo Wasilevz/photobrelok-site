@@ -15,7 +15,7 @@ import {
 } from "@/lib/contacts";
 import { track } from "@/lib/analytics";
 import { landingCopy, faqCopy, occasionCopy } from "@/lib/landing-copy";
-import { UrgencyBanner, DailyCutoff, SlotsLeft } from "@/components/Urgency";
+import { UrgencyBanner } from "@/components/Urgency";
 import { useOccasion } from "@/lib/occasion-store";
 
 function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
@@ -281,9 +281,6 @@ export default function Landing() {
                   <span>{photoCount > 0 ? t.priceCta : t.heroCta}</span>
                   <span aria-hidden="true">→</span>
                 </button>
-                <a className="hero-how-link" href="#how">{t.heroSecondary}</a>
-                <DailyCutoff />
-                <SlotsLeft />
               </div>
               <div className="hero-unified-media">
                 <HeroProductVideo lang={lang} />
