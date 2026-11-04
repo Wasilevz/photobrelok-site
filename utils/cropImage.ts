@@ -21,9 +21,18 @@ export default async function getCroppedImg(
 
   if (!ctx) return null;
 
-  // Задаем размер холста равным размеру квадрата
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  // Ограничиваем максимальный размер до 1200px:
+  // Для печати мини-фото 25.5мм это дает сверхчеткие >1200 DPI,
+  // при этом предотвращает зависание мобильного браузера и ускоряет загрузку фото с камеры смартфона
+  const MAX_SIZE = 1200;
+  const scale = Math.min(1, MAX_SIZE / Math.max(pixelCrop.width, pixelCrop.height));
+  const targetWidth = Math.max(1, Math.round(pixelCrop.width * scale));
+  const targetHeight = Math.max(1, Math.round(pixelCrop.height * scale));
+
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   // Вырезаем нужный кусок и рисуем на холсте
   ctx.drawImage(
@@ -34,8 +43,8 @@ export default async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    targetWidth,
+    targetHeight
   );
 
   // Превращаем холст обратно в файл картинки (Blob) в формате JPEG

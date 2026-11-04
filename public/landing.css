@@ -3721,6 +3721,24 @@ a { color: inherit; }
   opacity: 0.8;
 }
 
+.pb .foot-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.pb .foot-legal a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pb .foot-legal a:hover {
+  color: var(--ink);
+}
+
 /* Mobile sticky CTA matches mock */
 .pb .mobile-cta {
   background: var(--ink);

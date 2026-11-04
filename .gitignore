@@ -13,3 +13,8 @@ cloudflared.exe
 
 *.tsbuildinfo
 .tools/
+
+# Playwright & diagnostic logs
+.pw-*
+.server*
+.playwright-cli/

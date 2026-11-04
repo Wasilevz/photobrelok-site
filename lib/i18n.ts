@@ -19,6 +19,10 @@ export interface Dict {
     photoCount: (n: number) => string;
     replace: string;
     remove: string;
+    moveLeft: string;
+    moveRight: string;
+    photoAlreadyAdded: (n: number) => string;
+    photosAlreadyAdded: (list: string) => string;
     uploadTruncated: (added: number, total: number) => string;
   };
   cropper: {
@@ -66,6 +70,13 @@ export interface Dict {
       branchPlaceholder: string;
       fieldRequired: string;
       chooseMethod: string;
+    };
+    consent: {
+      dataLabel: string;
+      dataLink: string;
+      photoLabel: string;
+      marketingLabel: string;
+      requiredHint: string;
     };
   };
   errors: {
@@ -119,14 +130,20 @@ export const translations: Record<Locale, Dict> = {
         "Загрузите от 6 до 10 любимых фото — мы напечатаем их на плёнке и сделаем уникальный брелок",
       priceLine: (price: number) => `${price} лей · Оплата при получении`,
       slotHint: "+ фото",
-      helperEmpty: "Нажмите на кадр → можно выбрать сразу несколько фото",
-      helperMore: (n: number) => `Ещё ${n} фото, чтобы собрать плёнку`,
-      helperReady: "Отлично! Можно отправить на макет",
+      helperEmpty: "Нажмите на кадр → выберите от 6 до 10 фото",
+      helperMore: (n: number) => `Ещё ${n} фото до заказа (минимум 6)`,
+      helperReady: "Отлично! Минимум 6 фото есть — можно оформить заказ",
       ctaUpload: "Выбрать фото",
       ctaOrder: "Получить бесплатный макет",
       photoCount: (n: number) => `${n}/10 фото`,
       replace: "Заменить",
       remove: "Удалить",
+      moveLeft: "Сдвинуть влево",
+      moveRight: "Сдвинуть вправо",
+      photoAlreadyAdded: (n: number) =>
+        `Это фото уже добавлено (кадр ${n}) — выберите другое`,
+      photosAlreadyAdded: (list: string) =>
+        `Эти фото уже добавлены (кадры ${list}) — пропущены`,
       uploadTruncated: (added: number, total: number) =>
         `Добавлено ${added} из ${total} фото — все слоты заполнены (максимум 10)`,
     },
@@ -176,6 +193,15 @@ export const translations: Record<Locale, Dict> = {
         branchPlaceholder: "Например, 25",
         fieldRequired: "Заполните это поле",
         chooseMethod: "Выберите способ получения",
+      },
+      consent: {
+        dataLabel:
+          "Согласен(на) на обработку персональных данных (имя, телефон, адрес) для оформления и выполнения заказа",
+        dataLink: "Политика конфиденциальности",
+        photoLabel:
+          "Подтверждаю, что имею право использовать загруженные фотографии и получил(а) согласие изображённых на них лиц",
+        marketingLabel: "Хочу получать новости и специальные предложения",
+        requiredHint: "Отметьте согласия, чтобы оформить заказ",
       },
     },
     errors: {
@@ -230,14 +256,20 @@ export const translations: Record<Locale, Dict> = {
         "Încarcă de la 6 la 10 poze preferate — le imprimăm pe film și facem un breloc unic",
       priceLine: (price: number) => `${price} lei · Plată la livrare`,
       slotHint: "+ poză",
-      helperEmpty: "Apasă pe cadru → poți alege mai multe poze deodată",
-      helperMore: (n: number) => `Încă ${n} poze până la comandă`,
-      helperReady: "Perfect! Poți plasa comanda",
+      helperEmpty: "Apasă pe cadru → alege de la 6 la 10 poze",
+      helperMore: (n: number) => `Încă ${n} poze până la comandă (minim 6)`,
+      helperReady: "Perfect! Minim 6 poze încărcate — poți comanda",
       ctaUpload: "Alege pozele",
       ctaOrder: "Primește macheta gratuită",
       photoCount: (n: number) => `${n}/10 poze`,
       replace: "Înlocuiește",
       remove: "Șterge",
+      moveLeft: "Mută la stânga",
+      moveRight: "Mută la dreapta",
+      photoAlreadyAdded: (n: number) =>
+        `Această poză e deja adăugată (cadrul ${n}) — alege alta`,
+      photosAlreadyAdded: (list: string) =>
+        `Aceste poze sunt deja adăugate (cadrurile ${list}) — au fost sărite`,
       uploadTruncated: (added: number, total: number) =>
         `Adăugate ${added} din ${total} poze — toate sloturile sunt ocupate (maxim 10)`,
     },
@@ -287,6 +319,15 @@ export const translations: Record<Locale, Dict> = {
         branchPlaceholder: "De exemplu, 25",
         fieldRequired: "Completează acest câmp",
         chooseMethod: "Alege metoda de livrare",
+      },
+      consent: {
+        dataLabel:
+          "Sunt de acord cu prelucrarea datelor cu caracter personal (nume, telefon, adresă) pentru întocmirea și executarea comenzii",
+        dataLink: "Politica de confidențialitate",
+        photoLabel:
+          "Confirm că am dreptul să utilizez fotografiile încărcate și am obținut acordul persoanelor fotografiate",
+        marketingLabel: "Vreau să primesc noutăți și oferte speciale",
+        requiredHint: "Bifează acordurile pentru a plasa comanda",
       },
     },
     errors: {

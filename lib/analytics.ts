@@ -1,4 +1,5 @@
 import { META_PIXEL_ID } from "@/lib/meta";
+import { readConsent } from "@/lib/consent";
 
 export type AnalyticsEvent =
   | "hero_view"
@@ -56,6 +57,10 @@ export function metaEventId(): string {
 }
 
 function trackMeta(event: AnalyticsEvent, payload: Payload) {
+  // Явная проверка согласия: пока пользователь не принял маркетинг,
+  // ни событий, ни контактов в Meta не уходит.
+  if (!readConsent()?.marketing) return;
+
   const fbq = window.fbq;
   if (!fbq) return;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import PhotoConstructor from "@/components/PhotoConstructor";
 import { useLanguage } from "@/context/LanguageContext";
@@ -15,6 +16,7 @@ import {
 } from "@/lib/contacts";
 import { track } from "@/lib/analytics";
 import { landingCopy, faqCopy, occasionCopy } from "@/lib/landing-copy";
+import { legalCopy } from "@/lib/legal-copy";
 import { UrgencyBanner } from "@/components/Urgency";
 import { useOccasion } from "@/lib/occasion-store";
 
@@ -705,6 +707,11 @@ export default function Landing() {
               </svg>
               Instagram
             </a>
+          </div>
+          <div className="foot-legal">
+            <Link href="/privacy">{legalCopy[lang].nav.privacy}</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/cookies">{legalCopy[lang].nav.cookies}</Link>
           </div>
         </div>
       </footer>

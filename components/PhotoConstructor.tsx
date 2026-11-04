@@ -17,11 +17,15 @@ export default function PhotoConstructor() {
   const router = useRouter();
   const { lang, dict } = useLanguage();
   const [slots, setSlots] = useState<(string | null)[]>(Array(MAX_SLOTS).fill(null));
+  // Хэши исходных файлов — по ним ловим повторный выбор того же фото в галерее
+  const [slotHashes, setSlotHashes] = useState<(string | null)[]>(Array(MAX_SLOTS).fill(null));
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const longPressRef = useRef<number | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const draggingRef = useRef(false);
   const [activeSlotIndex, setActiveSlotIndex] = useState<number | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scrollThumb, setScrollThumb] = useState({ width: 0.4, left: 0 });
@@ -31,7 +35,7 @@ export default function PhotoConstructor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Батч-загрузка: очередь фото, ожидающих обрезки, каждое привязано к своему слоту
-  const [cropQueue, setCropQueue] = useState<{ url: string; slotIndex: number }[]>([]);
+  const [cropQueue, setCropQueue] = useState<{ url: string; slotIndex: number; hash: string }[]>([]);
   const [totalInBatch, setTotalInBatch] = useState(0);
   const imageToCrop = cropQueue[0]?.url ?? null;
   const photoCount = slots.filter(Boolean).length;
@@ -48,6 +52,18 @@ export default function PhotoConstructor() {
     }
   }, []);
 
+  /** Хэш содержимого файла — одинаковое фото даёт одинаковый хэш даже с разными именами */
+  const hashFile = async (file: File): Promise<string> => {
+    try {
+      const buf = await file.arrayBuffer();
+      const digest = await crypto.subtle.digest("SHA-256", buf);
+      return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+    } catch {
+      // вне secure context (http по сети) crypto.subtle недоступен — слабый запасной ключ
+      return `${file.size}:${file.lastModified}:${file.name}`;
+    }
+  };
+
   useEffect(() => {
     handleCarouselScroll();
     const onResize = () => handleCarouselScroll();
@@ -56,38 +72,89 @@ export default function PhotoConstructor() {
   }, []);
 
   const handleSlotClick = (index: number) => {
+    if (slots[index]) {
+      // Занятый слот: тап выделяет кадр и показывает панель управления (на мобиле hover нет)
+      setSelectedSlot((prev) => (prev === index ? null : index));
+      return;
+    }
     setActiveSlotIndex(index);
     fileInputRef.current?.click();
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReplaceSelected = () => {
+    if (selectedSlot === null) return;
+    setActiveSlotIndex(selectedSlot);
+    fileInputRef.current?.click();
+  };
+
+  /** Сдвиг фото на один кадр влево/вправо (обмен со соседним слотом) */
+  const moveSlot = (index: number, dir: -1 | 1) => {
+    const to = index + dir;
+    if (to < 0 || to >= MAX_SLOTS) return;
+    setSlots((prev) => {
+      const next = [...prev];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+    setSlotHashes((prev) => {
+      const next = [...prev];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+    setSelectedSlot(to);
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const fileArray = Array.from(files);
+    e.target.value = "";
+
+    // Дедупликация: фото, которое уже есть в слотах или встречается в этой же пачке, пропускаем
+    const seenInBatch = new Set<string>();
+    const dupSlots: number[] = [];
+    const accepted: { file: File; hash: string }[] = [];
+    for (const file of fileArray) {
+      const hash = await hashFile(file);
+      const alreadySlot = slotHashes.findIndex((h) => h === hash);
+      if (alreadySlot !== -1) {
+        dupSlots.push(alreadySlot + 1);
+        continue;
+      }
+      if (seenInBatch.has(hash)) continue;
+      seenInBatch.add(hash);
+      accepted.push({ file, hash });
+    }
+
+    const messages: string[] = [];
+    if (dupSlots.length === 1) messages.push(dict.home.photoAlreadyAdded(dupSlots[0]));
+    else if (dupSlots.length > 1) messages.push(dict.home.photosAlreadyAdded(dupSlots.join(", ")));
 
     // Слот, на который кликнули, заполняется первым (даже если уже занят — это "заменить")
     const targetIndices: number[] = [];
     if (activeSlotIndex !== null) targetIndices.push(activeSlotIndex);
 
     // Остальные фото уходят в следующие свободные слоты по порядку
-    for (let i = 0; i < slots.length && targetIndices.length < fileArray.length; i++) {
+    for (let i = 0; i < slots.length && targetIndices.length < accepted.length; i++) {
       if (i === activeSlotIndex) continue;
       if (!slots[i]) targetIndices.push(i);
     }
 
-    const queue = fileArray.slice(0, targetIndices.length).map((file, i) => ({
-      url: URL.createObjectURL(file),
-      slotIndex: targetIndices[i],
-    }));
-
-    if (fileArray.length > targetIndices.length) {
-      setShowError(dict.home.uploadTruncated(queue.length, fileArray.length));
+    const queue: { url: string; slotIndex: number; hash: string }[] = [];
+    for (let i = 0; i < targetIndices.length && i < accepted.length; i++) {
+      queue.push({ url: URL.createObjectURL(accepted[i].file), slotIndex: targetIndices[i], hash: accepted[i].hash });
     }
+    setActiveSlotIndex(null);
 
+    if (accepted.length > targetIndices.length) {
+      messages.push(dict.home.uploadTruncated(queue.length, fileArray.length));
+    }
+    if (messages.length > 0) setShowError(messages.join(" · "));
+
+    if (queue.length === 0) return;
     setCropQueue(queue);
     setTotalInBatch(queue.length);
-    e.target.value = "";
   };
 
   const handleCropDone = (croppedImageUrl: string) => {
@@ -100,6 +167,11 @@ export default function PhotoConstructor() {
         revokeOldUrl(newSlots[current.slotIndex]);
         newSlots[current.slotIndex] = croppedImageUrl;
         return newSlots;
+      });
+      setSlotHashes((prev) => {
+        const next = [...prev];
+        next[current.slotIndex] = current.hash;
+        return next;
       });
     }
     const rest = cropQueue.slice(1);
@@ -178,9 +250,10 @@ export default function PhotoConstructor() {
     }
   };
 
-  const startLongPress = (index: number) => {
+  const startLongPress = (index: number, clientX: number, clientY: number) => {
     if (!slots[index]) return;
     clearLongPress();
+    pointerStartRef.current = { x: clientX, y: clientY };
     longPressRef.current = window.setTimeout(() => {
       draggingRef.current = true;
       setDragIndex(index);
@@ -207,14 +280,24 @@ export default function PhotoConstructor() {
   const finishDrag = () => {
     clearLongPress();
     if (draggingRef.current && dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+      const from = dragIndex;
+      const to = overIndex;
       setSlots((prev) => {
         const next = [...prev];
-        const [item] = next.splice(dragIndex, 1);
-        next.splice(overIndex, 0, item ?? null);
+        const [item] = next.splice(from, 1);
+        next.splice(to, 0, item ?? null);
+        while (next.length < MAX_SLOTS) next.push(null);
+        return next.slice(0, MAX_SLOTS);
+      });
+      setSlotHashes((prev) => {
+        const next = [...prev];
+        const [item] = next.splice(from, 1);
+        next.splice(to, 0, item ?? null);
         while (next.length < MAX_SLOTS) next.push(null);
         return next.slice(0, MAX_SLOTS);
       });
       vibrate(25);
+      setSelectedSlot(null);
     }
     draggingRef.current = false;
     setDragIndex(null);
@@ -227,9 +310,15 @@ export default function PhotoConstructor() {
     revokeOldUrl(newSlots[index]);
     newSlots[index] = null;
     setSlots(newSlots);
+    setSlotHashes((prev) => {
+      const next = [...prev];
+      next[index] = null;
+      return next;
+    });
+    setSelectedSlot((prev) => (prev === index ? null : prev));
   };
 
-  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData }) => {
+  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean }) => {
     setIsSubmitting(true);
     try {
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -244,7 +333,11 @@ export default function PhotoConstructor() {
 
       const filled = slots.filter((url): url is string => !!url);
       if (filled.length < 6) {
-        throw new Error(lang === "ru" ? "Добавьте хотя бы 6 фото" : "Adaugă cel puțin 6 poze");
+        throw new Error(
+          lang === "ru"
+            ? "Для заказа нужно минимум 6 фото. Добавьте ещё недостающие кадры."
+            : "Pentru comandă sunt necesare minim 6 poze. Adăugați pozele lipsă."
+        );
       }
 
       const photoUrls: string[] = [];
@@ -281,6 +374,7 @@ export default function PhotoConstructor() {
           lang,
           delivery: userData.delivery,
           metaEventIds,
+          marketingConsent: userData.marketingConsent,
         }),
       });
 
@@ -299,6 +393,8 @@ export default function PhotoConstructor() {
 
       slots.forEach(revokeOldUrl);
       setSlots(Array(MAX_SLOTS).fill(null));
+      setSlotHashes(Array(MAX_SLOTS).fill(null));
+      setSelectedSlot(null);
       setIsModalOpen(false);
       setTelegramFallback(null);
       router.push(`/thanks?orderId=${orderId}`);
@@ -490,11 +586,14 @@ export default function PhotoConstructor() {
                     }}
                     onPointerDown={(e) => {
                       if (e.button !== undefined && e.button !== 0) return;
-                      startLongPress(index);
+                      startLongPress(index, e.clientX, e.clientY);
                     }}
                     onPointerMove={(e) => {
-                      if (!draggingRef.current && longPressRef.current !== null) {
-                        // cancel long-press if finger moves too much before drag starts
+                      if (!draggingRef.current && longPressRef.current !== null && pointerStartRef.current) {
+                        // отмена long-press, если палец сдвинулся — это скролл плёнки, а не перетаскивание
+                        const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+                        const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+                        if (dx > 10 || dy > 10) clearLongPress();
                       }
                       moveDragTarget(e.clientX, e.clientY);
                     }}
@@ -521,22 +620,9 @@ export default function PhotoConstructor() {
                     {url ? (
                       <>
                         <Image src={url} alt={`${index + 1}`} width={120} height={120} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-1">
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleSlotClick(index); }}
-                            className="w-[90%] min-h-[40px] bg-white text-black text-[12px] font-semibold px-1 py-2 rounded-md shadow hover:bg-gray-100"
-                          >
-                            {dict.home.replace}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleRemoveSlot(index, e)}
-                            className="w-[90%] min-h-[40px] bg-red-600 hover:bg-red-700 text-white text-[12px] font-semibold px-1 py-2 rounded-md shadow"
-                          >
-                            {dict.home.remove}
-                          </button>
-                        </div>
+                        {selectedSlot === index && (
+                          <div className="absolute inset-0 ring-[3px] ring-inset ring-[#FFC400] bg-black/15 pointer-events-none" />
+                        )}
                       </>
                     ) : (
                       <div className="flex flex-col items-center text-zinc-500 group-hover:text-gray-300">
@@ -615,6 +701,51 @@ export default function PhotoConstructor() {
           />
         </div>
 
+        {/* Панель управления выделенным кадром — удобные кнопки под палец (44x44px min) */}
+        {selectedSlot !== null && slots[selectedSlot] && (
+          <div className="mx-auto mt-3 max-w-[420px] rounded-xl border-2 border-[#191715] bg-white px-3 py-2.5 shadow-md">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] font-semibold text-[#5C564E] shrink-0">
+                {lang === "ru" ? `Кадр ${selectedSlot + 1}` : `Cadrul ${selectedSlot + 1}`}
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => moveSlot(selectedSlot, -1)}
+                  disabled={selectedSlot === 0}
+                  aria-label={dict.home.moveLeft}
+                  className="h-11 w-11 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-base font-bold disabled:opacity-30 active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveSlot(selectedSlot, 1)}
+                  disabled={selectedSlot === MAX_SLOTS - 1}
+                  aria-label={dict.home.moveRight}
+                  className="h-11 w-11 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-base font-bold disabled:opacity-30 active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
+                >
+                  →
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReplaceSelected}
+                  className="h-11 px-3.5 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-[13px] font-semibold active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
+                >
+                  {dict.home.replace}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleRemoveSlot(selectedSlot, e)}
+                  className="h-11 px-3.5 rounded-lg border-2 border-[#B42318] bg-[#B42318] text-white text-[13px] font-semibold active:scale-95 flex items-center justify-center shrink-0"
+                >
+                  {dict.home.remove}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <p className="text-center text-[12px] text-[#6B6560] mt-3">
           {lang === "ru"
             ? "Плёнка с фото наматывается внутрь катушки — как в настоящем брелоке"
@@ -634,13 +765,17 @@ export default function PhotoConstructor() {
                     ? count === 0
                       ? "Добавьте от 6 до 10 фото · макет бесплатный"
                       : count < 6
-                        ? `Добавлено ${count} · рекомендуем 6–10, можно отправить сейчас`
-                        : `Добавлено ${count} · можно отправить на макет`
+                        ? `Добавлено ${count} из 6 (минимум) · ещё ${6 - count} фото`
+                        : count === 10
+                          ? "Все 10 фото добавлены · готово к заказу"
+                          : `Добавлено ${count} фото · можно оформить или добавить до 10`
                     : count === 0
                       ? "Adaugă de la 6 la 10 poze · macheta e gratuită"
                       : count < 6
-                        ? `Adăugate ${count} · recomandăm 6–10, poți trimite acum`
-                        : `Adăugate ${count} · poți cere macheta`}
+                        ? `Adăugate ${count} din 6 (minim) · încă ${6 - count} poze`
+                        : count === 10
+                          ? "Toate cele 10 poze adăugate · gata de comandă"
+                          : `Adăugate ${count} poze · poți comanda sau adăuga până la 10`}
                 </span>
                 <div
                   className="mt-2 h-1.5 w-full rounded-full bg-[#E8E0D0] overflow-hidden"
@@ -661,6 +796,7 @@ export default function PhotoConstructor() {
                 onClick={() => {
                   if (count < 6) {
                     track("builder_start");
+                    setActiveSlotIndex(null);
                     fileInputRef.current?.click();
                     return;
                   }
@@ -668,31 +804,35 @@ export default function PhotoConstructor() {
                   setTelegramFallback(null);
                   setIsModalOpen(true);
                 }}
-                className="w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg relative z-50 bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] active:bg-[#D4A000] shadow-[#FFC400]/40"
+                className="w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg relative z-50 bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] active:bg-[#D4A000] shadow-[#FFC400]/40 flex items-center justify-center min-h-[56px]"
               >
-                {count < 6
-                  ? (lang === "ru" ? `Ещё ${6 - count} фото до заказа` : `Încă ${6 - count} poze până la comandă`)
-                  : dict.home.ctaOrder}
+                {count === 0
+                  ? (lang === "ru" ? "Выбрать фото (минимум 6)" : "Alege pozele (minim 6)")
+                  : count < 6
+                    ? (lang === "ru" ? `Добавить ещё ${6 - count} фото (мин. 6)` : `Mai adaugă ${6 - count} poze (min. 6)`)
+                    : dict.home.ctaOrder}
               </button>
               {count === 0 && (
                 <p className="text-center text-[12px] text-gray-600 mt-2" aria-live="polite">
                   {lang === "ru"
-                    ? "Загрузите фото через конструктор — так быстрее всего получим макет"
-                    : "Încarcă pozele prin constructor — așa primim cel mai rapid macheta"}
+                    ? "Загрузите от 6 до 10 фото через конструктор — макет подготовим бесплатно"
+                    : "Încarcă de la 6 la 10 poze prin constructor — pregătim macheta gratuit"}
                 </p>
               )}
               {count > 0 && count < 6 && (
                 <p className="text-center text-[12px] text-gray-600 mt-2" aria-live="polite">
                   {lang === "ru"
-                    ? `Можно добавить ещё ${6 - count} фото — или отправить сейчас`
-                    : `Poți adăuga încă ${6 - count} poze — sau trimite acum`}
+                    ? `Для заказа нужно минимум 6 фото — добавьте ещё ${6 - count}`
+                    : `Pentru comandă sunt necesare minim 6 poze — mai adaugă ${6 - count}`}
                 </p>
               )}
-              <p className="text-center text-[12px] text-gray-600 mt-2">
-                {lang === "ru"
-                  ? "Макет бесплатно. Платите при получении."
-                  : "Machetă gratuită. Plătești la livrare."}
-              </p>
+              {count >= 6 && (
+                <p className="text-center text-[12px] text-gray-600 mt-2">
+                  {lang === "ru"
+                    ? "Макет бесплатно. Платите при получении."
+                    : "Machetă gratuită. Plătești la livrare."}
+                </p>
+              )}
             </>
           );
         })()}

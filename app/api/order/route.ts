@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Некорректные данные заказа" }, { status: 400 });
     }
 
-    const { name, phone, photoUrls, lang, delivery } = body as Record<string, unknown>;
+    const { name, phone, photoUrls, lang, delivery, marketingConsent } = body as Record<string, unknown>;
 
     if (typeof name !== "string" || !name.trim() || name.length > 120) {
       return NextResponse.json({ error: "Имя клиента обязательно" }, { status: 400 });
@@ -111,7 +111,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Телефон обязателен" }, { status: 400 });
     }
     if (!Array.isArray(photoUrls) || photoUrls.length < MIN_PHOTOS || photoUrls.length > MAX_PHOTOS) {
-      return NextResponse.json({ error: `Нужно от 1 до 10 фото` }, { status: 400 });
+      const errorMsg =
+        lang === "ro"
+          ? "Sunt necesare între 6 și 10 poze"
+          : "Нужно от 6 до 10 фото";
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
     }
 
     const cloudinaryUrls = photoUrls.map(getCloudinaryPhotoUrl);
@@ -257,26 +261,29 @@ export async function POST(request: Request) {
       );
     }
 
-    // Meta Conversions API: серверное событие с тем же event_id, что и пиксель
-    const rawIds = (body as Record<string, unknown>).metaEventIds;
-    const pickId = (v: unknown) =>
-      typeof v === "string" && v.length > 0 && v.length <= 64 ? v : undefined;
-    const eventIds =
-      rawIds && typeof rawIds === "object" && !Array.isArray(rawIds)
-        ? {
-            lead: pickId((rawIds as Record<string, unknown>).lead),
-            purchase: pickId((rawIds as Record<string, unknown>).purchase),
-          }
-        : {};
-    await sendCapiEvents({
-      orderId,
-      name: safeName,
-      phone: safePhone,
-      eventIds,
-      sourceUrl: request.headers.get("origin") || "https://photobrelok-site.vercel.app",
-      clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined,
-      userAgent: request.headers.get("user-agent") || undefined,
-    });
+    // Meta Conversions API — только с согласия на маркетинг. Без него ни IP,
+    // ни контакты клиента в Meta не передаются.
+    if (marketingConsent === true) {
+      const rawIds = (body as Record<string, unknown>).metaEventIds;
+      const pickId = (v: unknown) =>
+        typeof v === "string" && v.length > 0 && v.length <= 64 ? v : undefined;
+      const eventIds =
+        rawIds && typeof rawIds === "object" && !Array.isArray(rawIds)
+          ? {
+              lead: pickId((rawIds as Record<string, unknown>).lead),
+              purchase: pickId((rawIds as Record<string, unknown>).purchase),
+            }
+          : {};
+      await sendCapiEvents({
+        orderId,
+        name: safeName,
+        phone: safePhone,
+        eventIds,
+        sourceUrl: request.headers.get("origin") || "https://photobrelok-site.vercel.app",
+        clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined,
+        userAgent: request.headers.get("user-agent") || undefined,
+      });
+    }
 
     return NextResponse.json({ success: true, orderId });
   } catch (error) {

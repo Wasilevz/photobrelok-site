@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useLanguage } from "@/context/LanguageContext";
 import { DeliveryMethod } from "@/lib/i18n";
 
@@ -15,7 +16,7 @@ export interface DeliveryData {
 interface OrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData }) => void;
+  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean }) => void;
   isSubmitting: boolean;
 }
 
@@ -38,16 +39,29 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   const [novaPostBranch, setNovaPostBranch] = useState('');
   const [deliveryTouched, setDeliveryTouched] = useState(false);
 
+  const [dataConsent, setDataConsent] = useState(false);
+  const [photoConsent, setPhotoConsent] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      nameRef.current?.focus();
+      // Автофокус только на десктопе: на мобилке клавиатура сразу перекрывает поля формы
+      const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+      if (!isCoarsePointer) nameRef.current?.focus();
       const handleEscape = (e: KeyboardEvent) => {
         if (e.key === 'Escape') onClose();
       };
       document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      // Фон не должен прокручиваться под модалкой — иначе тапы «промахиваются» мимо полей
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+        document.body.style.overflow = prevOverflow;
+      };
     }
   }, [isOpen, onClose]);
 
@@ -76,11 +90,16 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   };
 
   const canSubmit =
-    !isSubmitting && name.trim() !== '' && phone.trim() !== '' && isDeliveryValid();
+    !isSubmitting && name.trim() !== '' && phone.trim() !== '' && isDeliveryValid() && dataConsent && photoConsent;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setDeliveryTouched(true);
+    if (!dataConsent || !photoConsent) {
+      setConsentError(true);
+      return;
+    }
+    setConsentError(false);
     if (!name.trim()) {
       setNameError(dict.orderModal.delivery.fieldRequired);
       return;
@@ -100,7 +119,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
       ? `${name.trim()} ${surname.trim()}`
       : name.trim();
 
-    onSubmit({ name: fullName, phone: phone.trim(), delivery });
+    onSubmit({ name: fullName, phone: phone.trim(), delivery, marketingConsent });
   };
 
   const methodCardClass = (m: DeliveryMethod) =>
@@ -111,16 +130,17 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
     }`;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#191715]/70 p-4 overflow-y-auto" onClick={onClose}>
-      <div
-        className="bg-[#FFFDF8] border-2 border-[#191715] rounded-2xl p-8 w-full max-w-2xl shadow-2xl relative my-8"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="order-modal-title"
-      >
+    <div className="fixed inset-0 z-[10000] overflow-y-auto overscroll-contain bg-[#191715]/70" onClick={onClose}>
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+        <div
+          className="bg-[#FFFDF8] border-2 border-[#191715] rounded-2xl p-5 sm:p-8 w-full max-w-2xl shadow-2xl relative my-auto"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="order-modal-title"
+        >
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-[#7A7368] hover:text-[#191715] text-xl font-bold w-11 h-11 flex items-center justify-center rounded-full hover:bg-[#F5F1E8] transition-colors"
@@ -207,7 +227,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                       value={surname}
                       onChange={(e) => setSurname(e.target.value)}
                       placeholder={d.surnamePlaceholder}
-                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-base focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -222,7 +242,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                         value={postalCode}
                         onChange={(e) => setPostalCode(e.target.value)}
                         placeholder={d.postalCodePlaceholder}
-                        className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                        className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-base focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                       />
                     </div>
                     <div>
@@ -234,7 +254,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                         value={district}
                         onChange={(e) => setDistrict(e.target.value)}
                         placeholder={d.districtPlaceholder}
-                        className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                        className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-base focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                       />
                     </div>
                   </div>
@@ -249,7 +269,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder={d.cityPlaceholder}
-                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-base focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                     />
                   </div>
                   <div>
@@ -262,7 +282,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
                       placeholder={d.streetPlaceholder}
-                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                      className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-base focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                     />
                   </div>
                   </div>
@@ -285,7 +305,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
                     value={novaPostBranch}
                     onChange={(e) => setNovaPostBranch(e.target.value)}
                     placeholder={d.branchPlaceholder}
-                    className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-sm focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
+                    className="w-full bg-white border border-[#D9D0BF] rounded-lg px-3 py-2.5 text-[#191715] text-base focus:outline-none focus:border-[#FFC400] focus:ring-1 focus:ring-[#FFC400]"
                   />
                 </div>
               )}
@@ -310,6 +330,62 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
             )}
           </div>
 
+          <div className="mt-2 rounded-2xl border border-[#E5DCCB] bg-[#F5F1E8] p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={dataConsent}
+                onChange={(e) => {
+                  setDataConsent(e.target.checked);
+                  setConsentError(false);
+                }}
+                className="mt-0.5 size-5 shrink-0 accent-[#191715] cursor-pointer"
+              />
+              <span className="text-[13px] leading-relaxed text-[#3D3832]">
+                {dict.orderModal.consent.dataLabel}
+              </span>
+            </label>
+            <Link
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-8 mt-1 inline-block min-h-[24px] text-[12px] font-semibold text-[#191715] underline underline-offset-2 hover:text-[#E6B000]"
+            >
+              {dict.orderModal.consent.dataLink}
+            </Link>
+
+            <label className="mt-3 flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={photoConsent}
+                onChange={(e) => {
+                  setPhotoConsent(e.target.checked);
+                  setConsentError(false);
+                }}
+                className="mt-0.5 size-5 shrink-0 accent-[#191715] cursor-pointer"
+              />
+              <span className="text-[13px] leading-relaxed text-[#3D3832]">
+                {dict.orderModal.consent.photoLabel}
+              </span>
+            </label>
+
+            <label className="mt-3 flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={marketingConsent}
+                onChange={(e) => setMarketingConsent(e.target.checked)}
+                className="mt-0.5 size-5 shrink-0 accent-[#191715] cursor-pointer"
+              />
+              <span className="text-[13px] leading-relaxed text-[#5C564E]">
+                {dict.orderModal.consent.marketingLabel}
+              </span>
+            </label>
+
+            {consentError && (
+              <p className="mt-2 text-[#B42318] text-xs">{dict.orderModal.consent.requiredHint}</p>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={!canSubmit}
@@ -327,6 +403,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
               : "Machetă gratuită · plata la livrare · fără avans"}
           </p>
         </form>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import MetaPixel from "@/components/MetaPixel";
+import CookieBanner from "@/components/CookieBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,7 +43,6 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <head>
-        <MetaPixel />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -52,7 +52,11 @@ export default function RootLayout({
         <link rel="stylesheet" href="/landing.css" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          {children}
+          <MetaPixel />
+          <CookieBanner />
+        </LanguageProvider>
       </body>
     </html>
   );
