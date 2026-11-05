@@ -13,14 +13,21 @@ export interface DeliveryData {
   novaPostBranch?: string;
 }
 
+export interface UploadProgress {
+  uploaded: number;
+  total: number;
+  stage: 'uploading' | 'finishing';
+}
+
 interface OrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean }) => void;
   isSubmitting: boolean;
+  uploadProgress?: UploadProgress | null;
 }
 
-export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: OrderModalProps) {
+export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, uploadProgress }: OrderModalProps) {
   const { dict, lang } = useLanguage();
   const d = dict.orderModal.delivery;
 
@@ -389,16 +396,72 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
             )}
           </div>
 
+          {isSubmitting && (
+            <div className="mt-2 p-4 rounded-xl bg-[#F5F1E8] border-2 border-[#191715] flex flex-col gap-2.5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-xs font-bold text-[#191715]">
+                <span className="flex items-center gap-2">
+                  <span className="inline-block size-3.5 rounded-full border-2 border-[#191715] border-t-transparent animate-spin" />
+                  {uploadProgress?.stage === 'finishing'
+                    ? (lang === 'ru' ? 'Оформляем заказ...' : 'Finalizăm comanda...')
+                    : uploadProgress && uploadProgress.total > 0
+                      ? (lang === 'ru'
+                          ? `Загрузка фото: ${uploadProgress.uploaded} из ${uploadProgress.total}`
+                          : `Se încarcă pozele: ${uploadProgress.uploaded} din ${uploadProgress.total}`)
+                      : (lang === 'ru' ? 'Подготовка к отправке...' : 'Pregătire pentru trimitere...')}
+                </span>
+                <span className="text-xs font-bold tabular-nums">
+                  {uploadProgress && uploadProgress.total > 0
+                    ? uploadProgress.stage === 'finishing'
+                      ? '100%'
+                      : `${Math.min(95, Math.round((uploadProgress.uploaded / uploadProgress.total) * 100))}%`
+                    : '...'}
+                </span>
+              </div>
+              <div className="w-full h-3 bg-white rounded-full overflow-hidden border border-[#D9D0BF] p-0.5">
+                <div
+                  className="h-full bg-[#FFC400] rounded-full transition-all duration-300 ease-out"
+                  style={{
+                    width: `${
+                      uploadProgress && uploadProgress.total > 0
+                        ? uploadProgress.stage === 'finishing'
+                          ? 100
+                          : Math.max(8, Math.min(95, Math.round((uploadProgress.uploaded / uploadProgress.total) * 100)))
+                        : 15
+                    }%`,
+                  }}
+                />
+              </div>
+              <p className="text-[11px] text-[#7A7368] text-center leading-tight">
+                {lang === 'ru'
+                  ? 'Пожалуйста, не закрывайте вкладку — фото отправляются на печать'
+                  : 'Vă rugăm să nu închideți pagina — pozele se trimit pentru tipar'}
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={!canSubmit}
-              className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all min-h-[52px] ${
-                !canSubmit
-                  ? "bg-[#E8E0D0] text-[#7A7368] cursor-not-allowed"
-                  : "bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] border-2 border-[#191715] active:scale-[0.98] shadow-lg shadow-[#FFC400]/35"
-              }`}
+            disabled={!canSubmit || isSubmitting}
+            className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all min-h-[52px] ${
+              !canSubmit || isSubmitting
+                ? "bg-[#E8E0D0] text-[#7A7368] cursor-not-allowed"
+                : "bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] border-2 border-[#191715] active:scale-[0.98] shadow-lg shadow-[#FFC400]/35"
+            }`}
           >
-            {isSubmitting ? dict.orderModal.submitting : dict.orderModal.submit}
+            {isSubmitting ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <span className="inline-block size-4 rounded-full border-2 border-[#7A7368] border-t-transparent animate-spin" />
+                {uploadProgress?.stage === 'finishing'
+                  ? (lang === 'ru' ? 'Оформляем...' : 'Finalizăm...')
+                  : uploadProgress && uploadProgress.total > 0
+                    ? (lang === 'ru'
+                        ? `Загружено ${uploadProgress.uploaded} из ${uploadProgress.total}`
+                        : `Încărcat ${uploadProgress.uploaded} din ${uploadProgress.total}`)
+                    : dict.orderModal.submitting}
+              </span>
+            ) : (
+              dict.orderModal.submit
+            )}
           </button>
           <p className="text-center text-[12px] text-[#7A7368] -mt-1">
             {lang === "ru"

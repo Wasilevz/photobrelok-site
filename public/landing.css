@@ -4849,3 +4849,37 @@ a { color: inherit; }
   border: none;
   display: block;
 }
+/* Price Anchoring Styles */
+.pb .hero-price-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pb .hero-price-anchor-icon {
+  font-size: 14px;
+}
+.pb .offer-price-anchor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 10px auto 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(25, 23, 21, 0.08);
+  border: 1px solid rgba(25, 23, 21, 0.14);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+}

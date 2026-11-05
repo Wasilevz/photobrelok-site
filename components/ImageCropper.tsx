@@ -62,9 +62,17 @@ export default function ImageCropper({ imageSrc, onCropDone, onSkip, onCancel, c
     <div className="fixed inset-0 z-[10000] flex flex-col bg-black" style={{ height: "100dvh" }}>
       <div className="relative flex-1 min-h-0 w-full">
         {total !== undefined && total > 1 && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/70 text-white text-xs font-medium px-3 py-1.5 rounded-full">
-            {dict.cropper.progress(currentIndex ?? 1, total)}
-          </div>
+          <>
+            <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 z-20">
+              <div
+                className="h-full bg-[#FFC400] transition-all duration-300"
+                style={{ width: `${((currentIndex ?? 1) / total) * 100}%` }}
+              />
+            </div>
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/70 text-white text-xs font-medium px-3 py-1.5 rounded-full">
+              {dict.cropper.progress(currentIndex ?? 1, total)}
+            </div>
+          </>
         )}
         <Cropper
           image={imageSrc}

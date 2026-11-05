@@ -239,6 +239,10 @@ export default function Landing() {
                 <div className="hero-price-block">
                   <div className="hero-price">{t.heroPrice}</div>
                   <p className="hero-price-note">{t.heroPriceNote}</p>
+                  <p className="hero-price-anchor">
+                    <span className="hero-price-anchor-icon" aria-hidden="true">💐</span>
+                    <span>{t.priceAnchor}</span>
+                  </p>
                 </div>
                 <div className="offer-divider" />
                 <ul className="offer-list offer-list-plain hero-feats">
@@ -404,6 +408,10 @@ export default function Landing() {
                 <p className="offer-eyebrow">{t.priceTitle}</p>
                 <div className="offer-price">{t.priceBig}</div>
                 <p className="offer-tagline">{t.priceText}</p>
+                <p className="offer-price-anchor">
+                  <span aria-hidden="true">💐</span>
+                  <span>{t.priceAnchor}</span>
+                </p>
                 <div className="offer-divider" />
                 <ul className="offer-list">
                   <li>

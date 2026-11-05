@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import ImageCropper from "@/components/ImageCropper";
 import OrderModal from "@/components/OrderModal";
-import type { DeliveryData } from "@/components/OrderModal";
+import type { DeliveryData, UploadProgress } from "@/components/OrderModal";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from "@/context/LanguageContext";
 import { telegramLink } from "@/lib/contacts";
@@ -28,6 +28,8 @@ export default function PhotoConstructor() {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+  const [isReadingFiles, setIsReadingFiles] = useState(false);
   const [scrollThumb, setScrollThumb] = useState({ width: 0.4, left: 0 });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showError, setShowError] = useState<string | null>(null);
@@ -108,7 +110,9 @@ export default function PhotoConstructor() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const fileArray = Array.from(files);
+    setIsReadingFiles(true);
+    try {
+      const fileArray = Array.from(files);
     e.target.value = "";
 
     // Дедупликация: фото, которое уже есть в слотах или встречается в этой же пачке, пропускаем
@@ -155,6 +159,9 @@ export default function PhotoConstructor() {
     if (queue.length === 0) return;
     setCropQueue(queue);
     setTotalInBatch(queue.length);
+    } finally {
+      setIsReadingFiles(false);
+    }
   };
 
   const handleCropDone = (croppedImageUrl: string) => {
@@ -340,6 +347,9 @@ export default function PhotoConstructor() {
         );
       }
 
+      setUploadProgress({ uploaded: 0, total: filled.length, stage: "uploading" });
+
+      let uploadedCounter = 0;
       const photoUrls: string[] = [];
       const uploadOne = async (blobUrl: string) => {
         const res = await fetch(blobUrl);
@@ -353,6 +363,8 @@ export default function PhotoConstructor() {
         );
         const data = await cloudRes.json();
         if (!cloudRes.ok) throw new Error(dict.errors.uploadFailed);
+        uploadedCounter += 1;
+        setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
         return data.secure_url as string;
       };
 
@@ -362,6 +374,8 @@ export default function PhotoConstructor() {
         const urls = await Promise.all(chunk.map(uploadOne));
         photoUrls.push(...urls);
       }
+
+      setUploadProgress({ uploaded: filled.length, total: filled.length, stage: "finishing" });
 
       const metaEventIds = { lead: metaEventId(), purchase: metaEventId() };
       const apiRes = await fetch("/api/order", {
@@ -400,6 +414,7 @@ export default function PhotoConstructor() {
       router.push(`/thanks?orderId=${orderId}`);
 
     } catch (err: unknown) {
+      setUploadProgress(null);
       const msg = err instanceof Error ? err.message : dict.errors.unknown;
       setShowError(msg);
       setTelegramFallback(
@@ -411,6 +426,7 @@ export default function PhotoConstructor() {
       );
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(null);
     }
   };
 
@@ -431,6 +447,12 @@ export default function PhotoConstructor() {
       {/* Title/subtitle/price live in the landing section above — keep constructor UI only */}
 
       {/* Film strip + Kodak canister: film feeds into the keychain body */}
+      {isReadingFiles && (
+        <div className="max-w-md mx-auto mb-4 px-4 py-3 bg-[#FFC400]/25 border-2 border-[#191715] rounded-xl flex items-center justify-center gap-2.5 text-xs font-bold text-[#191715] animate-pulse shadow-sm">
+          <span className="inline-block size-3.5 rounded-full border-2 border-[#191715] border-t-transparent animate-spin" />
+          <span>{lang === "ru" ? "Обработка выбранных фото..." : "Se procesează pozele selectate..."}</span>
+        </div>
+      )}
       <div className="relative w-full max-w-none w-full mx-auto mt-10 sm:mt-10 px-2 sm:px-4 pt-2">
         {/* Stage: film track + canister as one object */}
         <div className="relative pb-stage">
@@ -856,9 +878,12 @@ export default function PhotoConstructor() {
             {isModalOpen && (
               <OrderModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                  if (!isSubmitting) setIsModalOpen(false);
+                }}
                 onSubmit={handleFinalSubmit}
                 isSubmitting={isSubmitting}
+                uploadProgress={uploadProgress}
               />
             )}
           </>,
