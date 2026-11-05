@@ -15,16 +15,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "https://photobrelok-site.vercel.app");
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://photobrelok.md"
-  ),
+  metadataBase: new URL(siteUrl),
   title: "PHOTOBRELOK — подарок с вашими фото на плёнке Kodak",
   description:
-    "Подарите день, который захочется пережить снова: брелок из катушки Kodak с 6–10 вашими фото. Макет бесплатно, оплата при получении, 1–2 дня.",
+    "Подарите день, который захочется пережить снова: брелок из катушки Kodak с 6–10 вашими фото. 250 лей. Макет бесплатно, оплата при получении, 1–2 дня.",
   openGraph: {
-    title: "PHOTOBRELOK — 6–10 кадров вашей истории",
-    description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 MDL, макет до оплаты.",
+    title: "PHOTOBRELOK — 10 фото в 1 брелоке Kodak",
+    description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 лей, бесплатный макет до оплаты.",
+    url: siteUrl,
+    siteName: "PHOTOBRELOK",
+    locale: "ru_RU",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1353,
+        height: 748,
+        alt: "Фотобрелок из катушки Kodak с вашими фото",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PHOTOBRELOK — 10 фото в 1 брелоке Kodak",
+    description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 лей, бесплатный макет до оплаты.",
     images: ["/opengraph-image.png"],
   },
 };
