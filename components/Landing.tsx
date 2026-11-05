@@ -34,9 +34,22 @@ function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
       video.pause();
       return;
     }
-    video.play().then(() => track("video_play")).catch(() => {
-      /* autoplay blocked — user can tap play */
-    });
+    video.play().then(() => track("video_play")).catch(() => {});
+
+    if (typeof IntersectionObserver !== "undefined") {
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        },
+        { threshold: 0.15 }
+      );
+      io.observe(video);
+      return () => io.disconnect();
+    }
   }, []);
 
   const toggleMute = () => {
@@ -167,6 +180,7 @@ export default function Landing() {
   const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
   const [ytReady, setYtReady] = useState(false);
+  const howVideoRef = useRef<HTMLDivElement>(null);
   // Open price (index 1) + guarantee (index 3) FAQs — these are the top conversion objections
   const [openFaq, setOpenFaq] = useState<number[]>([1, 3]);
   const builderRef = useRef<HTMLElement>(null);
@@ -181,6 +195,22 @@ export default function Landing() {
     );
     io.observe(el);
 
+    // Auto-play how-to video as soon as user scrolls down to it
+    const videoEl = howVideoRef.current;
+    let videoIo: IntersectionObserver | null = null;
+    if (videoEl) {
+      videoIo = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setYtReady(true);
+            videoIo?.disconnect();
+          }
+        },
+        { threshold: 0.25 }
+      );
+      videoIo.observe(videoEl);
+    }
+
     const onSlots = (e: Event) => {
       const detail = (e as CustomEvent<number>).detail;
       if (typeof detail === "number") setPhotoCount(detail);
@@ -188,6 +218,7 @@ export default function Landing() {
     window.addEventListener("photobrelok_slots", onSlots);
     return () => {
       io.disconnect();
+      videoIo?.disconnect();
       window.removeEventListener("photobrelok_slots", onSlots);
     };
   }, []);
@@ -587,10 +618,10 @@ export default function Landing() {
             <h2>{t.howUseTitle}</h2>
             <p className="lead">{t.howUseLead}</p>
 
-            <div className="video-shell">
+            <div className="video-shell" ref={howVideoRef}>
               {ytReady ? (
                 <iframe
-                  src="https://www.youtube-nocookie.com/embed/ghOptgciqEU?rel=0&modestbranding=1&playsinline=1&autoplay=1"
+                  src="https://www.youtube-nocookie.com/embed/ghOptgciqEU?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=ghOptgciqEU"
                   title={t.howUseTitle}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
