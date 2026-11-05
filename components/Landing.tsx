@@ -166,8 +166,9 @@ export default function Landing() {
   const occasions = occasionCopy[lang];
   const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
-  // Open delivery + timing FAQs by default so key terms are visible without a tap
-  const [openFaq, setOpenFaq] = useState<number[]>([2, 6, 7]);
+  const [ytReady, setYtReady] = useState(false);
+  // Open price (index 1) + guarantee (index 3) FAQs — these are the top conversion objections
+  const [openFaq, setOpenFaq] = useState<number[]>([1, 3]);
   const builderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -331,6 +332,12 @@ export default function Landing() {
             </div>
 
             <p className="memories-hint">{t.reviewsHint}</p>
+            <div style={{ textAlign: "center", marginTop: 32 }}>
+              <button type="button" className="hero-cta-btn" onClick={scrollToBuilder} style={{ display: "inline-flex" }}>
+                <span>{t.reviewsCta}</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -366,7 +373,7 @@ export default function Landing() {
                           el?.scrollIntoView({ behavior: "smooth", block: "start" });
                         }}
                       >
-                        {lang === "ru" ? "Выбрать" : "Alege"}
+                        {lang === "ru" ? `Создать — ${item.title.toLowerCase()}` : `Creează — ${item.title.toLowerCase()}`}
                       </button>
                     </div>
                   </figcaption>
@@ -380,6 +387,12 @@ export default function Landing() {
           <div className="wrap center">
             <h2>{t.giftTitle}</h2>
             <p className="lead">{t.giftLead}</p>
+            <div style={{ marginTop: 32 }}>
+              <button type="button" className="hero-cta-btn" onClick={scrollToBuilder} style={{ display: "inline-flex" }}>
+                <span>{t.giftCta}</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -481,7 +494,7 @@ export default function Landing() {
             </div>
 
             <a
-              className="offer-tg"
+              className="offer-tg offer-tg-btn"
               href={telegramLink(
                 lang === "ru"
                   ? "Здравствуйте! Хочу такой брелок."
@@ -491,6 +504,7 @@ export default function Landing() {
               rel="noopener noreferrer"
               onClick={() => track("telegram_click", { source: "price_secondary" })}
             >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
               {lang === "ru" ? "Написать в Telegram" : "Scrie pe Telegram"}
             </a>
 
@@ -566,14 +580,35 @@ export default function Landing() {
             <p className="lead">{t.howUseLead}</p>
 
             <div className="video-shell">
-              <iframe
-                src="https://www.youtube-nocookie.com/embed/ghOptgciqEU?rel=0&modestbranding=1&playsinline=1"
-                title={t.howUseTitle}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
+              {ytReady ? (
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/ghOptgciqEU?rel=0&modestbranding=1&playsinline=1&autoplay=1"
+                  title={t.howUseTitle}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="yt-facade"
+                  onClick={() => setYtReady(true)}
+                  aria-label={lang === "ru" ? "Смотреть видео" : "Vizionează videoclipul"}
+                >
+                  <img
+                    src="https://i.ytimg.com/vi/ghOptgciqEU/hqdefault.jpg"
+                    alt={t.howUseTitle}
+                    loading="lazy"
+                    className="yt-facade-thumb"
+                  />
+                  <span className="yt-facade-play" aria-hidden="true">
+                    <svg viewBox="0 0 68 48" width="68" height="48">
+                      <path d="M66.5 7.7a8.5 8.5 0 00-6-6C55.8 0 34 0 34 0S12.2 0 7.5 1.7a8.5 8.5 0 00-6 6C0 12.4 0 24 0 24s0 11.6 1.5 16.3a8.5 8.5 0 006 6C12.2 48 34 48 34 48s21.8 0 26.5-1.7a8.5 8.5 0 006-6C68 35.6 68 24 68 24s0-11.6-1.5-16.3z" fill="#f00"/>
+                      <path d="M27 34l18-10-18-10v20z" fill="#fff"/>
+                    </svg>
+                  </span>
+                </button>
+              )}
             </div>
 
             <p className="video-hint">{t.howUseHint}</p>
@@ -720,9 +755,11 @@ export default function Landing() {
         <div className="mobile-cta-price">
           <div className="mobile-cta-amount">{t.priceChip}</div>
           <div className="mobile-cta-note">
-            {photoCount > 0
+            {photoCount >= 6
               ? (lang === "ru" ? `Фото: ${photoCount} · макет бесплатно` : `Poze: ${photoCount} · machetă gratuită`)
-              : t.mobileCtaNote}
+              : photoCount > 0
+                ? (lang === "ru" ? `Добавьте ещё ${6 - photoCount} фото` : `Adaugă încă ${6 - photoCount} poze`)
+                : t.mobileCtaNote}
           </div>
         </div>
         <button type="button" className="hero-cta-btn mobile-cta-button" onClick={scrollToBuilder}>

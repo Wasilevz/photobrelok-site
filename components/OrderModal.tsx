@@ -45,6 +45,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
   const [consentError, setConsentError] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
+  const consentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -97,11 +98,13 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
     setDeliveryTouched(true);
     if (!dataConsent || !photoConsent) {
       setConsentError(true);
+      consentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     setConsentError(false);
     if (!name.trim()) {
       setNameError(dict.orderModal.delivery.fieldRequired);
+      nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     setNameError('');
@@ -330,7 +333,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting }: 
             )}
           </div>
 
-          <div className="mt-2 rounded-2xl border border-[#E5DCCB] bg-[#F5F1E8] p-4">
+          <div ref={consentRef} className="mt-2 rounded-2xl border border-[#E5DCCB] bg-[#F5F1E8] p-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
