@@ -7,7 +7,7 @@ export const PRICE_MDL = 250;
 export const MIN_PHOTOS = 1;
 export const MAX_PHOTOS = 10;
 export const LEAD_TIME = "1–2 дня";
-export const WORK_HOURS = "09:00–23:00";
+export const WORK_HOURS = "12:00–21:00";
 
 /** Messengers — same number. Instagram handle: confirm with owner if it differs. */
 export const WHATSAPP_URL = "https://wa.me/37378238455";

@@ -116,7 +116,7 @@ export function buildDeliveryText(method: DeliveryMethod, d: DeliveryDetails = {
     case "taxi":
       return `🚚 Способ получения: Такси по Кишинёву\n🏠 Адрес: ${d.address}`;
     case "pickup":
-      return "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (09:00–23:00)";
+      return "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (12:00–21:00)";
     default:
       return "🚚 Способ получения: клиент уточнит после макета";
   }
@@ -205,7 +205,25 @@ export function readUpsellToken(token: unknown, orderId: string): UpsellPayload 
   }
 }
 
-export const UPSELL_CAPTION_LINE = "🔥 АПСЕЛЛ: клиент добавил 2-й такой же брелок (−40%, 150 лей). Положите 2 шт.";
+const UPSELL_MARK = "АПСЕЛЛ";
+
+/**
+ * Делает апселл заметным с первого взгляда: тег в заголовке (виден и в списке чатов)
+ * и яркий блок сразу под ним. Блок едет вместе с заказом по темам, потому что бот
+ * переносит подпись целиком. Повторный вызов подпись не меняет.
+ */
+export function withUpsell(caption: string): string {
+  if (caption.includes(UPSELL_MARK)) return caption;
+  const [first, ...rest] = caption.split("\n");
+  const block = [
+    "━━━━━━━━━━━━━━━",
+    "⚠️⚠️ АПСЕЛЛ: ВТОРОЙ БРЕЛОК! ⚠️⚠️",
+    "➕ Положите в заказ 2 шт. одинаковых брелка",
+    "💰 Брелки: 250 + 150 (−40%) = 400 лей, плюс доставка",
+    "━━━━━━━━━━━━━━━",
+  ];
+  return [`${first} — ⚠️ 2 БРЕЛКА`, ...block, ...rest].join("\n").slice(0, 1000);
+}
 
 /* --------------------------------- Кнопки --------------------------------- */
 

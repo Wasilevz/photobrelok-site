@@ -2363,35 +2363,6 @@ a { color: inherit; }
   object-fit: cover !important;
 }
 
-/* Urgency module */
-.pb .urgency-banner {
-  background: var(--ink);
-  color: var(--accent);
-  font-family: var(--font);
-  font-size: 13px;
-  line-height: 1.35;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid rgba(255, 196, 0, 0.25);
-}
-
-.pb .urgency-banner-inner {
-  padding: 8px 0;
-  text-align: center;
-}
-
-.pb .urgency-count {
-  white-space: nowrap;
-}
-
-.pb .tnum {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
-  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
-  font-weight: 700;
-}
-
 .pb .hero-cta-note {
   margin: 8px 0 0;
   font-size: 13px;
@@ -2421,16 +2392,6 @@ a { color: inherit; }
   margin: 14px 0 0;
   font-size: 13px;
   opacity: 0.75;
-}
-
-@media (max-width: 767px) {
-  .pb .urgency-banner {
-    font-size: 12px;
-    min-height: 32px;
-  }
-  .pb .urgency-banner-inner {
-    padding: 6px 0;
-  }
 }
 
 /* Audit: hero terms, occasion rail, chips, badges */
@@ -2750,12 +2711,6 @@ a { color: inherit; }
 .pb .faq-item { border-bottom-color: var(--line); }
 
 .pb .faq-q { font-size: 16px; }
-
-.pb .urgency-banner {
-  background: #28231B;
-  color: #E8C56C;
-  border-bottom-color: rgba(232, 197, 108, 0.25);
-}
 
 .pb .mobile-cta {
   background: rgba(255, 252, 246, 0.97);
