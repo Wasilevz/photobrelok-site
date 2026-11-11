@@ -19,7 +19,7 @@ function notifyUpsell(orderId: string, ref: { chatId: string; messageId: number;
     try {
       const sent = await tg<{ message_id: number }>("sendMessage", {
         chat_id: ref.chatId,
-        text: `⚠️ К заказу #${orderId} добавлен ВТОРОЙ БРЕЛОК. Смотрите блок «АПСЕЛЛ» в заказе.`,
+        text: `⚠️ К заказу #${orderId} добавлен ВТОРОЙ БРЕЛОК. Смотрите заказ.`,
         reply_parameters: { message_id: ref.messageId, allow_sending_without_reply: true },
         ...(ref.threadId !== undefined ? { message_thread_id: ref.threadId } : {}),
       });
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
               chat_id: ref.chatId,
               message_id: ref.messageId,
               caption,
-              ...(withKeyboard ? { reply_markup: { inline_keyboard: keyboard("work", topics) } } : {}),
+              ...(withKeyboard ? { reply_markup: { inline_keyboard: keyboard("work", topics, true) } } : {}),
             });
             return "edited";
           } catch (error) {
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     }
 
     // Never forward arbitrary user-supplied text to the internal Telegram chat.
-    const text = `⚠️⚠️ <b>АПСЕЛЛ! Заявка #${orderId}</b> ⚠️⚠️\nКлиент добавил второй брелок со скидкой 40% (150 лей).\n<b>Положите 2 шт. в заказ.</b>`;
+    const text = `⚠️ <b>ВТОРОЙ БРЕЛОК к заказу #${orderId}</b>\nПоложите в заказ 2 штуки.\nСтоимость: 400 лей плюс доставка`;
     const results = await Promise.allSettled(
       recipients.map(async ({ chatId, threadId }) => {
         const base = { chat_id: chatId, text, parse_mode: "HTML" };
