@@ -202,7 +202,8 @@
 .pb2 .offer-second { margin: 10px 0 0; font-size: 15px; line-height: 1.45; font-weight: 500; }
 .pb2 .v2-pay { margin: 12px 0 0; font-size: 15px; line-height: 1.45; }
 .pb2 .offer-chat-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
-.pb2 .offer-chat-links .offer-tg { margin-top: 0; }
+.pb2 .offer-chat-links { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+.pb2 .offer-chat-links .offer-tg { margin-top: 0; white-space: nowrap; }
 
 /* 7. Финал */
 .pb2 .v2-final .final-phone { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
