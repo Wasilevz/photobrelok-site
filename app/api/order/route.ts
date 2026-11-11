@@ -152,7 +152,14 @@ export async function POST(request: Request) {
     }
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatIds = (process.env.TELEGRAM_CHAT_ID || "").split(",").map((id) => id.trim()).filter(Boolean);
+    const topics = getTopicConfig();
+    // Группа с темами получает заказ всегда, даже если её нет в TELEGRAM_CHAT_ID.
+    const chatIds = [
+      ...new Set([
+        ...(process.env.TELEGRAM_CHAT_ID || "").split(",").map((id) => id.trim()).filter(Boolean),
+        ...(topics ? [topics.chatId] : []),
+      ]),
+    ];
     if (!token || chatIds.length === 0) {
       console.error("Order delivery is not configured: missing Telegram token or chat ID");
       return NextResponse.json({ error: "Не удалось принять заказ. Попробуйте позже или свяжитесь с нами напрямую." }, { status: 500 });
@@ -236,8 +243,6 @@ export async function POST(request: Request) {
     const captionText = `🔥 Новый заказ #${orderId}\n👤 Клиент: ${safeName}\n📞 Тел: ${safePhone}\n📸 Фотографий: ${numPhotos} шт.\n${deliveryText}${langNote}`;
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
-    const topics = getTopicConfig();
-
     let deliveredToAtLeastOne = false;
     for (const chatId of chatIds) {
       const tgFormData = new FormData();
