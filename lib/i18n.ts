@@ -41,6 +41,10 @@ export interface Dict {
     phoneLabel: string;
     phonePlaceholder: string;
     phoneError: string;
+    nameError: string;
+    phoneRequired: string;
+    phoneHint: string;
+    unsavedConfirm: string;
     submitting: string;
     submit: string;
     close: string;
@@ -163,7 +167,11 @@ export const translations: Record<Locale, Dict> = {
       namePlaceholder: "Николай",
       phoneLabel: "Номер телефона",
       phonePlaceholder: "60 123 456",
-      phoneError: "Формат: 60 123 456",
+      phoneError: "Проверьте номер: нужно 8–15 цифр, например 60 123 456",
+      nameError: "Введите имя, чтобы мы знали, как к вам обращаться",
+      phoneRequired: "Введите телефон, мы свяжемся по поводу макета",
+      phoneHint: "Например: 60 123 456 или +373 60 123 456",
+      unsavedConfirm: "Закрыть форму? Введённые данные будут потеряны.",
       submitting: "Отправка...",
       submit: "Получить бесплатный макет",
       close: "Закрыть",
@@ -289,7 +297,11 @@ export const translations: Record<Locale, Dict> = {
       namePlaceholder: "Ion",
       phoneLabel: "Număr de telefon",
       phonePlaceholder: "069 123 456",
-      phoneError: "Format: 069 123 456",
+      phoneError: "Verifică numărul: 8–15 cifre, de exemplu 069 123 456",
+      nameError: "Introdu numele, ca să știm cum să ne adresăm",
+      phoneRequired: "Introdu telefonul, te contactăm pentru machetă",
+      phoneHint: "De exemplu: 069 123 456 sau +373 69 123 456",
+      unsavedConfirm: "Închizi formularul? Datele introduse se vor pierde.",
       submitting: "Se trimite...",
       submit: "Primește macheta gratuită",
       close: "Închide",
