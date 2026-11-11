@@ -35,6 +35,8 @@ const lora = Lora({
 
 type Lang = "ru" | "ro";
 
+// Ленты работ и отзывов: у всех кадров одна высота, у каждой группы один формат (без разнобоя)
+// Студийные кадры на белом, формат 3:2
 const examples = [
   { src: "/images/card-love.jpg", alt: "Пара с брелком-плёнкой / Pereche cu breloc-film" },
   { src: "/images/card-family.jpg", alt: "Семейные фото на плёнке / Poze de familie pe film" },
@@ -42,21 +44,24 @@ const examples = [
   { src: "/images/card-achievement.jpg", alt: "Брелок с фото выпускников / Breloc absolvire" },
 ];
 
+// Фотографии брелоков, формат 4:5 (обрезка по краям, главное в кадре сохранено)
 const gallery = [
-  { src: "/images/gallery-1.jpg", alt: "Брелки на красной ткани со свечами / Brelocuri pe pânză roșie" },
-  { src: "/images/gallery-2.jpg", alt: "Брелок-плёнка в руках / Breloc-film în mâini" },
-  { src: "/images/gallery-3.jpg", alt: "Брелки-катушки на фоне цветов / Brelocuri lângă flori" },
-  { src: "/images/gallery-4.jpg", alt: "Брелок с фото в руках / Breloc cu poze în mâini" },
-  { src: "/images/gallery-5.jpg", alt: "Плёнка с семейными фото / Film cu poze de familie" },
+  { src: "/images/gallery-1.jpg", pos: "50% 50%", alt: "Брелки на красной ткани со свечами / Brelocuri pe pânză roșie" },
+  { src: "/images/gallery-2.jpg", pos: "50% 40%", alt: "Брелок-плёнка в руках / Breloc-film în mâini" },
+  { src: "/images/gallery-3.jpg", pos: "50% 45%", alt: "Брелки-катушки на фоне цветов / Brelocuri lângă flori" },
+  { src: "/images/gallery-4.jpg", pos: "50% 45%", alt: "Брелок с фото в руках / Breloc cu poze în mâini" },
+  { src: "/images/gallery-5.jpg", pos: "50% 50%", alt: "Плёнка с семейными фото / Film cu poze de familie" },
 ];
 
+// Отзывы: скриншоты сторис в одинаковых рамках 9:16 без обрезки. Поля, если нужны, закрашены цветом
+// верхнего и нижнего края самого скриншота (замерены по файлу).
 const reviewShots = [
-  { src: "/images/reviews/img_4352.jpg", alt: "Сторис клиента: брелок-плёнка / Story client: breloc-film" },
-  { src: "/images/reviews/img_4353.jpg", alt: "Отзыв: упаковка и брелок-плёнка / Recenzie: ambalaj și breloc-film" },
-  { src: "/images/reviews/img_4354.jpg", alt: "Клиентка с брелком-плёнкой / Clientă cu breloc-film" },
-  { src: "/images/reviews/img_4356.jpg", alt: "Сообщения клиентов о заказе / Mesaje de la clienți" },
-  { src: "/images/reviews/img_4357.jpg", alt: "Благодарность за подарок / Mulțumiri pentru cadou" },
-  { src: "/images/reviews/img_4358.jpg", alt: "Отзыв на румынском о брелоке / Recenzie în română" },
+  { src: "/images/reviews/img_4352.jpg", top: "#c6c5c4", bottom: "#b4aea8", alt: "Сторис клиента: брелок-плёнка / Story client: breloc-film" },
+  { src: "/images/reviews/img_4353.jpg", top: "#3a4031", bottom: "#2d2329", alt: "Отзыв: упаковка и брелок-плёнка / Recenzie: ambalaj și breloc-film" },
+  { src: "/images/reviews/img_4354.jpg", top: "#646265", bottom: "#8a888b", alt: "Клиентка с брелком-плёнкой / Clientă cu breloc-film" },
+  { src: "/images/reviews/img_4356.jpg", top: "#513930", bottom: "#72736f", alt: "Сообщения клиентов о заказе / Mesaje de la clienți" },
+  { src: "/images/reviews/img_4357.jpg", top: "#7e7972", bottom: "#b26e29", alt: "Благодарность за подарок / Mulțumiri pentru cadou" },
+  { src: "/images/reviews/img_4358.jpg", top: "#b8ada4", bottom: "#bfb7af", alt: "Отзыв на румынском о брелоке / Recenzie în română" },
 ];
 
 /** Двуязычные alt хранятся как «RU / RO»: скринридеру отдаём только язык интерфейса */
@@ -310,26 +315,26 @@ export default function LandingV2() {
           </div>
           <div className="v2-rail" tabIndex={0} role="region" aria-label={v.examplesTitle}>
             {examples.map((item, i) => (
-              <figure key={item.src} className="v2-print">
+              <figure key={item.src} className="v2-shot" style={{ aspectRatio: "3 / 2" }}>
                 <Image
                   src={item.src}
                   alt={altFor(item.alt, lang)}
-                  width={900}
-                  height={575}
-                  sizes="(max-width: 767px) 72vw, 320px"
+                  fill
+                  sizes="(max-width: 767px) 360px, 450px"
+                  style={{ objectFit: "cover" }}
                   loading="lazy"
                 />
                 <figcaption>{v.captions[i]}</figcaption>
               </figure>
             ))}
             {gallery.map((item) => (
-              <figure key={item.src} className="v2-print">
+              <figure key={item.src} className="v2-shot" style={{ aspectRatio: "4 / 5" }}>
                 <Image
                   src={item.src}
                   alt={altFor(item.alt, lang)}
-                  width={800}
-                  height={1000}
-                  sizes="(max-width: 767px) 62vw, 250px"
+                  fill
+                  sizes="(max-width: 767px) 200px, 240px"
+                  style={{ objectFit: "cover", objectPosition: item.pos }}
                   loading="lazy"
                 />
               </figure>
@@ -343,13 +348,17 @@ export default function LandingV2() {
           </div>
           <div className="v2-rail v2-rail-reviews" tabIndex={0} role="region" aria-label={v.reviewsTitle}>
             {reviewShots.map((shot) => (
-              <figure key={shot.src} className="v2-review">
+              <figure
+                key={shot.src}
+                className="v2-review"
+                style={{ background: `linear-gradient(${shot.top}, ${shot.bottom})` }}
+              >
                 <Image
                   src={shot.src}
                   alt={altFor(shot.alt, lang)}
-                  width={1200}
-                  height={1800}
-                  sizes="(max-width: 767px) 72vw, 280px"
+                  fill
+                  sizes="(max-width: 767px) 215px, 250px"
+                  style={{ objectFit: "contain" }}
                   loading="lazy"
                 />
               </figure>

@@ -162,13 +162,39 @@
   -webkit-overflow-scrolling: touch;
 }
 .pb2 .v2-rail > figure { flex: 0 0 auto; margin: 0; scroll-snap-align: start; }
-.pb2 .v2-print { width: min(72vw, 280px); background: #fff; padding: 8px 8px 10px; box-shadow: 0 10px 26px rgba(33, 29, 24, 0.12); border-radius: 2px; }
-.pb2 .v2-print img { display: block; width: 100%; height: auto; border-radius: 1px; }
-.pb2 .v2-print figcaption { padding: 8px 2px 0; font-size: 14px; font-weight: 500; }
-.pb2 .v2-print:nth-child(odd) { transform: rotate(-0.8deg); }
-.pb2 .v2-print:nth-child(even) { transform: rotate(0.8deg); }
-.pb2 .v2-review { width: min(72vw, 280px); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; }
-.pb2 .v2-review img { display: block; width: 100%; height: auto; }
+/* Фото работ: одна высота, формат 3:2 или 4:5, без наклонов */
+.pb2 { --v2-shot-h: 240px; --v2-review-h: 380px; }
+@media (min-width: 768px) {
+  .pb2 { --v2-shot-h: 300px; --v2-review-h: 440px; }
+}
+.pb2 .v2-shot {
+  position: relative;
+  height: var(--v2-shot-h);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.pb2 .v2-shot figcaption {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(33, 29, 24, 0.82);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+}
+/* Отзывы: одинаковые рамки 9:16, скриншот целиком */
+.pb2 .v2-review {
+  position: relative;
+  height: var(--v2-review-h);
+  aspect-ratio: 9 / 16;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
 .pb2 .v2-hint { margin-top: 0; font-size: 13px; color: var(--muted); }
 .pb2 .v2-reviews-head { margin-top: 36px; }
 
@@ -182,9 +208,6 @@
 .pb2 .v2-final .final-phone a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
 .pb2 .v2-final .final-phone span { color: #f5f1e8; }
 
-@media (prefers-reduced-motion: reduce) {
-  .pb2 .v2-print, .pb2 .v2-print:nth-child(odd), .pb2 .v2-print:nth-child(even) { transform: none; }
-}
 
 /* Старые правила центрируют и сужают заголовки, в новом макете они выровнены по левому краю */
 .pb.pb2 .v2-h1, .pb.pb2 .v2-h2, .pb.pb2 .v2-h3 { text-align: left; max-width: none; }
@@ -198,3 +221,12 @@
 .pb2 #constructor { padding-top: 0; }
 .pb2 #constructor > .relative { margin-top: 8px; }
 .pb2 .v2-video-btn img { object-fit: cover; opacity: 0.75; }
+
+/* Ленты на широком экране начинаются на одной линии с заголовками (контейнер 1120 px) */
+@media (min-width: 1184px) {
+  .pb2 .v2-rail {
+    padding-left: calc((100vw - 1120px) / 2 + var(--v2-pad));
+    padding-right: calc((100vw - 1120px) / 2 + var(--v2-pad));
+    scroll-padding-left: calc((100vw - 1120px) / 2 + var(--v2-pad));
+  }
+}
