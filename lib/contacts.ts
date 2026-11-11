@@ -12,9 +12,9 @@ export const WORK_HOURS = "12:00–21:00";
 /** Messengers — same number. Instagram handle: confirm with owner if it differs. */
 export const WHATSAPP_URL = "https://wa.me/37378238455";
 export const VIBER_URL = "viber://chat?number=%2B37378238455";
-export const INSTAGRAM_URL = "https://www.instagram.com/fotobrelok.md/";
-/** Личные сообщения Instagram (Direct). Ник нужно подтвердить: в отзывах встречается @photobrelokmd. */
-export const INSTAGRAM_DM_URL = "https://ig.me/m/fotobrelok.md";
+export const INSTAGRAM_URL = "https://www.instagram.com/photobrelok.md/";
+/** Личные сообщения Instagram (Direct). Ник подтверждён владельцем: photobrelok.md */
+export const INSTAGRAM_DM_URL = "https://ig.me/m/photobrelok.md";
 
 export const DELIVERY_OPTIONS = {
   pickup: { label: "pickup", price: 0, days: null as string | null },

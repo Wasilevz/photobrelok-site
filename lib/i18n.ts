@@ -84,7 +84,7 @@ export interface Dict {
     consent: {
       dataLabel: string;
       dataLink: string;
-      photoLabel: string;
+      photoNote: string;
       marketingLabel: string;
       requiredHint: string;
     };
@@ -219,8 +219,8 @@ export const translations: Record<Locale, Dict> = {
         dataLabel:
           "Согласен(на) на обработку персональных данных (имя, телефон, адрес) для оформления и выполнения заказа",
         dataLink: "Политика конфиденциальности",
-        photoLabel:
-          "Подтверждаю, что имею право использовать загруженные фотографии и получил(а) согласие изображённых на них лиц",
+        photoNote:
+          "Отправляя заказ, вы подтверждаете, что имеете право использовать эти фото и люди на них не против.",
         marketingLabel: "Хочу получать новости и специальные предложения",
         requiredHint: "Отметьте согласия, чтобы оформить заказ",
       },
@@ -356,8 +356,8 @@ export const translations: Record<Locale, Dict> = {
         dataLabel:
           "Sunt de acord cu prelucrarea datelor cu caracter personal (nume, telefon, adresă) pentru întocmirea și executarea comenzii",
         dataLink: "Politica de confidențialitate",
-        photoLabel:
-          "Confirm că am dreptul să utilizez fotografiile încărcate și am obținut acordul persoanelor fotografiate",
+        photoNote:
+          "Trimițând comanda, confirmi că ai dreptul să folosești aceste poze și că persoanele din ele sunt de acord.",
         marketingLabel: "Vreau să primesc noutăți și oferte speciale",
         requiredHint: "Bifează acordurile pentru a plasa comanda",
       },

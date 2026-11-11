@@ -75,7 +75,6 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const [novaPostBranch, setNovaPostBranch] = useState('');
 
   const [dataConsent, setDataConsent] = useState(false);
-  const [photoConsent, setPhotoConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
   // Второй такой же брелок со скидкой: по умолчанию выключено
   const [second, setSecond] = useState(false);
@@ -88,7 +87,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const isDirty =
     name.trim() !== '' || phone.trim() !== '' || surname !== '' || postalCode !== '' ||
     street !== '' || city !== '' || district !== '' || novaPostBranch !== '' ||
-    dataConsent || photoConsent || marketingConsent || second;
+    dataConsent || marketingConsent || second;
 
   // Закрытие: не во время отправки; если что-то введено — спрашиваем, чтобы не потерять данные
   const requestClose = () => {
@@ -153,7 +152,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
       if (!city.trim()) next.city = d.fieldRequired;
     }
     if (method === 'novapost' && !novaPostBranch.trim()) next.novaPostBranch = d.fieldRequired;
-    if (!dataConsent || !photoConsent) next.consent = dict.orderModal.consent.requiredHint;
+    if (!dataConsent) next.consent = dict.orderModal.consent.requiredHint;
     return next;
   };
 
@@ -463,21 +462,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             {dict.orderModal.consent.dataLink}
           </Link>
 
-          <label className="mt-1 flex items-start gap-3 cursor-pointer min-h-[44px]">
-            <input
-              id="consent-photo"
-              type="checkbox"
-              required
-              checked={photoConsent}
-              onChange={(e) => { setPhotoConsent(e.target.checked); clearError('consent'); }}
-              aria-invalid={!!errors.consent && !photoConsent}
-              aria-describedby={errors.consent ? 'consent-err' : undefined}
-              className="mt-0.5 size-6 shrink-0 accent-[#191715] cursor-pointer"
-            />
-            <span className="text-sm leading-relaxed text-[#3D3832]">
-              {dict.orderModal.consent.photoLabel}
-            </span>
-          </label>
+          <p className="mt-1 text-xs leading-relaxed text-[#5C564E]">{dict.orderModal.consent.photoNote}</p>
 
           <label className="mt-3 flex items-start gap-3 cursor-pointer min-h-[44px]">
             <input

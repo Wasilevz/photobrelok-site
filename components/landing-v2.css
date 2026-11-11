@@ -1,0 +1,201 @@
+/* Новый макет главной (LandingV2). Все правила под .pb2, прежний макет их не видит. */
+.pb2 {
+  --accent: #f7bd18;
+  --accent-press: #e5a900;
+  --ink: #211d18;
+  --bg: #f5f1e8;
+  --surface-2: #eee6d8;
+  --muted: #625a50;
+  --line: #d8cdbb;
+  --serif: var(--font-lora), Georgia, "Times New Roman", serif;
+  --v2-pad: 20px;
+  background: var(--bg);
+  color: var(--ink);
+}
+@media (min-width: 768px) {
+  .pb2 { --v2-pad: 32px; }
+}
+
+/* Заголовки: serif Lora с запасом, шрифт подключён через next/font, на Android больше нет случайной подстановки */
+.pb2 h1, .pb2 h2, .pb2 h3 {
+  font-family: var(--serif) !important;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+.pb2 .v2-h1 { font-size: clamp(30px, 8.2vw, 54px); line-height: 1.08; margin: 0 0 14px; }
+.pb2 .v2-h2 { font-size: clamp(26px, 6.4vw, 40px); line-height: 1.12; margin: 0 0 12px; }
+.pb2 .v2-h3 { font-size: 20px; line-height: 1.25; margin: 0 0 6px; }
+
+.pb2 .v2-wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--v2-pad); }
+.pb2 .v2-section { padding: clamp(44px, 9vw, 88px) 0; }
+.pb2 .v2-lead { font-size: 17px; line-height: 1.5; color: var(--muted); margin: 0 0 20px; max-width: 56ch; }
+.pb2 .v2-center { text-align: center; margin-top: 28px; }
+
+/* Шапка: язык тише, чтобы не спорить с главной кнопкой */
+.pb.pb2 .lang-btn {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  min-width: 52px;
+}
+
+/* Подписи секций в виде счётчика кадров на плёнке */
+.pb2 .v2-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pb2 .v2-label-line { flex: 1; height: 1px; background: var(--line); }
+
+/* 1. Hero */
+.pb2 .v2-hero { padding: 12px 0 36px; }
+.pb2 .v2-hero-grid { display: grid; gap: 22px; }
+.pb2 .v2-hero-media {
+  position: relative;
+  order: -1;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #111;
+  aspect-ratio: 5 / 4;
+  max-height: 42svh;
+}
+.pb2 .v2-hero-video { width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; display: block; }
+.pb2 .v2-pause {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: var(--accent);
+  color: var(--ink);
+  cursor: pointer;
+}
+.pb2 .v2-eyebrow { margin: 0 0 12px; font-size: 12px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.pb2 .v2-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 16px; }
+.pb2 .v2-price strong { font-family: var(--serif); font-size: 38px; line-height: 1; font-weight: 600; }
+.pb2 .v2-price span { font-size: 14px; color: var(--muted); }
+.pb2 .v2-cta { width: 100%; justify-content: center; }
+.pb2 .v2-center .v2-cta { width: auto; display: inline-flex; }
+.pb2 .v2-note { margin: 10px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
+.pb2 .v2-conditions { margin: 6px 0 0; text-align: center; font-size: 13px; line-height: 1.4; color: var(--muted); }
+@media (min-width: 900px) {
+  .pb2 .v2-hero { padding: 28px 0 64px; }
+  .pb2 .v2-hero-grid { grid-template-columns: 1.15fr 0.85fr; align-items: center; gap: 64px; }
+  .pb2 .v2-hero-media { order: 0; aspect-ratio: 9 / 16; max-height: 640px; width: min(100%, 360px); justify-self: end; }
+  .pb2 .v2-cta { width: auto; display: inline-flex; }
+  .pb2 .v2-note, .pb2 .v2-conditions { text-align: left; }
+}
+
+/* 2. Шаги */
+.pb2 .v2-steps { background: var(--surface-2); }
+.pb2 .v2-story { margin: 0 0 24px; font-size: 18px; line-height: 1.5; max-width: 52ch; }
+.pb2 .v2-step-list { list-style: none; margin: 0 0 28px; padding: 0; display: grid; gap: 12px; }
+.pb2 .v2-step { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 18px 64px; position: relative; }
+.pb2 .v2-step p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--muted); }
+.pb2 .v2-step-num {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: #111;
+  color: var(--accent);
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 18px;
+}
+@media (min-width: 768px) {
+  .pb2 .v2-step-list { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+}
+.pb2 .v2-video { position: relative; aspect-ratio: 16 / 9; max-width: 720px; border-radius: 12px; overflow: hidden; background: #111; }
+.pb2 .v2-video iframe, .pb2 .v2-video-btn { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.pb2 .v2-video-btn { padding: 0; cursor: pointer; background: #111; color: #fff; }
+.pb2 .v2-video-btn img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+.pb2 .v2-video-label {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+}
+
+/* 3. Конструктор: заголовок секции; сам конструктор стилизован своими классами */
+.pb2 .v2-builder { padding-bottom: 20px; }
+
+/* 4. Работы и отзывы */
+.pb2 .v2-rail {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 8px var(--v2-pad) 14px;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--v2-pad);
+  -webkit-overflow-scrolling: touch;
+}
+.pb2 .v2-rail > figure { flex: 0 0 auto; margin: 0; scroll-snap-align: start; }
+.pb2 .v2-print { width: min(72vw, 280px); background: #fff; padding: 8px 8px 10px; box-shadow: 0 10px 26px rgba(33, 29, 24, 0.12); border-radius: 2px; }
+.pb2 .v2-print img { display: block; width: 100%; height: auto; border-radius: 1px; }
+.pb2 .v2-print figcaption { padding: 8px 2px 0; font-size: 14px; font-weight: 500; }
+.pb2 .v2-print:nth-child(odd) { transform: rotate(-0.8deg); }
+.pb2 .v2-print:nth-child(even) { transform: rotate(0.8deg); }
+.pb2 .v2-review { width: min(72vw, 280px); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; }
+.pb2 .v2-review img { display: block; width: 100%; height: auto; }
+.pb2 .v2-hint { margin-top: 0; font-size: 13px; color: var(--muted); }
+.pb2 .v2-reviews-head { margin-top: 36px; }
+
+/* 5. Предложение: используем прежние классы offer-*, добавляем отступы новых строк */
+.pb2 .offer-second { margin: 10px 0 0; font-size: 15px; line-height: 1.45; font-weight: 500; }
+.pb2 .v2-risk { margin: 0 0 16px; font-size: 16px; line-height: 1.5; }
+.pb2 .v2-pay { margin: 12px 0 0; font-size: 15px; line-height: 1.45; }
+.pb2 .offer-chat-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
+
+/* 7. Финал */
+.pb2 .v2-final .final-phone { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+.pb2 .v2-final .final-phone a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.pb2 .v2-final .final-phone span { color: #f5f1e8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pb2 .v2-print, .pb2 .v2-print:nth-child(odd), .pb2 .v2-print:nth-child(even) { transform: none; }
+}
+
+/* Старые правила центрируют и сужают заголовки, в новом макете они выровнены по левому краю */
+.pb.pb2 .v2-h1, .pb.pb2 .v2-h2, .pb.pb2 .v2-h3 { text-align: left; max-width: none; }
+.pb.pb2 .v2-h1 { margin: 0 0 14px; }
+.pb.pb2 .v2-h2 { margin: 0 0 12px; }
+.pb.pb2 .v2-lead { text-align: left; }
+
+/* Правки по скриншотам: карточки не растягиваются по высоте, единые боковые отступы, меньше зазор над конструктором */
+.pb2 .v2-rail { align-items: flex-start; }
+.pb2 .wrap, .pb2 .wrap-narrow { padding-left: var(--v2-pad); padding-right: var(--v2-pad); }
+.pb2 #constructor { padding-top: 0; }
+.pb2 #constructor > .relative { margin-top: 8px; }
+.pb2 .v2-video-btn img { object-fit: cover; opacity: 0.75; }
