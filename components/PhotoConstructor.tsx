@@ -11,7 +11,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { telegramLink } from "@/lib/contacts";
 import { metaEventId, track } from "@/lib/analytics";
 import { readSource } from "@/lib/source";
-import getCroppedImg, { createImage } from "@/utils/cropImage";
 import { readConstructorV2 } from "@/lib/flags";
 import { saveDraft, loadDraft, clearDraft } from "@/lib/draft";
 
@@ -43,20 +42,18 @@ export default function PhotoConstructor() {
   const [telegramFallback, setTelegramFallback] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Конструктор V2 (за флагом): автообрезка, сохранение черновика, таймаут загрузки.
+  // Конструктор V2 (за флагом): сохранение черновика и таймаут загрузки. Обрезка остаётся ручной, как раньше.
   // Пока флаг выключен, всё работает ровно как раньше.
   const [v2, setV2] = useState(false);
   useEffect(() => {
     setV2(readConstructorV2());
   }, []);
-  // обрезанный кадр -> исходное фото (чтобы можно было перекадрировать)
-  const origByCropped = useRef<Map<string, string>>(new Map());
   const [restoredCount, setRestoredCount] = useState(0);
   const draftReady = useRef(false);
   const [persistFailed, setPersistFailed] = useState(false);
 
   // Батч-загрузка: очередь фото, ожидающих обрезки, каждое привязано к своему слоту
-  const [cropQueue, setCropQueue] = useState<{ url: string; slotIndex: number; hash: string; keepOriginal?: boolean }[]>([]);
+  const [cropQueue, setCropQueue] = useState<{ url: string; slotIndex: number; hash: string }[]>([]);
   const [totalInBatch, setTotalInBatch] = useState(0);
   const imageToCrop = cropQueue[0]?.url ?? null;
   const photoCount = slots.filter(Boolean).length;
@@ -96,12 +93,6 @@ export default function PhotoConstructor() {
   const revokeOldUrl = useCallback((url: string | null) => {
     if (url && url.startsWith("blob:")) {
       URL.revokeObjectURL(url);
-      // V2: вместе с обрезанным кадром освобождаем и исходное фото
-      const original = origByCropped.current.get(url);
-      if (original) {
-        URL.revokeObjectURL(original);
-        origByCropped.current.delete(url);
-      }
     }
   }, []);
 
@@ -218,55 +209,6 @@ export default function PhotoConstructor() {
     setSelectedSlot(to);
   };
 
-  /** V2: фото сразу ложатся в слоты, обрезка по центру (портреты чуть выше центра, чтобы не терять лица) */
-  const autoCropItems = async (items: { url: string; slotIndex: number; hash: string }[]) => {
-    const failed: typeof items = [];
-    // по одному, чтобы не держать в памяти много больших снимков сразу
-    for (const item of items) {
-      try {
-        const img = await createImage(item.url);
-        const w = img.naturalWidth;
-        const h = img.naturalHeight;
-        const side = Math.min(w, h);
-        if (!side) throw new Error("пустое изображение");
-        const x = Math.round((w - side) / 2);
-        const y = Math.round((h - side) * (h > w ? 0.35 : 0.5));
-        const blob = await getCroppedImg(item.url, { x, y, width: side, height: side });
-        if (!blob) throw new Error("не удалось обрезать");
-        const cropped = URL.createObjectURL(blob);
-        origByCropped.current.set(cropped, item.url);
-        setSlots((prev) => {
-          const next = [...prev];
-          revokeOldUrl(next[item.slotIndex]);
-          next[item.slotIndex] = cropped;
-          return next;
-        });
-        setSlotHashes((prev) => {
-          const next = [...prev];
-          next[item.slotIndex] = item.hash;
-          return next;
-        });
-      } catch {
-        failed.push(item);
-      }
-    }
-    // что не получилось обработать автоматически, обрезается вручную, как раньше
-    if (failed.length > 0) {
-      setCropQueue(failed);
-      setTotalInBatch(failed.length);
-    }
-  };
-
-  /** V2: открыть обрезку для выделенного кадра с исходным фото */
-  const handleRecropSelected = () => {
-    if (selectedSlot === null) return;
-    const current = slots[selectedSlot];
-    const original = current ? origByCropped.current.get(current) : undefined;
-    if (!original) return;
-    setCropQueue([{ url: original, slotIndex: selectedSlot, hash: slotHashes[selectedSlot] ?? "", keepOriginal: true }]);
-    setTotalInBatch(1);
-  };
-
   /** V2: убрать вернувшиеся фото и начать заново */
   const handleDiscardDraft = () => {
     slots.forEach(revokeOldUrl);
@@ -329,10 +271,6 @@ export default function PhotoConstructor() {
 
     if (queue.length === 0) return;
     setRestoredCount(0);
-    if (v2) {
-      await autoCropItems(queue);
-      return;
-    }
     setCropQueue(queue);
     setTotalInBatch(queue.length);
     } finally {
@@ -342,25 +280,7 @@ export default function PhotoConstructor() {
 
   const handleCropDone = (croppedImageUrl: string) => {
     const current = cropQueue[0];
-    if (current && current.keepOriginal) {
-      // Перекадрирование (V2): исходное фото остаётся, чтобы кадр можно было править снова
-      origByCropped.current.set(croppedImageUrl, current.url);
-      setSlots((prev) => {
-        const newSlots = [...prev];
-        const old = newSlots[current.slotIndex];
-        if (old && old !== croppedImageUrl) {
-          origByCropped.current.delete(old);
-          if (old.startsWith("blob:")) URL.revokeObjectURL(old);
-        }
-        newSlots[current.slotIndex] = croppedImageUrl;
-        return newSlots;
-      });
-      setSlotHashes((prev) => {
-        const next = [...prev];
-        next[current.slotIndex] = current.hash;
-        return next;
-      });
-    } else if (current) {
+    if (current) {
       // The cropper creates a new object URL; release the original upload URL.
       revokeOldUrl(current.url);
       setSlots((prev) => {
@@ -383,7 +303,7 @@ export default function PhotoConstructor() {
   /** Пропустить только текущий кадр, остальные продолжить обрезку */
   const handleCropSkip = () => {
     const current = cropQueue[0];
-    if (current && !current.keepOriginal) revokeOldUrl(current.url);
+    if (current) revokeOldUrl(current.url);
     const rest = cropQueue.slice(1);
     setCropQueue(rest);
     if (rest.length === 0) setTotalInBatch(0);
@@ -392,7 +312,7 @@ export default function PhotoConstructor() {
   /** Отменить всю оставшуюся пачку */
   const handleCropCancel = () => {
     const current = cropQueue[0];
-    if (current && !current.keepOriginal) revokeOldUrl(current.url);
+    if (current) revokeOldUrl(current.url);
 
     const rest = cropQueue.slice(1);
 
@@ -968,11 +888,11 @@ export default function PhotoConstructor() {
         {/* Панель управления выделенным кадром — удобные кнопки под палец (44x44px min) */}
         {selectedSlot !== null && slots[selectedSlot] && (
           <div className="mx-auto mt-3 max-w-[420px] rounded-xl border-2 border-[#191715] bg-white px-3 py-2.5 shadow-md">
-            <div className={`flex items-center justify-between gap-2${v2 ? " flex-wrap" : ""}`}>
+            <div className="flex items-center justify-between gap-2">
               <span className="text-[12px] font-semibold text-[#5C564E] shrink-0">
                 {lang === "ru" ? `Кадр ${selectedSlot + 1}` : `Cadrul ${selectedSlot + 1}`}
               </span>
-              <div className={v2 ? "flex flex-wrap items-center justify-end gap-1.5" : "flex items-center gap-1.5 shrink-0"}>
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => moveSlot(selectedSlot, -1)}
@@ -991,15 +911,6 @@ export default function PhotoConstructor() {
                 >
                   →
                 </button>
-                {v2 && slots[selectedSlot] && origByCropped.current.has(slots[selectedSlot] as string) && (
-                  <button
-                    type="button"
-                    onClick={handleRecropSelected}
-                    className="h-11 px-3.5 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-[13px] font-semibold active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
-                  >
-                    {dict.home.recrop}
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={handleReplaceSelected}

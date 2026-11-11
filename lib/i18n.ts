@@ -24,7 +24,6 @@ export interface Dict {
     photoAlreadyAdded: (n: number) => string;
     photosAlreadyAdded: (list: string) => string;
     uploadTruncated: (added: number, total: number) => string;
-    recrop: string;
     draftRestored: (n: number) => string;
     draftClear: string;
   };
@@ -157,7 +156,6 @@ export const translations: Record<Locale, Dict> = {
         `Эти фото уже добавлены (кадры ${list}) — пропущены`,
       uploadTruncated: (added: number, total: number) =>
         `Добавлено ${added} из ${total} фото — все слоты заполнены (максимум 10)`,
-      recrop: "Кадрировать",
       draftRestored: (n: number) => `Вернули ваши фото: ${n}`,
       draftClear: "Начать заново",
     },
@@ -294,7 +292,6 @@ export const translations: Record<Locale, Dict> = {
         `Aceste poze sunt deja adăugate (cadrurile ${list}) — au fost sărite`,
       uploadTruncated: (added: number, total: number) =>
         `Adăugate ${added} din ${total} poze — toate sloturile sunt ocupate (maxim 10)`,
-      recrop: "Decupează",
       draftRestored: (n: number) => `Ți-am păstrat pozele: ${n}`,
       draftClear: "O iau de la capăt",
     },
