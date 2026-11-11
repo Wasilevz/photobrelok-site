@@ -372,6 +372,7 @@ export default function Landing() {
                   <span>{photoCount > 0 ? t.priceCta : t.heroCta}</span>
                   <span aria-hidden="true">→</span>
                 </button>
+                <p className="hero-trust">{t.trustLine}</p>
               </div>
               <div className="hero-unified-media">
                 <HeroProductVideo lang={lang} />
@@ -497,32 +498,21 @@ export default function Landing() {
                   <span>{t.priceAnchor}</span>
                 </p>
                 <div className="offer-divider" />
-                <ul className="offer-list">
-                  <li>
-                    <span className="offer-icon" aria-hidden="true">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-                        <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <div>
-                      <strong>{t.offerItem1Title}</strong>
-                      <span>{t.offerItem1Text}</span>
-                    </div>
-                  </li>
-                  <li>
-                    <span className="offer-icon" aria-hidden="true">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 10h16v10H4V10z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                        <path d="M2.5 7h19v3h-19V7zM12 7v13" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                        <path d="M12 7c-2-3-5-3-5 0M12 7c2-3 5-3 5 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                      </svg>
-                    </span>
-                    <div>
-                      <strong>{t.offerItem2Title}</strong>
-                      <span>{t.offerItem2Text}</span>
-                    </div>
-                  </li>
+                <p className="offer-include-title">{t.includeLead}</p>
+                <ul className="offer-list offer-include">
+                  {t.includeItems.map((item) => (
+                    <li key={item}>
+                      <span className="offer-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <div>
+                        <span>{item}</span>
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               </div>
 
@@ -803,6 +793,7 @@ export default function Landing() {
             </li>
           </ul>
           <p className="foot-note">{t.footerNote}</p>
+          <p className="foot-trademark">{t.trademarkNote}</p>
           <div className="foot-divider" />
           <ul className="foot-list">
             <li>

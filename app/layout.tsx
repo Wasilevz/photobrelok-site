@@ -101,7 +101,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={`${rubik.variable} ${caveat.variable}`}>
       <head>
         <link rel="stylesheet" href="/landing.css" />
         <script
@@ -109,7 +109,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${rubik.variable} ${caveat.variable} antialiased`}>
+      <body className="antialiased">
         <LanguageProvider>
           {children}
           <MetaPixel />

@@ -65,7 +65,7 @@ function ThankYouContent() {
 
           <div className="mb-4">
             <span className="inline-block bg-[#FFC400]/25 text-[#191715] text-xs font-bold px-3 py-1 rounded-full uppercase bg-[#FFC400]">
-              {dict.thanks.sameOrderBadge} · {dict.thanks.todayOnly}
+              {dict.thanks.todayOnly}
             </span>
           </div>
 
