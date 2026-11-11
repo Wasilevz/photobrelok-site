@@ -1,0 +1,893 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import PhotoConstructor from "@/components/PhotoConstructor";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  ADDRESS,
+  EMAIL,
+  TELEGRAM_PHONE,
+  TELEGRAM_PHONE_DISPLAY,
+  TELEGRAM_URL,
+  INSTAGRAM_URL,
+  INSTAGRAM_DM_URL,
+  telegramLink,
+} from "@/lib/contacts";
+import { track } from "@/lib/analytics";
+import { landingCopy, faqCopy, occasionCopy } from "@/lib/landing-copy";
+import { legalCopy } from "@/lib/legal-copy";
+import { useOccasion } from "@/lib/occasion-store";
+import { useConsent } from "@/lib/consent";
+import { captureSource } from "@/lib/source";
+
+function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(true);
+  const [failed, setFailed] = useState(false);
+  // Если человек сам поставил на паузу, прокрутка не должна возобновлять видео
+  const userPaused = useRef(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      video.removeAttribute("autoplay");
+      video.pause();
+      userPaused.current = true;
+      return;
+    }
+    video.play().then(() => track("video_play")).catch(() => {});
+
+    if (typeof IntersectionObserver !== "undefined") {
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            if (!userPaused.current) video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        },
+        { threshold: 0.15 }
+      );
+      io.observe(video);
+      return () => io.disconnect();
+    }
+  }, []);
+
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      userPaused.current = false;
+      video.play().catch(() => {});
+    } else {
+      userPaused.current = true;
+      video.pause();
+    }
+    setPlaying(!video.paused);
+    track(video.paused ? "video_pause" : "video_resume");
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setMuted(video.muted);
+    if (!video.muted) video.play().catch(() => {});
+    track(video.muted ? "video_mute" : "video_unmute");
+  };
+
+  if (failed) {
+    return (
+      <Image
+        className="photo-main"
+        src="/images/hero-keychain.jpg"
+        alt={
+          lang === "ru"
+            ? "Брелок-катушка Kodak с фото на красном шарфе"
+            : "Breloc-casetă Kodak cu poze pe eșarfă roșie"
+        }
+        width={600}
+        height={900}
+        priority
+      />
+    );
+  }
+
+  return (
+    <div className="hero-video-wrap">
+      <video
+        ref={videoRef}
+        className="hero-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/media/hero-product.jpg"
+        onError={() => setFailed(true)}
+        onLoadedMetadata={() => setPlaying(!videoRef.current?.paused)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        aria-label={
+          lang === "ru"
+            ? "Видео: как выглядит брелок-катушка с вашими фото"
+            : "Video: cum arată brelocul-casetă cu pozele tale"
+        }
+      >
+        <source src="/media/hero-product.mp4" type="video/mp4" />
+      </video>
+      <button
+        type="button"
+        className="hero-video-mute hero-video-play"
+        onClick={togglePlay}
+        aria-pressed={!playing}
+        aria-label={
+          playing
+            ? lang === "ru"
+              ? "Пауза"
+              : "Pauză"
+            : lang === "ru"
+              ? "Воспроизвести видео"
+              : "Redă videoclipul"
+        }
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          {playing ? (
+            <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
+          ) : (
+            <path d="M8 5v14l11-7z" />
+          )}
+        </svg>
+      </button>
+      <button
+        type="button"
+        className="hero-video-mute"
+        onClick={toggleMute}
+        aria-label={
+          muted
+            ? lang === "ru"
+              ? "Включить звук"
+              : "Pornește sunetul"
+            : lang === "ru"
+              ? "Выключить звук"
+              : "Oprește sunetul"
+        }
+      >
+        {muted ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 5L6 9H3v6h3l5 4V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 5L6 9H3v6h3l5 4V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+}
+
+const memories = [
+  { src: "/images/gallery-1.jpg", alt: "Брелки на красной ткани со свечами / Brelocuri pe pânză roșie" },
+  { src: "/images/gallery-2.jpg", alt: "Брелок-плёнка в руках / Breloc-film în mâini" },
+  { src: "/images/gallery-3.jpg", alt: "Брелки-катушки на фоне цветов / Brelocuri lângă flori" },
+  { src: "/images/gallery-4.jpg", alt: "Брелок с фото в руках / Breloc cu poze în mâini" },
+  { src: "/images/gallery-5.jpg", alt: "Плёнка с семейными фото / Film cu poze de familie" },
+];
+
+const reviewShots = [
+  {
+    src: "/images/reviews/img_4352.jpg",
+    alt: "Сторис клиента: брелок-плёнка, доставка 2–3 дня / Story client: breloc-film",
+  },
+  {
+    src: "/images/reviews/img_4353.jpg",
+    alt: "Отзыв: упаковка и брелок-плёнка / Recenzie: ambalaj și breloc-film",
+  },
+  {
+    src: "/images/reviews/img_4354.jpg",
+    alt: "Клиентка с брелком-плёнкой / Clientă cu breloc-film",
+  },
+  {
+    src: "/images/reviews/img_4356.jpg",
+    alt: "Сообщения клиентов о заказе / Mesaje de la clienți",
+  },
+  {
+    src: "/images/reviews/img_4357.jpg",
+    alt: "Благодарность за подарок / Mulțumiri pentru cadou",
+  },
+  {
+    src: "/images/reviews/img_4358.jpg",
+    alt: "Отзыв на румынском о брелоке / Recenzie în română",
+  },
+];
+
+const exampleMeta = [
+  { src: "/images/card-love.jpg", alt: "Пара с брелком-плёнкой / Pereche cu breloc-film" },
+  { src: "/images/card-family.jpg", alt: "Семейные фото на плёнке / Poze de familie pe film" },
+  { src: "/images/card-pets.jpg", alt: "Брелок с фото питомцев / Breloc cu animale" },
+  { src: "/images/card-achievement.jpg", alt: "Брелок с фото выпускников / Breloc absolvire" },
+];
+
+/** Двуязычные alt хранятся как «RU / RO»: берём только язык интерфейса, чтобы скринридер не читал оба */
+const altFor = (alt: string, lang: "ru" | "ro") => {
+  const [ru, ro] = alt.split(" / ");
+  return lang === "ro" ? (ro ?? ru) : ru;
+};
+
+export default function Landing() {
+  const { lang, setLang } = useLanguage();
+  const { occasion, setOccasion } = useOccasion();
+  const t = landingCopy[lang];
+  const faq = faqCopy[lang];
+  const occasions = occasionCopy[lang];
+  const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
+  // Нижняя панель не должна перекрывать главную кнопку: показываем её, только когда кнопка героя ушла с экрана
+  const [heroCtaVisible, setHeroCtaVisible] = useState(true);
+  const heroCtaRef = useRef<HTMLButtonElement>(null);
+  const { decided: cookiesDecided } = useConsent();
+  const [photoCount, setPhotoCount] = useState(0);
+  const [ytReady, setYtReady] = useState(false);
+  const howVideoRef = useRef<HTMLDivElement>(null);
+  // Open price (index 1) + guarantee (index 3) FAQs — these are the top conversion objections
+  const [openFaq, setOpenFaq] = useState<number[]>([1, 3]);
+  const builderRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    track("hero_view");
+    captureSource();
+    const el = builderRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setMobileCtaHidden(entry.isIntersecting),
+      { threshold: 0.15 }
+    );
+    io.observe(el);
+
+    const heroBtn = heroCtaRef.current;
+    const heroIo = new IntersectionObserver(([entry]) => setHeroCtaVisible(entry.isIntersecting), { threshold: 0.6 });
+    if (heroBtn) heroIo.observe(heroBtn);
+
+    // Auto-play how-to video as soon as user scrolls down to it
+    const videoEl = howVideoRef.current;
+    let videoIo: IntersectionObserver | null = null;
+    if (videoEl) {
+      videoIo = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setYtReady(true);
+            videoIo?.disconnect();
+          }
+        },
+        { threshold: 0.25 }
+      );
+      videoIo.observe(videoEl);
+    }
+
+    const onSlots = (e: Event) => {
+      const detail = (e as CustomEvent<number>).detail;
+      if (typeof detail === "number") setPhotoCount(detail);
+    };
+    window.addEventListener("photobrelok_slots", onSlots);
+    return () => {
+      io.disconnect();
+      heroIo.disconnect();
+      videoIo?.disconnect();
+      window.removeEventListener("photobrelok_slots", onSlots);
+    };
+  }, []);
+
+  // source — какая именно кнопка нажата (hero, reviews, gift, final, sticky): нужно для воронки.
+  // builder_start теперь считает только реальное начало выбора фото (в конструкторе).
+  const scrollToBuilder = (source: string) => {
+    track("hero_cta", { source });
+    const el = document.getElementById("constructor") || document.getElementById("builder");
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <div className="pb">
+      <a className="skip-link" href="#top">
+        {lang === "ru" ? "Перейти к содержимому" : "Salt la conținut"}
+      </a>
+      <header className="hd">
+        <div className="wrap hd-bar">
+          <a className="logo" href="#top">
+            PHOTO<span>BRELOK</span>
+          </a>
+          <nav className="hd-actions" aria-label={lang === "ru" ? "Язык" : "Limbă"}>
+            <button
+              type="button"
+              className="lang-btn"
+              data-testid="lang-switch"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setLang(lang === "ru" ? "ro" : "ru");
+              }}
+              aria-label={lang === "ru" ? "Переключить на румынский" : "Comută pe rusă (Русский)"}
+            >
+              <span lang={lang === "ro" ? "ru" : undefined}>{lang === "ru" ? "Румынский" : "Русский"}</span>
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <main id="top">
+        <section className="hero">
+          <div className="wrap">
+            <div className="hero-card hero-unified">
+              <div className="hero-unified-copy">
+                <p className="eyebrow">
+                  <span className="eyebrow-dot" aria-hidden="true" />
+                  {t.eyebrow}
+                </p>
+                <h1>{t.heroTitle}</h1>
+                <p className="lead">{t.heroLead}</p>
+                <div className="hero-price-block">
+                  <div className="hero-price">{t.heroPrice}</div>
+                  <p className="hero-price-note">{t.heroPriceNote}</p>
+                  <p className="hero-price-anchor">
+                    <span>{t.priceAnchor}</span>
+                  </p>
+                </div>
+                <div className="offer-divider" />
+                <ul className="offer-list offer-list-plain hero-feats">
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.heroFeat1Title}</strong>
+                      <span>{t.heroFeat1Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.heroFeat2Title}</strong>
+                      <span>{t.heroFeat2Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="2.5" y="6" width="19" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M6 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.heroFeat3Title}</strong>
+                      <span>{t.heroFeat3Text}</span>
+                    </div>
+                  </li>
+                </ul>
+                <button type="button" ref={heroCtaRef} className="hero-cta-btn" onClick={() => scrollToBuilder("hero")}>
+                  <span>{photoCount >= 6 ? t.priceCta : t.heroCta}</span>
+                  <span aria-hidden="true">→</span>
+                </button>
+                <p className="hero-conditions">{t.conditionsLine}</p>
+                <p className="hero-trust">{t.trustLine}</p>
+              </div>
+              <div className="hero-unified-media">
+                <HeroProductVideo lang={lang} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="pain">
+          <div className="wrap center">
+            <h2>{t.painTitle}</h2>
+            <p className="lead">{t.painLead}</p>
+            <p className="hand" style={{ fontSize: 32, marginTop: 8 }}>
+              {t.painHand}
+            </p>
+          </div>
+        </section>
+
+        <section className="builder" id="builder" ref={builderRef}>
+          <div className="wrap">
+            <h2>{t.builderTitle}</h2>
+            <p className="lead">{t.builderLead}</p>
+            {occasion ? (
+              <div className="occasion-chip" role="status">
+                {t.occasionSelected}: {occasion}
+                <button type="button" className="occasion-chip-x" onClick={() => setOccasion("")}>
+                  · {t.occasionChange}
+                </button>
+              </div>
+            ) : null}
+          </div>
+          <PhotoConstructor />
+        </section>
+
+<section id="reviews" className="reviews-sec">
+          <div className="wrap">
+            <h2>{t.reviewsTitle}</h2>
+            <p className="lead">{t.reviewsLead}</p>
+
+            <div className="reviews-wall occ-rail" role="region" tabIndex={0} aria-label={t.reviewsTitle}>
+              {reviewShots.map((shot) => (
+                <figure key={shot.src} className="review-shot">
+                  <Image
+                    src={shot.src}
+                    alt={altFor(shot.alt, lang)}
+                    width={1200}
+                    height={1800}
+                    sizes="(max-width: 767px) 72vw, 280px"
+                    loading="lazy"
+                  />
+                </figure>
+              ))}
+            </div>
+
+            <p className="memories-hint">{t.reviewsHint}</p>
+            <div style={{ textAlign: "center", marginTop: 32 }}>
+              <button type="button" className="hero-cta-btn" onClick={() => scrollToBuilder("reviews")} style={{ display: "inline-flex" }}>
+                <span>{t.reviewsCta}</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Video instruction — anchor target for «Как это работает» */}
+
+        <section className="examples" id="occasions">
+          <div className="wrap">
+            <h2>{t.occTitle}</h2>
+            <p className="lead">{t.occLead}</p>
+            <div className="gallery occ-rail">
+              {occasions.map((item, i) => (
+                <figure key={item.title}>
+                  <Image
+                    src={exampleMeta[i].src}
+                    alt={altFor(exampleMeta[i].alt, lang)}
+                    width={900}
+                    height={600}
+                    sizes="(max-width: 767px) 77vw, 340px"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    <div>
+                      <strong style={{ display: "block", fontSize: 18, marginBottom: 6 }}>
+                        {item.title}
+                      </strong>
+                      {item.text}
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm occ-btn"
+                        onClick={() => {
+                          setOccasion(item.title);
+                          track("select_occasion", { occasion: item.title });
+                          const el = document.getElementById("constructor") || document.getElementById("builder");
+                          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                      >
+                        {lang === "ru" ? `Создать — ${item.title.toLowerCase()}` : `Creează — ${item.title.toLowerCase()}`}
+                      </button>
+                    </div>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="gift" className="final" style={{ background: "var(--ink)" }}>
+          <div className="wrap center">
+            <h2>{t.giftTitle}</h2>
+            <p className="lead">{t.giftLead}</p>
+            <div style={{ marginTop: 32 }}>
+              <button type="button" className="hero-cta-btn" onClick={() => scrollToBuilder("gift")} style={{ display: "inline-flex" }}>
+                <span>{t.giftCta}</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="price" className="offer-sec">
+          <div className="wrap">
+            <div className="offer-grid">
+              {/* Yellow offer card */}
+              <div className="offer-card">
+                <p className="offer-eyebrow">{t.priceTitle}</p>
+                <div className="offer-price">{t.priceBig}</div>
+                <p className="offer-tagline">{t.priceText}</p>
+                <p className="offer-second">{t.secondOffer}</p>
+                <p className="offer-price-anchor">
+                  <span>{t.priceAnchor}</span>
+                </p>
+                <div className="offer-divider" />
+                <p className="offer-include-title">{t.includeLead}</p>
+                <ul className="offer-list offer-include">
+                  {t.includeItems.map((item) => (
+                    <li key={item}>
+                      <span className="offer-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <div>
+                        <span>{item}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Risk-free side */}
+              <div className="offer-side">
+                <h2 className="offer-risk-title">{t.riskTitle}</h2>
+                <ul className="offer-list offer-list-plain">
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" stroke="currentColor" strokeWidth="1.8" />
+                        <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.riskItem1Title}</strong>
+                      <span>{t.riskItem1Text}</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span className="offer-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="2.5" y="6" width="19" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M6 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                    <div>
+                      <strong>{t.riskItem2Title}</strong>
+                      <span>{t.riskItem2Text}</span>
+                    </div>
+                  </li>
+                </ul>
+
+                <button
+                  type="button"
+                  className="offer-cta"
+                  onClick={() => {
+                    track("hero_cta", { source: "price" });
+                    const el = document.getElementById("constructor") || document.getElementById("builder");
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  <span>{t.offerCta}</span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="offer-chat-links">
+            <a
+              className="offer-tg offer-tg-btn"
+              href={telegramLink(
+                lang === "ru"
+                  ? "Здравствуйте! Хочу такой брелок."
+                  : "Bună ziua! Vreau un astfel de breloc."
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("telegram_click", { source: "price_secondary" })}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+              {lang === "ru" ? "Написать в Telegram" : "Scrie pe Telegram"}
+            </a>
+            <a
+              className="offer-tg offer-tg-btn"
+              href={INSTAGRAM_DM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("instagram_click", { source: "price_secondary" })}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="17" cy="7" r="1.2" fill="currentColor" />
+              </svg>
+              {lang === "ru" ? "Написать в Instagram" : "Scrie pe Instagram"}
+            </a>
+            </div>
+
+            <div className="offer-bottom">
+            <div className="offer-delivery">
+              <h2 className="offer-delivery-title">{t.deliveryTitle}</h2>
+              <div className="offer-delivery-row">
+                <div>
+                  <div className="offer-delivery-head">
+                    <strong>{t.deliveryPickup}</strong>
+                    <em>{t.deliveryPickupPrice}</em>
+                  </div>
+                  <p>{t.deliveryPickupPlace}</p>
+                </div>
+              </div>
+              <div className="offer-delivery-row">
+                <div>
+                  <div className="offer-delivery-head">
+                    <strong>{t.deliveryPosta}</strong>
+                    <em>{t.deliveryPostaPrice}</em>
+                  </div>
+                  <p>{t.deliveryPostaNote}</p>
+                </div>
+              </div>
+              <div className="offer-delivery-row">
+                <div>
+                  <div className="offer-delivery-head">
+                    <strong>{t.deliveryNova}</strong>
+                    <em>{t.deliveryNovaPrice}</em>
+                  </div>
+                  <p>{t.deliveryNovaNote}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="offer-facts">
+              <p className="offer-facts-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M8.5 12l2.5 2.5L15.5 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {t.factsTitle}
+              </p>
+              <p>{t.factsText1}</p>
+              <p>{t.factsText2}</p>
+            </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Memories — horizontal swipe */}
+        <section className="memories" id="memories">
+          <div className="wrap center">
+            <h2>{t.memoriesTitle}</h2>
+            <div
+              className="memories-rail"
+              tabIndex={0}
+              aria-label={lang === "ru" ? "Фотографии готовых брелоков" : "Fotografii brelocuri gata"}
+            >
+              {memories.map((item) => (
+                <figure key={item.src}>
+                  <Image
+                    src={item.src}
+                    alt={altFor(item.alt, lang)}
+                    width={800}
+                    height={1000}
+                    sizes="(max-width: 767px) 62vw, 250px"
+                    loading="lazy"
+                  />
+                </figure>
+              ))}
+            </div>
+            <p className="memories-hint">{t.memoriesHint}</p>
+          </div>
+        </section>
+
+        <section id="how" className="video-sec">
+          <div className="wrap center">
+            <h2>{t.howUseTitle}</h2>
+            <p className="lead">{t.howUseLead}</p>
+
+            <div className="video-shell" ref={howVideoRef}>
+              {ytReady ? (
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/ghOptgciqEU?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=ghOptgciqEU"
+                  title={t.howUseTitle}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="yt-facade"
+                  onClick={() => setYtReady(true)}
+                  aria-label={lang === "ru" ? "Смотреть видео" : "Vizionează videoclipul"}
+                >
+                  <img
+                    src="https://i.ytimg.com/vi/ghOptgciqEU/hqdefault.jpg"
+                    alt={t.howUseTitle}
+                    loading="lazy"
+                    className="yt-facade-thumb"
+                  />
+                  <span className="yt-facade-play" aria-hidden="true">
+                    <svg viewBox="0 0 68 48" width="68" height="48">
+                      <path d="M66.5 7.7a8.5 8.5 0 00-6-6C55.8 0 34 0 34 0S12.2 0 7.5 1.7a8.5 8.5 0 00-6 6C0 12.4 0 24 0 24s0 11.6 1.5 16.3a8.5 8.5 0 006 6C12.2 48 34 48 34 48s21.8 0 26.5-1.7a8.5 8.5 0 006-6C68 35.6 68 24 68 24s0-11.6-1.5-16.3z" fill="#f00"/>
+                      <path d="M27 34l18-10-18-10v20z" fill="#fff"/>
+                    </svg>
+                  </span>
+                </button>
+              )}
+            </div>
+
+            <p className="video-hint">{t.howUseHint}</p>
+
+            <div className="steps steps-under-video">
+              <article className="step">
+                <div className="step-num">1</div>
+                <h3>{t.step1}</h3>
+                <p>{t.step1t}</p>
+              </article>
+              <article className="step">
+                <div className="step-num">2</div>
+                <h3>{t.step2}</h3>
+                <p>{t.step2t}</p>
+              </article>
+              <article className="step">
+                <div className="step-num">3</div>
+                <h3>{t.step3}</h3>
+                <p>{t.step3t}</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section className="faq" id="faq">
+          <div className="wrap-narrow">
+            <h2>{t.faqTitle}</h2>
+            {faq.map((item, i) => {
+              // вопрос «А если не понравится?» (индекс 2) не показываем: обещание «не платите» снято
+              if (i === 2) return null;
+              const isOpen = openFaq.includes(i);
+              return (
+                <div className="faq-item" key={item.q}>
+                  <button
+                    type="button"
+                    className="faq-q"
+                    aria-expanded={isOpen}
+                    onClick={() =>
+                      setOpenFaq((current) =>
+                        current.includes(i)
+                          ? current.filter((index) => index !== i)
+                          : [...current, i]
+                      )
+                    }
+                  >
+                    <span>{item.q}</span>
+                    <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  <div className="faq-a" hidden={!isOpen}>
+                    <p>{item.a}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="final final-cta" id="order">
+          <div className="wrap final-cta-grid">
+            <div className="final-cta-copy">
+              <p className="final-eyebrow">{t.finalEyebrow}</p>
+              <h2 className="final-title">{t.finalTitle}</h2>
+              <p className="final-lead">{t.finalLead}</p>
+            </div>
+            <div className="final-cta-actions">
+              <button type="button" className="hero-cta-btn final-btn" onClick={() => scrollToBuilder("final")}>
+                <span>{t.finalTg}</span>
+                <span aria-hidden="true">→</span>
+              </button>
+              <p className="final-phone">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 006 6l1.5-2 4 1.5v3a2 2 0 01-2 2A15.5 15.5 0 014.5 5.5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                </svg>
+                <span>{t.finalCallLabel}</span>
+                <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+              </p>
+              <p className="final-note">{t.finalNote}</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="foot">
+        <div className="wrap">
+          <div className="foot-logo">
+            PHOTO<span>BRELOK</span>
+          </div>
+          <ul className="foot-list">
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 21s7-5.2 7-11a7 7 0 10-14 0c0 5.8 7 11 7 11z" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+              </svg>
+              <span>{ADDRESS} · {lang === "ru" ? "Кишинёв" : "Chișinău"}</span>
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <span>{t.footerHours}</span>
+            </li>
+          </ul>
+          <p className="foot-note">{t.footerNote}</p>
+          <p className="foot-trademark">{t.trademarkNote}</p>
+          <div className="foot-divider" />
+          <ul className="foot-list">
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M3 7l9 7 9-7" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 006 6l1.5-2 4 1.5v3a2 2 0 01-2 2A15.5 15.5 0 014.5 5.5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+            </li>
+          </ul>
+          <div className="foot-social">
+            <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              Telegram
+            </a>
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="17" cy="7" r="1.2" fill="currentColor" />
+              </svg>
+              Instagram
+            </a>
+          </div>
+          <div className="foot-legal">
+            <Link href="/privacy">{legalCopy[lang].nav.privacy}</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/cookies">{legalCopy[lang].nav.cookies}</Link>
+          </div>
+        </div>
+      </footer>
+
+      <aside className={`mobile-cta ${mobileCtaHidden || heroCtaVisible || !cookiesDecided ? "hidden" : ""}`} aria-label={lang === "ru" ? "Быстрый заказ" : "Comandă rapidă"}>
+        <div className="mobile-cta-price">
+          <div className="mobile-cta-amount">{t.priceChip}</div>
+          <div className="mobile-cta-note">
+            {photoCount >= 6
+              ? (lang === "ru" ? `Фото: ${photoCount} · макет бесплатно` : `Poze: ${photoCount} · machetă gratuită`)
+              : photoCount > 0
+                ? (lang === "ru" ? `Добавьте ещё ${6 - photoCount} фото` : `Adaugă încă ${6 - photoCount} poze`)
+                : t.mobileCtaNote}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="hero-cta-btn mobile-cta-button"
+          onClick={() => {
+            // 6 и больше фото: сразу открываем форму заказа, иначе ведём к конструктору
+            if (photoCount >= 6) window.dispatchEvent(new CustomEvent("photobrelok_open_order"));
+            else scrollToBuilder("sticky");
+          }}
+        >
+          {photoCount >= 6 ? t.priceCta : photoCount > 0 ? t.mobileCtaMore : t.mobileCtaBtn}
+        </button>
+      </aside>
+    </div>
+  );
+}
