@@ -110,7 +110,8 @@ export type DeliveryDetails = {
 export function buildDeliveryText(method: DeliveryMethod, d: DeliveryDetails = {}): string {
   switch (method) {
     case "posta":
-      return `🚚 Способ получения: Poșta Moldovei — 30 лей\n📮 Индекс: ${d.postalCode}\n🏘 ${d.city}, р-н ${d.district}${d.street ? `\n🏠 Улица: ${d.street}` : ""}`;
+      // Порядок адреса: улица, город и район, индекс; способ получения идёт последним (см. replaceDelivery)
+      return `${d.street ? `🏠 Улица: ${d.street}\n` : ""}🏘 ${d.city}, р-н ${d.district}\n📮 Индекс: ${d.postalCode}\n🚚 Способ получения: Poșta Moldovei — 30 лей`;
     case "novapost":
       return `🚚 Способ получения: Nova Poshta — 60 лей\n📦 Отделение №${d.branch}`;
     case "taxi":
@@ -134,12 +135,41 @@ export function methodFromCaption(caption: string): DeliveryMethod {
   return "later";
 }
 
+// Строки адреса для почты: стоят сразу под именем клиента, до телефона.
+const ADDRESS_PREFIXES = ["🏠 Улица:", "🏘", "📮"];
+
+/**
+ * Собирает блок доставки в подписи заказа в таком порядке:
+ *   🔥 заказ → 👤 клиент → (почта: улица, город и район, индекс) → 📞 телефон → 📸 фото → … →
+ *   🚚 способ получения и его детали (внизу, чтобы бросалось в глаза) → заметки и история.
+ * Вызывается и при создании заказа, и когда менеджер меняет доставку в боте.
+ */
 export function replaceDelivery(caption: string, deliveryBlock: string): string {
   const lines = caption.split("\n").filter((l) => !DELIVERY_PREFIXES.some((p) => l.startsWith(p)));
-  const photosIdx = lines.findIndex((l) => l.startsWith("📸"));
-  const at = photosIdx === -1 ? lines.length : photosIdx + 1;
-  lines.splice(at, 0, ...deliveryBlock.split("\n"));
+  const blockLines = deliveryBlock.split("\n");
+  const top = blockLines.filter((l) => ADDRESS_PREFIXES.some((p) => l.startsWith(p)));
+  const bottom = blockLines.filter((l) => !top.includes(l));
+
+  // адрес: сразу после строки клиента (а если её нет — после заголовка)
+  const clientIdx = lines.findIndex((l) => l.startsWith("👤"));
+  lines.splice(clientIdx === -1 ? 1 : clientIdx + 1, 0, ...top);
+
+  // способ получения: перед заметками менеджера и историей, иначе в самом конце
+  const tailIdx = lines.findIndex((l) => l.startsWith("📝") || l.startsWith("🕒"));
+  lines.splice(tailIdx === -1 ? lines.length : tailIdx, 0, ...bottom);
   return lines.join("\n");
+}
+
+export function buildOrderCaption(o: {
+  orderId: string;
+  name: string;
+  phone: string;
+  photos: number;
+  langNote?: string;
+  deliveryBlock: string;
+}): string {
+  const base = `🔥 Новый заказ #${o.orderId}\n👤 Клиент: ${o.name}\n📞 Тел: ${o.phone}\n📸 Фотографий: ${o.photos} шт.${o.langNote ?? ""}`;
+  return replaceDelivery(base, o.deliveryBlock);
 }
 
 const CAPTION_LIMIT = 1000; // у Telegram лимит 1024
