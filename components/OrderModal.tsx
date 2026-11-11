@@ -44,9 +44,9 @@ const FIELD_ID: Record<FieldKey, string> = {
 };
 
 const inputBase =
-  'w-full bg-white border rounded-lg px-4 py-3 text-base text-[#141413] min-h-[48px] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#141413]';
+  'w-full bg-white border rounded-lg px-4 py-3 text-base text-[#191715] min-h-[48px] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#191715]';
 const inputClass = (invalid: boolean) =>
-  `${inputBase} ${invalid ? 'border-[#B42318] border-2' : 'border-[#DAD9D4]'}`;
+  `${inputBase} ${invalid ? 'border-[#B42318] border-2' : 'border-[#D9D0BF]'}`;
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
@@ -185,7 +185,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   };
 
   const methodCardClass =
-    'w-full text-left px-3 py-3 rounded-xl border-2 transition-colors flex items-center justify-between gap-2 min-w-0 min-h-[48px] cursor-pointer border-[#DAD9D4] bg-white hover:border-[#141413] has-[:checked]:border-[#141413] has-[:checked]:bg-[#C96442]/15 has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#141413]';
+    'w-full text-left px-3 py-3 rounded-xl border-2 transition-colors flex items-center justify-between gap-2 min-w-0 min-h-[48px] cursor-pointer border-[#D9D0BF] bg-white hover:border-[#191715] has-[:checked]:border-[#191715] has-[:checked]:bg-[#FFC400]/35 has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#191715]';
 
   const smallInput = (key: FieldKey) => inputClass(!!errors[key]);
   const describedBy = (key: FieldKey, hintId?: string) =>
@@ -204,19 +204,19 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
     <dialog
       ref={dialogRef}
       aria-labelledby="order-modal-title"
-      className="m-auto w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border-2 border-[#141413] bg-[#FFFFFF] p-5 sm:p-8 text-[#141413] shadow-2xl backdrop:bg-[#141413]/70"
+      className="m-auto w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border-2 border-[#191715] bg-[#FFFDF8] p-5 sm:p-8 text-[#191715] shadow-2xl backdrop:bg-[#191715]/70"
     >
       <button
         type="button"
         onClick={requestClose}
-        className="absolute top-3 right-3 text-[#535146] hover:text-[#141413] text-xl font-bold w-11 h-11 flex items-center justify-center rounded-full hover:bg-[#FAF9F5] transition-colors focus-visible:outline-3 focus-visible:outline-[#141413]"
+        className="absolute top-3 right-3 text-[#5C564E] hover:text-[#191715] text-xl font-bold w-11 h-11 flex items-center justify-center rounded-full hover:bg-[#F5F1E8] transition-colors focus-visible:outline-3 focus-visible:outline-[#191715]"
         aria-label={dict.orderModal.close}
       >
         <span aria-hidden="true">✕</span>
       </button>
 
-      <h2 id="order-modal-title" tabIndex={-1} className="text-2xl font-bold text-[#141413] mb-2 pr-10 outline-none">{dict.orderModal.title}</h2>
-      <p className="text-[#535146] mb-6 text-sm">{dict.orderModal.subtitle}</p>
+      <h2 id="order-modal-title" tabIndex={-1} className="text-2xl font-bold text-[#191715] mb-2 pr-10 outline-none">{dict.orderModal.title}</h2>
+      <p className="text-[#5C564E] mb-6 text-sm">{dict.orderModal.subtitle}</p>
 
       {/* noValidate: все проверки и тексты ошибок — наши, на языке интерфейса */}
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
@@ -229,7 +229,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="customer-name" className="block text-[#3D3929] text-sm mb-1">{dict.orderModal.nameLabel}</label>
+            <label htmlFor="customer-name" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.nameLabel}</label>
             <input
               id="customer-name"
               name="name"
@@ -249,7 +249,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
           </div>
 
           <div>
-            <label htmlFor="customer-phone" className="block text-[#3D3929] text-sm mb-1">{dict.orderModal.phoneLabel}</label>
+            <label htmlFor="customer-phone" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.phoneLabel}</label>
             <input
               id="customer-phone"
               name="phone"
@@ -269,25 +269,25 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
               className={inputClass(!!errors.phone)}
               placeholder={dict.orderModal.phonePlaceholder}
             />
-            <p id="customer-phone-hint" className="text-[#535146] text-xs mt-1">{dict.orderModal.phoneHint}</p>
+            <p id="customer-phone-hint" className="text-[#5C564E] text-xs mt-1">{dict.orderModal.phoneHint}</p>
             <FieldError id="customer-phone-err" message={errors.phone} />
           </div>
         </div>
 
         {/* Способ получения: настоящие радиокнопки в fieldset */}
         <fieldset className="min-w-0 border-0 p-0 m-0">
-          <legend className="block text-[#3D3929] text-sm mb-2 p-0">{d.label}</legend>
+          <legend className="block text-[#3D3832] text-sm mb-2 p-0">{d.label}</legend>
           <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:gap-2">
             <label className={`${methodCardClass} sm:col-start-1 sm:row-start-1`}>
               <input type="radio" name="delivery-method" value="posta" checked={method === 'posta'} onChange={() => setMethod('posta')} className="sr-only" />
-              <span className="text-[#141413] font-medium text-sm">{d.posta}</span>
-              <span className="text-[#535146] text-xs text-right">{d.postaPrice}</span>
+              <span className="text-[#191715] font-medium text-sm">{d.posta}</span>
+              <span className="text-[#5C564E] text-xs text-right">{d.postaPrice}</span>
             </label>
 
             {method === 'posta' && (
               <div className="pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 sm:col-span-3 sm:row-start-2">
                 <div>
-                  <label htmlFor="surname" className="block text-[#535146] text-sm mb-1">{d.surnameLabel}</label>
+                  <label htmlFor="surname" className="block text-[#5C564E] text-sm mb-1">{d.surnameLabel}</label>
                   <input
                     id="surname"
                     name="surname"
@@ -306,7 +306,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="postal-code" className="block text-[#535146] text-sm mb-1">{d.postalCodeLabel}</label>
+                    <label htmlFor="postal-code" className="block text-[#5C564E] text-sm mb-1">{d.postalCodeLabel}</label>
                     <input
                       id="postal-code"
                       name="postalCode"
@@ -324,7 +324,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                     <FieldError id="postal-code-err" message={errors.postalCode} />
                   </div>
                   <div>
-                    <label htmlFor="district" className="block text-[#535146] text-sm mb-1">{d.districtLabel}</label>
+                    <label htmlFor="district" className="block text-[#5C564E] text-sm mb-1">{d.districtLabel}</label>
                     <input
                       id="district"
                       name="district"
@@ -344,7 +344,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="city" className="block text-[#535146] text-sm mb-1">{d.cityLabel}</label>
+                    <label htmlFor="city" className="block text-[#5C564E] text-sm mb-1">{d.cityLabel}</label>
                     <input
                       id="city"
                       name="city"
@@ -362,7 +362,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                     <FieldError id="city-err" message={errors.city} />
                   </div>
                   <div>
-                    <label htmlFor="street" className="block text-[#535146] text-sm mb-1">{d.streetLabel}</label>
+                    <label htmlFor="street" className="block text-[#5C564E] text-sm mb-1">{d.streetLabel}</label>
                     <input
                       id="street"
                       name="street"
@@ -381,13 +381,13 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
 
             <label className={`${methodCardClass} sm:col-start-2 sm:row-start-1`}>
               <input type="radio" name="delivery-method" value="novapost" checked={method === 'novapost'} onChange={() => setMethod('novapost')} className="sr-only" />
-              <span className="text-[#141413] font-medium text-sm">{d.novapost}</span>
-              <span className="text-[#535146] text-xs text-right">{d.novapostPrice}</span>
+              <span className="text-[#191715] font-medium text-sm">{d.novapost}</span>
+              <span className="text-[#5C564E] text-xs text-right">{d.novapostPrice}</span>
             </label>
 
             {method === 'novapost' && (
               <div className="pl-1 pr-1 pt-1 pb-2 sm:col-span-3 sm:row-start-2">
-                <label htmlFor="novapost-branch" className="block text-[#535146] text-sm mb-1">{d.branchLabel}</label>
+                <label htmlFor="novapost-branch" className="block text-[#5C564E] text-sm mb-1">{d.branchLabel}</label>
                 <input
                   id="novapost-branch"
                   name="novaPostBranch"
@@ -408,12 +408,12 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
 
             <label className={`${methodCardClass} sm:col-start-3 sm:row-start-1`}>
               <input type="radio" name="delivery-method" value="pickup" checked={method === 'pickup'} onChange={() => setMethod('pickup')} className="sr-only" />
-              <span className="text-[#141413] font-medium text-sm">{d.pickup}</span>
+              <span className="text-[#191715] font-medium text-sm">{d.pickup}</span>
               <span className="text-[#067647] text-xs text-right font-semibold">{d.pickupPrice}</span>
             </label>
 
             {method === 'pickup' && (
-              <div className="pl-1 pr-1 pt-1 pb-2 text-sm text-[#535146] leading-relaxed sm:col-span-3 sm:row-start-2">
+              <div className="pl-1 pr-1 pt-1 pb-2 text-sm text-[#5C564E] leading-relaxed sm:col-span-3 sm:row-start-2">
                 <span aria-hidden="true">📍 </span>{d.pickupAddress}<br />
                 <span aria-hidden="true">🕒 </span>{d.pickupHours}
               </div>
@@ -421,7 +421,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
           </div>
         </fieldset>
 
-        <fieldset className="mt-2 rounded-2xl border border-[#DAD9D4] bg-[#FAF9F5] p-4 min-w-0">
+        <fieldset className="mt-2 rounded-2xl border border-[#E5DCCB] bg-[#F5F1E8] p-4 min-w-0">
           <legend className="sr-only">{lang === 'ru' ? 'Согласия' : 'Acorduri'}</legend>
           <label className="flex items-start gap-3 cursor-pointer min-h-[44px]">
             <input
@@ -432,9 +432,9 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
               onChange={(e) => { setDataConsent(e.target.checked); clearError('consent'); }}
               aria-invalid={!!errors.consent && !dataConsent}
               aria-describedby={errors.consent ? 'consent-err' : undefined}
-              className="mt-0.5 size-6 shrink-0 accent-[#141413] cursor-pointer"
+              className="mt-0.5 size-6 shrink-0 accent-[#191715] cursor-pointer"
             />
-            <span className="text-sm leading-relaxed text-[#3D3929]">
+            <span className="text-sm leading-relaxed text-[#3D3832]">
               {dict.orderModal.consent.dataLabel}
             </span>
           </label>
@@ -442,7 +442,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-9 inline-flex items-center min-h-[44px] text-sm font-semibold text-[#141413] underline underline-offset-2 hover:text-[#535146]"
+            className="ml-9 inline-flex items-center min-h-[44px] text-sm font-semibold text-[#191715] underline underline-offset-2 hover:text-[#5C564E]"
           >
             {dict.orderModal.consent.dataLink}
           </Link>
@@ -456,9 +456,9 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
               onChange={(e) => { setPhotoConsent(e.target.checked); clearError('consent'); }}
               aria-invalid={!!errors.consent && !photoConsent}
               aria-describedby={errors.consent ? 'consent-err' : undefined}
-              className="mt-0.5 size-6 shrink-0 accent-[#141413] cursor-pointer"
+              className="mt-0.5 size-6 shrink-0 accent-[#191715] cursor-pointer"
             />
-            <span className="text-sm leading-relaxed text-[#3D3929]">
+            <span className="text-sm leading-relaxed text-[#3D3832]">
               {dict.orderModal.consent.photoLabel}
             </span>
           </label>
@@ -468,9 +468,9 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
               type="checkbox"
               checked={marketingConsent}
               onChange={(e) => setMarketingConsent(e.target.checked)}
-              className="mt-0.5 size-6 shrink-0 accent-[#141413] cursor-pointer"
+              className="mt-0.5 size-6 shrink-0 accent-[#191715] cursor-pointer"
             />
-            <span className="text-sm leading-relaxed text-[#535146]">
+            <span className="text-sm leading-relaxed text-[#5C564E]">
               {dict.orderModal.consent.marketingLabel}
             </span>
           </label>
@@ -479,10 +479,10 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
         </fieldset>
 
         {isSubmitting && (
-          <div role="status" aria-live="polite" className="mt-2 p-4 rounded-xl bg-[#FAF9F5] border-2 border-[#141413] flex flex-col gap-2.5">
-            <div className="flex items-center justify-between text-sm font-bold text-[#141413]">
+          <div role="status" aria-live="polite" className="mt-2 p-4 rounded-xl bg-[#F5F1E8] border-2 border-[#191715] flex flex-col gap-2.5">
+            <div className="flex items-center justify-between text-sm font-bold text-[#191715]">
               <span className="flex items-center gap-2">
-                <span aria-hidden="true" className="inline-block size-3.5 rounded-full border-2 border-[#141413] border-t-transparent animate-spin" />
+                <span aria-hidden="true" className="inline-block size-3.5 rounded-full border-2 border-[#191715] border-t-transparent animate-spin" />
                 {progressText}
               </span>
               <span className="text-sm font-bold tabular-nums">
@@ -493,9 +493,9 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                   : '...'}
               </span>
             </div>
-            <div aria-hidden="true" className="w-full h-3 bg-white rounded-full overflow-hidden border border-[#DAD9D4] p-0.5">
+            <div aria-hidden="true" className="w-full h-3 bg-white rounded-full overflow-hidden border border-[#D9D0BF] p-0.5">
               <div
-                className="h-full bg-[#C96442] rounded-full transition-all duration-300 ease-out"
+                className="h-full bg-[#FFC400] rounded-full transition-all duration-300 ease-out"
                 style={{
                   width: `${
                     uploadProgress && uploadProgress.total > 0
@@ -507,7 +507,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                 }}
               />
             </div>
-            <p className="text-xs text-[#535146] text-center leading-tight">
+            <p className="text-xs text-[#5C564E] text-center leading-tight">
               {lang === 'ru'
                 ? 'Пожалуйста, не закрывайте вкладку — фото отправляются на печать'
                 : 'Vă rugăm să nu închideți pagina — pozele se trimit pentru tipar'}
@@ -520,15 +520,15 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
         <button
           type="submit"
           aria-disabled={isSubmitting}
-          className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all min-h-[52px] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#141413] ${
+          className={`mt-2 w-full py-4 rounded-xl font-bold text-lg transition-all min-h-[52px] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#191715] ${
             isSubmitting
-              ? "bg-[#E9E6DC] text-[#535146] cursor-not-allowed"
-              : "bg-[#C96442] text-[#141413] hover:bg-[#B05730] border-2 border-[#141413] active:scale-[0.98] shadow-lg shadow-[#C96442]/35"
+              ? "bg-[#E8E0D0] text-[#5C564E] cursor-not-allowed"
+              : "bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] border-2 border-[#191715] active:scale-[0.98] shadow-lg shadow-[#FFC400]/35"
           }`}
         >
           {isSubmitting ? (
             <span className="inline-flex items-center justify-center gap-2">
-              <span aria-hidden="true" className="inline-block size-4 rounded-full border-2 border-[#535146] border-t-transparent animate-spin" />
+              <span aria-hidden="true" className="inline-block size-4 rounded-full border-2 border-[#5C564E] border-t-transparent animate-spin" />
               {uploadProgress?.stage === 'finishing'
                 ? (lang === 'ru' ? 'Оформляем...' : 'Finalizăm...')
                 : uploadProgress && uploadProgress.total > 0
@@ -541,7 +541,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             dict.orderModal.submit
           )}
         </button>
-        <p className="text-center text-xs text-[#535146] -mt-1">
+        <p className="text-center text-xs text-[#5C564E] -mt-1">
           {lang === "ru"
             ? "Макет бесплатно · оплата при получении · без предоплат"
             : "Machetă gratuită · plata la livrare · fără avans"}

@@ -42,58 +42,58 @@ function ThankYouContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] py-12 px-4 text-[#141413] font-sans">
+    <div className="min-h-screen bg-[#F5F1E8] py-12 px-4 text-[#191715] font-sans">
       <div className="mx-auto w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
       {/* 1. Блок успеха */}
       <div className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-1 text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-1000">
         <div className="flex justify-center">
           <div className="relative inline-flex">
-            <CheckCircle2 className="w-20 h-20 text-[#141413]" />
-            <Sparkles className="absolute -top-2 -right-2 text-[#141413]" />
+            <CheckCircle2 className="w-20 h-20 text-[#191715]" />
+            <Sparkles className="absolute -top-2 -right-2 text-[#191715]" />
           </div>
         </div>
         <h1 className="text-4xl font-bold leading-none">
-          {dict.thanks.orderAccepted} <span className="text-[#141413] bg-[#C96442] px-2 rounded-lg">{dict.thanks.accepted}</span>
+          {dict.thanks.orderAccepted} <span className="text-[#191715] bg-[#FFC400] px-2 rounded-lg">{dict.thanks.accepted}</span>
         </h1>
-        <p className="text-[#535146] font-medium">
+        <p className="text-[#5C564E] font-medium">
           {dict.thanks.orderNumber} <span className="text-black bg-zinc-200 px-2 py-1 rounded font-mono">#{orderId}</span>
         </p>
-        <p className="text-[#64635C] text-sm">
+        <p className="text-[#7A7368] text-sm">
           {dict.thanks.willContact}
         </p>
       </div>
 
       {/* 2. Оффер-апселл — без таймера и ложной срочности */}
       {status === 'pending' ? (
-        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFFFF] border-[3px] border-[#141413] rounded-[40px] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
-          <div className="absolute top-0 right-0 bg-[#C96442] text-[#141413] px-6 py-2 rounded-bl-3xl font-black text-xs uppercase tracking-widest">
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFDF8] border-[3px] border-[#191715] rounded-[40px] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
+          <div className="absolute top-0 right-0 bg-[#FFC400] text-white px-6 py-2 rounded-bl-3xl font-black text-xs uppercase tracking-widest">
             {dict.thanks.sameOrderBadge}
           </div>
 
           <div className="mb-4">
-            <span className="inline-block bg-[#C96442]/25 text-[#141413] text-xs font-bold px-3 py-1 rounded-full uppercase bg-[#C96442]">
+            <span className="inline-block bg-[#FFC400]/25 text-[#191715] text-xs font-bold px-3 py-1 rounded-full uppercase bg-[#FFC400]">
               {dict.thanks.todayOnly}
             </span>
           </div>
 
           <h2 className="text-2xl font-black leading-[1.1] mb-4">
             {dict.thanks.upsellTitle1}<br />
-            <span className="text-[#A84D2A]">{dict.thanks.upsellDiscount}</span>
+            <span className="text-[#FFC400]">{dict.thanks.upsellDiscount}</span>
           </h2>
 
-          <p className="text-[#3D3929] mb-6 leading-relaxed text-sm">
+          <p className="text-[#3D3832] mb-6 leading-relaxed text-sm">
             {dict.thanks.upsellDescPre} <span className="font-bold text-black">{dict.thanks.upsellDescBold}</span> {dict.thanks.upsellDescPost}
           </p>
 
-          <div className="space-y-3 mb-6 bg-[#F6E9E2] p-5 rounded-3xl border border-[#E6C4B4]">
+          <div className="space-y-3 mb-6 bg-[#FFF6D6] p-5 rounded-3xl border border-[#E8D48A]">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-[#535146]">{dict.thanks.regularPrice}</span>
-              <span className="font-bold line-through text-[#64635C]">250 {dict.thanks.currency}</span>
+              <span className="text-[#5C564E]">{dict.thanks.regularPrice}</span>
+              <span className="font-bold line-through text-[#7A7368]">250 {dict.thanks.currency}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-bold text-black">{dict.thanks.discountPrice}</span>
-              <span className="text-3xl font-black text-[#A84D2A]">150 {dict.thanks.currency}</span>
+              <span className="text-3xl font-black text-[#FFC400]">150 {dict.thanks.currency}</span>
             </div>
           </div>
 
@@ -106,7 +106,7 @@ function ThankYouContent() {
           <button
             onClick={handleUpsell}
             disabled={isLoading}
-            className="w-full py-5 bg-[#C96442] hover:bg-[#B05730] text-[#141413] font-black rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-center gap-3 group active:scale-[0.98] disabled:opacity-70 shadow-[#C96442]/40"
+            className="w-full py-5 bg-[#FFC400] hover:bg-[#E6B000] text-[#191715] font-black rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-center gap-3 group active:scale-[0.98] disabled:opacity-70 shadow-[#FFC400]/40"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
@@ -126,45 +126,45 @@ function ThankYouContent() {
 
           <button
             onClick={() => setStatus('declined')}
-            className="w-full mt-4 py-4 bg-white border border-[#DAD9D4] hover:bg-[#FAF9F5] text-[#141413] font-bold rounded-xl transition-colors text-sm"
+            className="w-full mt-4 py-4 bg-white border border-[#D9D0BF] hover:bg-[#F5F1E8] text-[#191715] font-bold rounded-xl transition-colors text-sm"
           >
             {dict.thanks.noThanks}
           </button>
         </div>
       ) : status === 'accepted' ? (
-        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#141413] text-[#FAF9F5] rounded-[40px] p-10 text-center animate-in fade-in zoom-in duration-500">
-          <div className="w-20 h-20 bg-[#C96442]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Package className="w-10 h-10 text-[#C96442]" />
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#191715] text-[#F5F1E8] rounded-[40px] p-10 text-center animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-[#FFC400]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Package className="w-10 h-10 text-[#FFC400]" />
           </div>
           <h2 className="text-2xl font-black uppercase">{dict.thanks.acceptedTitle}</h2>
-          <p className="text-[#B7B5A9] mt-3">{dict.thanks.acceptedDescLine1} <br />{dict.thanks.acceptedDescLine2}</p>
+          <p className="text-[#B8B0A4] mt-3">{dict.thanks.acceptedDescLine1} <br />{dict.thanks.acceptedDescLine2}</p>
         </div>
       ) : (
-        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFFFF] border border-[#DAD9D4] rounded-[40px] p-8 text-center">
-          <div className="w-16 h-16 bg-[#FAF9F5] rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-[#B7B5A9]" />
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFDF8] border border-[#D9D0BF] rounded-[40px] p-8 text-center">
+          <div className="w-16 h-16 bg-[#F5F1E8] rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 text-[#B8B0A4]" />
           </div>
           <h2 className="text-xl font-bold">{dict.thanks.neutralTitle}</h2>
-          <p className="text-[#64635C] mt-2 text-sm">{dict.thanks.neutralDeclined}</p>
+          <p className="text-[#7A7368] mt-2 text-sm">{dict.thanks.neutralDeclined}</p>
         </div>
       )}
 
       {/* Инфо */}
       <div className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-2 lg:mt-0 mt-8 space-y-3">
-        <div className="bg-[#FFFFFF] p-4 rounded-2xl flex items-center gap-3 border border-[#DAD9D4] shadow-sm">
-          <div className="w-10 h-10 bg-[#F6E9E2] rounded-xl flex items-center justify-center text-[#C96442]">
+        <div className="bg-[#FFFDF8] p-4 rounded-2xl flex items-center gap-3 border border-[#E5DCCB] shadow-sm">
+          <div className="w-10 h-10 bg-[#FFF6D6] rounded-xl flex items-center justify-center text-[#FFC400]">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
             <h4 className="font-bold text-sm">{dict.thanks.paymentTitle}</h4>
-            <p className="text-xs text-[#64635C]">{dict.thanks.paymentSub}</p>
+            <p className="text-xs text-[#7A7368]">{dict.thanks.paymentSub}</p>
           </div>
         </div>
       </div>
 
       <button
         onClick={() => router.push('/')}
-        className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-3 lg:mt-0 mt-8 py-4 bg-white border-2 border-gray-200 text-[#3D3929] font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+        className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-3 lg:mt-0 mt-8 py-4 bg-white border-2 border-gray-200 text-[#3D3832] font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
       >
         {dict.thanks.backToSite}
       </button>

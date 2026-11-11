@@ -447,7 +447,7 @@ export default function PhotoConstructor() {
   };
 
   return (
-    <div id="constructor" className="bg-[#FAF9F5] text-[#141413] py-10 font-sans selection:bg-white/40">
+    <div id="constructor" className="bg-[#F5F1E8] text-[#191715] py-10 font-sans selection:bg-white/40">
       
       <input
         type="file"
@@ -464,8 +464,8 @@ export default function PhotoConstructor() {
 
       {/* Film strip + Kodak canister: film feeds into the keychain body */}
       {isReadingFiles && (
-        <div className="max-w-md mx-auto mb-4 px-4 py-3 bg-[#C96442]/25 border-2 border-[#141413] rounded-xl flex items-center justify-center gap-2.5 text-xs font-bold text-[#141413] animate-pulse shadow-sm">
-          <span className="inline-block size-3.5 rounded-full border-2 border-[#141413] border-t-transparent animate-spin" />
+        <div className="max-w-md mx-auto mb-4 px-4 py-3 bg-[#FFC400]/25 border-2 border-[#191715] rounded-xl flex items-center justify-center gap-2.5 text-xs font-bold text-[#191715] animate-pulse shadow-sm">
+          <span className="inline-block size-3.5 rounded-full border-2 border-[#191715] border-t-transparent animate-spin" />
           <span>{lang === "ru" ? "Обработка выбранных фото..." : "Se procesează pozele selectate..."}</span>
         </div>
       )}
@@ -526,7 +526,7 @@ export default function PhotoConstructor() {
                 right: 52px;
               }
               .pb-film-throat {
-                background: linear-gradient(90deg, #111 0%, #111 50%, #141210 72%, #1F1E1D 88%, #221c16 100%);
+                background: linear-gradient(90deg, #111 0%, #111 50%, #141210 72%, #1c1814 88%, #221c16 100%);
               }
               .pb-tongue {
                 width: 56px;
@@ -547,7 +547,7 @@ export default function PhotoConstructor() {
                 margin-top: 14px;
                 border-radius: 999px;
                 background: #e4ddd0;
-                border: 1px solid #C8C6BC;
+                border: 1px solid #c9c2b7;
                 cursor: pointer;
                 touch-action: none;
               }
@@ -556,7 +556,7 @@ export default function PhotoConstructor() {
                 top: -1px;
                 height: 8px;
                 border-radius: 999px;
-                background: #141413;
+                background: #191715;
                 min-width: 36px;
                 cursor: grab;
                 touch-action: none;
@@ -662,7 +662,7 @@ export default function PhotoConstructor() {
                       <>
                         <Image src={url} alt={`${index + 1}`} width={120} height={120} className="w-full h-full object-cover" />
                         {selectedSlot === index && (
-                          <div className="absolute inset-0 ring-[3px] ring-inset ring-[#C96442] bg-black/15 pointer-events-none" />
+                          <div className="absolute inset-0 ring-[3px] ring-inset ring-[#FFC400] bg-black/15 pointer-events-none" />
                         )}
                       </>
                     ) : (
@@ -696,7 +696,7 @@ export default function PhotoConstructor() {
             style={{
               top: '50%',
               transform: 'translateY(-50%)',
-              background: '#1F1E1D',
+              background: '#1c1814',
               borderRadius: '2px 10px 10px 2px',
               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
             }}
@@ -707,7 +707,7 @@ export default function PhotoConstructor() {
             className="pb-canister pointer-events-none absolute z-20"
             style={{
               top: '50%',
-              filter: 'drop-shadow(0 22px 32px rgba(20, 20, 19, 0.32))',
+              filter: 'drop-shadow(0 22px 32px rgba(25, 23, 21, 0.32))',
             }}
           >
             <Image
@@ -744,9 +744,9 @@ export default function PhotoConstructor() {
 
         {/* Панель управления выделенным кадром — удобные кнопки под палец (44x44px min) */}
         {selectedSlot !== null && slots[selectedSlot] && (
-          <div className="mx-auto mt-3 max-w-[420px] rounded-xl border-2 border-[#141413] bg-white px-3 py-2.5 shadow-md">
+          <div className="mx-auto mt-3 max-w-[420px] rounded-xl border-2 border-[#191715] bg-white px-3 py-2.5 shadow-md">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[12px] font-semibold text-[#535146] shrink-0">
+              <span className="text-[12px] font-semibold text-[#5C564E] shrink-0">
                 {lang === "ru" ? `Кадр ${selectedSlot + 1}` : `Cadrul ${selectedSlot + 1}`}
               </span>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -755,7 +755,7 @@ export default function PhotoConstructor() {
                   onClick={() => moveSlot(selectedSlot, -1)}
                   disabled={selectedSlot === 0}
                   aria-label={dict.home.moveLeft}
-                  className="h-11 w-11 rounded-lg border-2 border-[#141413] bg-white text-[#141413] text-base font-bold disabled:opacity-30 active:bg-[#C96442]/40 flex items-center justify-center shrink-0"
+                  className="h-11 w-11 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-base font-bold disabled:opacity-30 active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
                 >
                   ←
                 </button>
@@ -764,14 +764,14 @@ export default function PhotoConstructor() {
                   onClick={() => moveSlot(selectedSlot, 1)}
                   disabled={selectedSlot === MAX_SLOTS - 1}
                   aria-label={dict.home.moveRight}
-                  className="h-11 w-11 rounded-lg border-2 border-[#141413] bg-white text-[#141413] text-base font-bold disabled:opacity-30 active:bg-[#C96442]/40 flex items-center justify-center shrink-0"
+                  className="h-11 w-11 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-base font-bold disabled:opacity-30 active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
                 >
                   →
                 </button>
                 <button
                   type="button"
                   onClick={handleReplaceSelected}
-                  className="h-11 px-3.5 rounded-lg border-2 border-[#141413] bg-white text-[#141413] text-[13px] font-semibold active:bg-[#C96442]/40 flex items-center justify-center shrink-0"
+                  className="h-11 px-3.5 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-[13px] font-semibold active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
                 >
                   {dict.home.replace}
                 </button>
@@ -787,7 +787,7 @@ export default function PhotoConstructor() {
           </div>
         )}
 
-        <p className="text-center text-[12px] text-[#64635C] mt-3">
+        <p className="text-center text-[12px] text-[#6B6560] mt-3">
           {lang === "ru"
             ? "Плёнка с фото наматывается внутрь катушки — как в настоящем брелоке"
             : "Filmul cu poze se învârte în interiorul casetei — ca la brelocul real"}
@@ -819,7 +819,7 @@ export default function PhotoConstructor() {
                           : `Adăugate ${count} poze · poți comanda sau adăuga până la 10`}
                 </span>
                 <div
-                  className="mt-2 h-1.5 w-full rounded-full bg-[#E9E6DC] overflow-hidden"
+                  className="mt-2 h-1.5 w-full rounded-full bg-[#E8E0D0] overflow-hidden"
                   role="progressbar"
                   aria-valuenow={count}
                   aria-valuemin={0}
@@ -827,7 +827,7 @@ export default function PhotoConstructor() {
                   aria-label={lang === "ru" ? "Прогресс загрузки фото" : "Progres încărcare poze"}
                 >
                   <div
-                    className="h-full rounded-full bg-[#C96442] transition-all duration-300"
+                    className="h-full rounded-full bg-[#FFC400] transition-all duration-300"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -845,7 +845,7 @@ export default function PhotoConstructor() {
                   setTelegramFallback(null);
                   setIsModalOpen(true);
                 }}
-                className="w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg relative z-50 bg-[#C96442] text-[#141413] hover:bg-[#B05730] active:bg-[#D4A000] shadow-[#C96442]/40 flex items-center justify-center min-h-[56px]"
+                className="w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg relative z-50 bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] active:bg-[#D4A000] shadow-[#FFC400]/40 flex items-center justify-center min-h-[56px]"
               >
                 {count === 0
                   ? (lang === "ru" ? "Выбрать фото (минимум 6)" : "Alege pozele (minim 6)")
