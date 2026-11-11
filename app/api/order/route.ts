@@ -257,7 +257,7 @@ export async function POST(request: Request) {
       address: cleanText(deliveryData.address, 150),
     });
 
-    const captionText = buildOrderCaption({ orderId, name: safeName, phone: safePhone, photos: numPhotos, langNote, deliveryBlock: deliveryText });
+    const captionText = buildOrderCaption({ orderId, name: safeName, phone: safePhone, langNote, deliveryBlock: deliveryText });
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
     let deliveredToAtLeastOne = false;

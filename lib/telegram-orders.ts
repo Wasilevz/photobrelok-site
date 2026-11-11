@@ -110,8 +110,8 @@ export type DeliveryDetails = {
 export function buildDeliveryText(method: DeliveryMethod, d: DeliveryDetails = {}): string {
   switch (method) {
     case "posta":
-      // Порядок адреса: улица, город и район, индекс; способ получения идёт последним (см. replaceDelivery)
-      return `${d.street ? `🏠 Улица: ${d.street}\n` : ""}🏘 ${d.city}, р-н ${d.district}\n📮 Индекс: ${d.postalCode}\n🚚 Способ получения: Poșta Moldovei — 30 лей`;
+      // Порядок адреса: район, улица, город, индекс; способ получения идёт последним (см. replaceDelivery)
+      return `🏘 Район: ${d.district}\n${d.street ? `🏠 Улица: ${d.street}\n` : ""}🏙 Город: ${d.city}\n📮 Индекс: ${d.postalCode}\n🚚 Способ получения: Poșta Moldovei — 30 лей`;
     case "novapost":
       return `🚚 Способ получения: Nova Poshta — 60 лей\n📦 Отделение №${d.branch}`;
     case "taxi":
@@ -124,7 +124,7 @@ export function buildDeliveryText(method: DeliveryMethod, d: DeliveryDetails = {
 }
 
 // Строки блока доставки начинаются с этих эмодзи — по ним блок находится и заменяется.
-const DELIVERY_PREFIXES = ["🚚", "📮", "🏘", "🏠", "📦", "📍"];
+const DELIVERY_PREFIXES = ["🚚", "📮", "🏘", "🏙", "🏠", "📦", "📍"];
 
 export function methodFromCaption(caption: string): DeliveryMethod {
   const line = caption.split("\n").find((l) => l.startsWith("🚚 Способ получения:")) || "";
@@ -136,16 +136,19 @@ export function methodFromCaption(caption: string): DeliveryMethod {
 }
 
 // Строки адреса для почты: стоят сразу под именем клиента, до телефона.
-const ADDRESS_PREFIXES = ["🏠 Улица:", "🏘", "📮"];
+const ADDRESS_PREFIXES = ["🏘", "🏠 Улица:", "🏙", "📮"];
 
 /**
  * Собирает блок доставки в подписи заказа в таком порядке:
- *   🔥 заказ → 👤 клиент → (почта: улица, город и район, индекс) → 📞 телефон → 📸 фото → … →
+ *   🔥 заказ → 👤 клиент → (почта: район, улица, город, индекс) → 📞 телефон →
  *   🚚 способ получения и его детали (внизу, чтобы бросалось в глаза) → заметки и история.
  * Вызывается и при создании заказа, и когда менеджер меняет доставку в боте.
  */
 export function replaceDelivery(caption: string, deliveryBlock: string): string {
-  const lines = caption.split("\n").filter((l) => !DELIVERY_PREFIXES.some((p) => l.startsWith(p)));
+  // Строку «📸 Фотографий» больше не показываем: убираем и из старых подписей при правке
+  const lines = caption
+    .split("\n")
+    .filter((l) => !DELIVERY_PREFIXES.some((p) => l.startsWith(p)) && !l.startsWith("📸"));
   const blockLines = deliveryBlock.split("\n");
   const top = blockLines.filter((l) => ADDRESS_PREFIXES.some((p) => l.startsWith(p)));
   const bottom = blockLines.filter((l) => !top.includes(l));
@@ -164,11 +167,10 @@ export function buildOrderCaption(o: {
   orderId: string;
   name: string;
   phone: string;
-  photos: number;
   langNote?: string;
   deliveryBlock: string;
 }): string {
-  const base = `🔥 Новый заказ #${o.orderId}\n👤 Клиент: ${o.name}\n📞 Тел: ${o.phone}\n📸 Фотографий: ${o.photos} шт.${o.langNote ?? ""}`;
+  const base = `🔥 Новый заказ #${o.orderId}\n👤 Клиент: ${o.name}\n📞 Тел: ${o.phone}${o.langNote ?? ""}`;
   return replaceDelivery(base, o.deliveryBlock);
 }
 
