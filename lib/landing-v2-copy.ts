@@ -4,7 +4,7 @@
 export const landingV2Copy = {
   ru: {
     heroEyebrow: "Печать на Epson · сделано в Молдове",
-    heroTitle: "Ваши воспоминания — на плёнке в катушке Kodak",
+    heroTitle: "Подарок из ваших воспоминаний: фото на плёнке в катушке Kodak",
     heroLead: "6–10 ваших фото. Плёнку можно вытянуть и листать кадры. Изготовим за 1–2 дня.",
     heroConditions: "Макет бесплатно · Оплата при получении · Самовывоз бесплатно",
     heroCtaNote: "Платить сейчас не нужно",
@@ -53,7 +53,7 @@ export const landingV2Copy = {
   },
   ro: {
     heroEyebrow: "Imprimat pe Epson · făcut în Moldova",
-    heroTitle: "Amintirile tale — pe peliculă, într-o casetă Kodak",
+    heroTitle: "Un cadou din amintirile tale: poze pe peliculă, într-o casetă Kodak",
     heroLead: "6–10 poze ale tale. Tragi de peliculă și răsfoiești cadrele. Le facem în 1–2 zile.",
     heroConditions: "Machetă gratuită · Plata la primire · Ridicare gratuită",
     heroCtaNote: "Nu plătești nimic acum",
