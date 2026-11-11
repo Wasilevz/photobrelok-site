@@ -8,7 +8,7 @@ const siteUrl =
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/thanks"] },
+    rules: { userAgent: "*", allow: "/", disallow: "/api/" },
     sitemap: `${siteUrl}/sitemap.xml`,
   };
 }
