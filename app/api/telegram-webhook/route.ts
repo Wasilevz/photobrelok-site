@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { type TgUpdate, handleUpdate } from "@/lib/telegram-bot";
+import { tg } from "@/lib/telegram-orders";
 
 // Вебхук Telegram-бота: кнопки под заказами и ответы-правки.
 // Регистрируется командой `npm run telegram:webhook -- https://<домен>` (см. README).
@@ -36,4 +37,26 @@ export async function POST(request: Request) {
     console.error("Telegram update failed:", error instanceof Error ? error.message : error);
   }
   return NextResponse.json({ ok: true });
+}
+
+// Подключение вебхука с самого сервера (токен бота остаётся на Vercel):
+// откройте /api/telegram-webhook?setup=<TELEGRAM_WEBHOOK_SECRET> один раз после деплоя.
+export async function GET(request: Request) {
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  const url = new URL(request.url);
+  if (!secret || !secretMatches(url.searchParams.get("setup"), secret)) {
+    return NextResponse.json({ ok: false }, { status: 404 });
+  }
+  try {
+    const webhookUrl = `${url.origin}/api/telegram-webhook`;
+    await tg("setWebhook", {
+      url: webhookUrl,
+      secret_token: secret,
+      allowed_updates: ["message", "callback_query"],
+      drop_pending_updates: true,
+    });
+    return NextResponse.json({ ok: true, webhook: webhookUrl });
+  } catch (error) {
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "failed" }, { status: 502 });
+  }
 }

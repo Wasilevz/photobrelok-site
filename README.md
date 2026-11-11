@@ -56,7 +56,8 @@ Bot API не умеет переносить сообщения между те�
 1. Включите в группе темы, создайте: *В работе, Готовы к выдаче, Готовы к отправке, Завершены* (и по желанию *Отменены*).
 2. Сделайте бота админом группы с правом **удалять сообщения**.
 3. Задайте `TELEGRAM_WEBHOOK_SECRET` (любая случайная строка) и задеплойте сайт.
-4. Подключите бота: `TELEGRAM_BOT_TOKEN=... TELEGRAM_WEBHOOK_SECRET=... npm run telegram:webhook -- https://ваш-домен`
+4. Подключите бота: откройте один раз `https://ваш-домен/api/telegram-webhook?setup=<TELEGRAM_WEBHOOK_SECRET>`
+   (или локально: `TELEGRAM_BOT_TOKEN=... TELEGRAM_WEBHOOK_SECRET=... npm run telegram:webhook -- https://ваш-домен`)
 5. Отправьте `/id` внутри каждой темы — бот ответит номерами `chat_id` и `thread_id`. Впишите их в `TELEGRAM_TOPIC_*`
    (`TELEGRAM_CHAT_ID` или `TELEGRAM_TOPIC_CHAT_ID` — ID группы). Без `TELEGRAM_TOPIC_*` заказы приходят как раньше, без кнопок.
 
