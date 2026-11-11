@@ -237,48 +237,75 @@ export function readUpsellToken(token: unknown, orderId: string): UpsellPayload 
   }
 }
 
-const UPSELL_MARK = "АПСЕЛЛ";
+const UPSELL_MARK = "ВТОРОЙ БРЕЛОК";
+const UPSELL_TITLE_TAG = " — ⚠️ 2 БРЕЛКА";
+const UPSELL_RULE = "━━━━━━━━━━━━━━━";
+
+/** Есть ли в подписи блок про второй брелок (поддерживаем и прежний вид с «АПСЕЛЛ»). */
+export function hasUpsell(caption: string): boolean {
+  return caption.includes(UPSELL_MARK) || caption.includes("АПСЕЛЛ");
+}
 
 /**
- * Делает апселл заметным с первого взгляда: тег в заголовке (виден и в списке чатов)
- * и яркий блок сразу под ним. Блок едет вместе с заказом по темам, потому что бот
+ * Делает второй брелок заметным с первого взгляда: тег в заголовке (виден и в списке чатов)
+ * и короткий блок сразу под ним. Блок едет вместе с заказом по темам, потому что бот
  * переносит подпись целиком. Повторный вызов подпись не меняет.
  */
 export function withUpsell(caption: string): string {
-  if (caption.includes(UPSELL_MARK)) return caption;
+  if (hasUpsell(caption)) return caption;
   const [first, ...rest] = caption.split("\n");
   const block = [
-    "━━━━━━━━━━━━━━━",
-    "⚠️⚠️ АПСЕЛЛ: ВТОРОЙ БРЕЛОК! ⚠️⚠️",
-    "➕ Положите в заказ 2 шт. одинаковых брелка",
-    "💰 Брелки: 250 + 150 (−40%) = 400 лей, плюс доставка",
-    "━━━━━━━━━━━━━━━",
+    UPSELL_RULE,
+    `⚠️ ${UPSELL_MARK}`,
+    "Положите в заказ 2 штуки",
+    "Стоимость: 400 лей плюс доставка",
+    UPSELL_RULE,
   ];
-  return [`${first} — ⚠️ 2 БРЕЛКА`, ...block, ...rest].join("\n").slice(0, 1000);
+  return [`${first}${UPSELL_TITLE_TAG}`, ...block, ...rest].join("\n").slice(0, 1000);
+}
+
+/** Убирает блок и тег второго брелка (клиент нажал случайно). Остальная подпись не меняется. */
+export function withoutUpsell(caption: string): string {
+  const lines = caption.split("\n");
+  if (lines[0]) lines[0] = lines[0].replace(UPSELL_TITLE_TAG, "");
+  const start = lines.findIndex((l) => l.startsWith("━"));
+  const end = start === -1 ? -1 : lines.findIndex((l, i) => i > start && l.startsWith("━"));
+  if (start !== -1 && end !== -1) lines.splice(start, end - start + 1);
+  return lines.join("\n");
 }
 
 /* --------------------------------- Кнопки --------------------------------- */
 
-export function keyboard(stage: Stage, cfg: TopicConfig): InlineButton[][] {
+export function keyboard(stage: Stage, cfg: TopicConfig, upsell = false): InlineButton[][] {
   const edit: InlineButton = { text: "✏️ Доставка", callback_data: "edm" };
   const note: InlineButton = { text: "📝 Заметка", callback_data: "nt" };
   const cancel: InlineButton[] = cfg.threads.cancel ? [{ text: "❌ Отмена", callback_data: "can" }] : [];
+  // Если клиент добавил второй брелок случайно, менеджер может его убрать (с подтверждением)
+  const dropUpsell: InlineButton[][] = upsell ? [[{ text: "✂️ Убрать 2-й брелок", callback_data: "ups" }]] : [];
 
   switch (stage) {
     case "work":
-      return [[{ text: "✅ Готов", callback_data: "rdy" }], [edit, note, ...cancel]];
+      return [[{ text: "✅ Готов", callback_data: "rdy" }], [edit, note, ...cancel], ...dropUpsell];
     case "pickup":
     case "ship":
       return [
         [{ text: stage === "pickup" ? "🤝 Выдан" : "🚚 Отправлен", callback_data: "fin" }],
         [{ text: "↩️ Назад", callback_data: "back" }, edit],
         [note, ...cancel],
+        ...dropUpsell,
       ];
     case "done":
       return [[{ text: "↩️ Назад", callback_data: "back" }, note]];
     case "cancel":
       return [[{ text: "↩️ Вернуть в работу", callback_data: "back" }]];
   }
+}
+
+export function upsellConfirmMenu(): InlineButton[][] {
+  return [
+    [{ text: "✅ Да, убрать 2-й брелок", callback_data: "upsx" }],
+    [{ text: "⬅️ Нет, оставить", callback_data: "esc" }],
+  ];
 }
 
 export function deliveryMenu(): InlineButton[][] {

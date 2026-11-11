@@ -10,6 +10,7 @@ import {
   cleanNote,
   cleanText,
   deliveryMenu,
+  hasUpsell,
   getTopicConfig,
   historyLine,
   keyboard,
@@ -19,6 +20,8 @@ import {
   replaceDelivery,
   stageOfThread,
   tg,
+  upsellConfirmMenu,
+  withoutUpsell,
 } from "@/lib/telegram-orders";
 
 type TgUser = { id: number; is_bot?: boolean };
@@ -82,7 +85,7 @@ async function editInPlace(cfg: TopicConfig, chatId: number, messageId: number, 
       chat_id: chatId,
       message_id: messageId,
       caption,
-      reply_markup: { inline_keyboard: keyboard(stage, cfg) },
+      reply_markup: { inline_keyboard: keyboard(stage, cfg, hasUpsell(caption)) },
     });
   } catch (error) {
     if (error instanceof Error && NOT_MODIFIED.test(error.message)) return;
@@ -100,7 +103,7 @@ async function moveOrder(cfg: TopicConfig, chatId: number, messageId: number, ca
     message_id: messageId,
     message_thread_id: thread,
     caption,
-    reply_markup: { inline_keyboard: keyboard(to, cfg) },
+    reply_markup: { inline_keyboard: keyboard(to, cfg, hasUpsell(caption)) },
   });
   try {
     await tg("deleteMessage", { chat_id: chatId, message_id: messageId });
@@ -237,13 +240,30 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
         tg("editMessageReplyMarkup", {
           chat_id: msg.chat.id,
           message_id: msg.message_id,
-          reply_markup: { inline_keyboard: keyboard(stage, cfg) },
+          reply_markup: { inline_keyboard: keyboard(stage, cfg, hasUpsell(caption)) },
         }),
       );
       return;
     case "nt":
       await askDetails(msg, "note", cb.from.id);
       return;
+    case "ups":
+      if (!hasUpsell(caption)) return "Второго брелка в заказе нет";
+      await tg("editMessageReplyMarkup", {
+        chat_id: msg.chat.id,
+        message_id: msg.message_id,
+        reply_markup: { inline_keyboard: upsellConfirmMenu() },
+      });
+      return;
+    case "upsx": {
+      if (!hasUpsell(caption)) {
+        await editInPlace(cfg, msg.chat.id, msg.message_id, caption, stage);
+        return "Второго брелка уже нет";
+      }
+      const next = appendLine(withoutUpsell(caption), historyLine("↩️ Второй брелок убран"));
+      await editInPlace(cfg, msg.chat.id, msg.message_id, next, stage);
+      return "Второй брелок убран из заказа";
+    }
     case "set": {
       const method = methodFromCode(arg || "");
       if (!method) throw new UserError("Неизвестный способ");
@@ -252,7 +272,7 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
         tg("editMessageReplyMarkup", {
           chat_id: msg.chat.id,
           message_id: msg.message_id,
-          reply_markup: { inline_keyboard: keyboard(stage, cfg) },
+          reply_markup: { inline_keyboard: keyboard(stage, cfg, hasUpsell(caption)) },
         }),
       );
       if (method === "posta" || method === "novapost" || method === "taxi") {
