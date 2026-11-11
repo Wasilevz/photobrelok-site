@@ -6,7 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "telegram:webhook": "node scripts/telegram-webhook.mjs"
   },
   "dependencies": {
     "jspdf": "^4.2.0",

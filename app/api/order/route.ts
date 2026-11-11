@@ -2,6 +2,14 @@ import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
 import { sendCapiEvents } from "@/lib/meta-capi";
+import {
+  type DeliveryMethod,
+  buildDeliveryText,
+  cleanText,
+  getTopicConfig,
+  isDeliveryMethod,
+  keyboard,
+} from "@/lib/telegram-orders";
 
 const MIN_PHOTOS = 6;
 const MAX_PHOTOS = 10;
@@ -11,12 +19,6 @@ const PHOTO_FETCH_TIMEOUT_MS = 15_000;
 function generateOrderId(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from({ length: 6 }, () => chars[randomInt(chars.length)]).join("");
-}
-
-function cleanText(value: unknown, maxLength = 100): string {
-  return typeof value === "string"
-    ? value.replace(/[^\p{L}\p{N}\s\-.,/#@+]/gu, "").replace(/\s+/g, " ").trim().slice(0, maxLength)
-    : "";
 }
 
 function getCloudinaryPhotoUrl(value: unknown): string | null {
@@ -141,6 +143,10 @@ export async function POST(request: Request) {
       if (typeof deliveryData.novaPostBranch !== "string" || !deliveryData.novaPostBranch.trim()) {
         return NextResponse.json({ error: "Укажите номер отделения Nova Poshta" }, { status: 400 });
       }
+    } else if (method === "taxi") {
+      if (typeof deliveryData.address !== "string" || !deliveryData.address.trim()) {
+        return NextResponse.json({ error: "Укажите адрес для доставки такси" }, { status: 400 });
+      }
     } else if (method !== "pickup" && method !== "later") {
       return NextResponse.json({ error: "Некорректный способ получения" }, { status: 400 });
     }
@@ -214,27 +220,32 @@ export async function POST(request: Request) {
     const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
     const langNote = lang === "ro" ? "\n🌐 Клиент оформлял на румынском (по возможности говорите по-румынски)" : "";
 
-    let deliveryText: string;
-    if (method === "posta") {
-      const postalCode = cleanText(deliveryData.postalCode, 20);
-      const city = cleanText(deliveryData.city, 80);
-      const district = cleanText(deliveryData.district, 80);
-      const street = cleanText(deliveryData.street, 100);
-      deliveryText = `🚚 Способ получения: Poșta Moldovei — 30 лей\n📮 Индекс: ${postalCode}\n🏘 ${city}, р-н ${district}${street ? `\n🏠 Улица: ${street}` : ""}`;
-    } else if (method === "novapost") {
-      deliveryText = `🚚 Способ получения: Nova Poshta — 60 лей\n📦 Отделение №${cleanText(deliveryData.novaPostBranch, 40)}`;
-    } else if (method === "pickup") {
-      deliveryText = "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (09:00–23:00)";
-    } else {
-      deliveryText = "🚚 Способ получения: клиент уточнит после макета";
+    const deliveryMethod = method as DeliveryMethod;
+    if (!isDeliveryMethod(deliveryMethod)) {
+      return NextResponse.json({ error: "Некорректный способ получения" }, { status: 400 });
     }
+    const deliveryText = buildDeliveryText(deliveryMethod, {
+      postalCode: cleanText(deliveryData.postalCode, 20),
+      city: cleanText(deliveryData.city, 80),
+      district: cleanText(deliveryData.district, 80),
+      street: cleanText(deliveryData.street, 100),
+      branch: cleanText(deliveryData.novaPostBranch, 40),
+      address: cleanText(deliveryData.address, 150),
+    });
 
     const captionText = `🔥 Новый заказ #${orderId}\n👤 Клиент: ${safeName}\n📞 Тел: ${safePhone}\n📸 Фотографий: ${numPhotos} шт.\n${deliveryText}${langNote}`;
+
+    // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
+    const topics = getTopicConfig();
 
     let deliveredToAtLeastOne = false;
     for (const chatId of chatIds) {
       const tgFormData = new FormData();
       tgFormData.append("chat_id", chatId);
+      if (topics && chatId === topics.chatId) {
+        tgFormData.append("message_thread_id", String(topics.threads.work));
+        tgFormData.append("reply_markup", JSON.stringify({ inline_keyboard: keyboard("work", topics) }));
+      }
       tgFormData.append("document", new Blob([pdfBuffer], { type: "application/pdf" }), `Brelok_${orderId}.pdf`);
       tgFormData.append("caption", captionText);
 
