@@ -1,4 +1,5 @@
 // Обработка апдейтов Telegram: кнопки под заказами и ответы-правки.
+import { after } from "next/server";
 import {
   type DeliveryDetails,
   type DeliveryMethod,
@@ -39,16 +40,33 @@ export type TgUpdate = {
 class UserError extends Error {}
 
 const NOT_MODIFIED = /message is not modified/i;
+const ALREADY_GONE = /message to delete not found|message can't be deleted/i;
 
 async function safe(promise: Promise<unknown>) {
   try {
     await promise;
   } catch (error) {
-    if (!(error instanceof Error) || !NOT_MODIFIED.test(error.message)) {
+    if (!(error instanceof Error) || !(NOT_MODIFIED.test(error.message) || ALREADY_GONE.test(error.message))) {
       console.error("Telegram call failed:", error instanceof Error ? error.message : error);
     }
   }
 }
+
+/** Удаляет служебное сообщение через delayMs, чтобы не захламлять чат. Если окружение не даёт отложить — просто остаётся. */
+function deleteLater(chatId: number, messageId: number, delayMs: number) {
+  try {
+    after(async () => {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await safe(tg("deleteMessage", { chat_id: chatId, message_id: messageId }));
+    });
+  } catch {
+    // вне запроса after недоступен
+  }
+}
+
+const WARNING_TTL_MS = 8_000;
+const PROMPT_TTL_MS = 4 * 60_000;
+const ID_TTL_MS = 20_000;
 
 function isAllowed(cfg: TopicConfig, user: TgUser | undefined, chatId: number): boolean {
   if (String(chatId) !== cfg.chatId) return false;
@@ -172,7 +190,7 @@ const PROMPT_RE = /^[^\n]+(?:\n[^\n]+)*\n\n([\s\S]*)\n\n#ref:(\d+):(\w+)$/;
 
 async function askDetails(msg: TgMessage, kind: string, userId: number) {
   // force_reply + упоминание нажавшего: поле ответа открывается само, и только у него.
-  await tg("sendMessage", {
+  const sent = await tg<{ message_id: number }>("sendMessage", {
     chat_id: msg.chat.id,
     ...(msg.message_thread_id ? { message_thread_id: msg.message_thread_id } : {}),
     text: `👉 ${buildPrompt(kind, msg.caption ?? "", msg.message_id)}`,
@@ -183,6 +201,8 @@ async function askDetails(msg: TgMessage, kind: string, userId: number) {
       input_field_placeholder: kind === "note" ? "Текст заметки" : "Введите данные",
     },
   });
+  // Если на запрос так и не ответили — убираем его сами.
+  deleteLater(msg.chat.id, sent.message_id, PROMPT_TTL_MS);
 }
 
 /* --------------------------------- Callback --------------------------------- */
@@ -307,14 +327,19 @@ async function handleReply(cfg: TopicConfig, msg: TgMessage) {
         ? error.message
         : "Не удалось обновить заказ. Возможно, он уже перемещён — нажмите кнопку под заказом заново.";
     if (!(error instanceof UserError)) console.error("Reply edit failed:", error);
-    await safe(
-      tg("sendMessage", {
+    try {
+      const warn = await tg<{ message_id: number }>("sendMessage", {
         chat_id: msg.chat.id,
         ...(threadId ? { message_thread_id: threadId } : {}),
         reply_parameters: { message_id: msg.message_id },
         text: `⚠️ ${text}`,
-      }),
-    );
+      });
+      // Предупреждение и неверный ответ исчезают сами; запрос остаётся — можно ответить ещё раз.
+      deleteLater(msg.chat.id, warn.message_id, WARNING_TTL_MS);
+      deleteLater(msg.chat.id, msg.message_id, WARNING_TTL_MS);
+    } catch (sendError) {
+      console.error("Warning failed:", sendError instanceof Error ? sendError.message : sendError);
+    }
   }
 }
 
@@ -341,13 +366,17 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
 
   // /id — помогает узнать ID группы и темы при настройке.
   if (/^\/id(@\w+)?(\s|$)/.test(msg.text)) {
-    await safe(
-      tg("sendMessage", {
+    try {
+      const info = await tg<{ message_id: number }>("sendMessage", {
         chat_id: msg.chat.id,
         ...(msg.message_thread_id ? { message_thread_id: msg.message_thread_id } : {}),
         text: `chat_id: ${msg.chat.id}\nthread_id: ${msg.message_thread_id ?? "— (общая тема)"}`,
-      }),
-    );
+      });
+      deleteLater(msg.chat.id, info.message_id, ID_TTL_MS);
+      deleteLater(msg.chat.id, msg.message_id, ID_TTL_MS);
+    } catch (error) {
+      console.error("/id failed:", error instanceof Error ? error.message : error);
+    }
     return;
   }
 
