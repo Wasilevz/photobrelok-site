@@ -17,7 +17,6 @@ import {
 import { track } from "@/lib/analytics";
 import { landingCopy, faqCopy, occasionCopy } from "@/lib/landing-copy";
 import { legalCopy } from "@/lib/legal-copy";
-import { UrgencyBanner } from "@/components/Urgency";
 import { useOccasion } from "@/lib/occasion-store";
 
 function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
@@ -307,7 +306,6 @@ export default function Landing() {
           </nav>
         </div>
       </header>
-      <UrgencyBanner />
 
       <main id="top">
         <section className="hero">
