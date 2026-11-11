@@ -263,6 +263,13 @@ export const legalCopy: Record<LegalLocale, LegalCopy> = {
                 "Мы",
               ],
               [
+                "photobrelok_draft (IndexedDB)",
+                "Необходимые",
+                "Выбранные и обрезанные фото для заказа хранятся на вашем устройстве, пока вы не отправите заказ. Нам они не передаются",
+                "7 дней",
+                "Мы",
+              ],
+              [
                 "_fbp",
                 "Маркетинг",
                 "Идентификатор браузера для рекламы и аналитики Meta",
@@ -525,6 +532,13 @@ export const legalCopy: Record<LegalLocale, LegalCopy> = {
                 "Necesare",
                 "Memorarea alegerii dumneavoastră privind cookie-urile",
                 "12 luni",
+                "Noi",
+              ],
+              [
+                "photobrelok_draft (IndexedDB)",
+                "Necesare",
+                "Pozele alese și decupate pentru comandă se păstrează pe dispozitivul dumneavoastră până trimiteți comanda. Nouă nu ne sunt transmise",
+                "7 zile",
                 "Noi",
               ],
               [

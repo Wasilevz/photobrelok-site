@@ -95,6 +95,7 @@ export const landingCopy = {
     mobileCtaBtn: "Собрать брелок",
     mobileCtaMore: "Добавить фото",
     offerCta: "Собрать брелок",
+    secondOffer: "Два брелока — 400 лей: второй такой же, с теми же фото, со скидкой 40% (150 лей). Доставка одна на весь заказ.",
     conditionsLine: "Самовывоз в Кишинёве — бесплатно · Доставка по Молдове",
   },
   ro: {
@@ -191,6 +192,7 @@ export const landingCopy = {
     mobileCtaBtn: "Creează-ți brelocul",
     mobileCtaMore: "Adaugă poze",
     offerCta: "Creează-ți brelocul",
+    secondOffer: "Două brelocuri — 400 lei: al doilea identic, cu aceleași poze, cu reducere de 40% (150 lei). Livrarea e una singură pentru toată comanda.",
     conditionsLine: "Ridicare din Chișinău — gratuit · Livrare în Moldova",
   },
 } as const;
@@ -223,7 +225,7 @@ export const faqCopy = {
     },
     {
       q: "Можно ли два одинаковых брелка?",
-      a: "Да. Второй такой же брелок с теми же фото — со скидкой 40% (150 лей вместо 250). Упакуем вместе.",
+      a: "Да. Второй такой же брелок с теми же фото — со скидкой 40% (150 лей вместо 250). Упакуем вместе. Доставка считается один раз за весь заказ.",
     },
     {
       q: "Как получить брелок и сколько это стоит?",
@@ -261,7 +263,7 @@ export const faqCopy = {
     },
     {
       q: "Pot comanda două brelocuri identice?",
-      a: "Da. Al doilea breloc la fel, cu aceleași poze — cu 40% reducere (150 lei în loc de 250). Le ambalăm împreună.",
+      a: "Da. Al doilea breloc la fel, cu aceleași poze — cu 40% reducere (150 lei în loc de 250). Le ambalăm împreună. Livrarea se plătește o singură dată pentru toată comanda.",
     },
     {
       q: "Cum primesc brelocul și cât costă?",

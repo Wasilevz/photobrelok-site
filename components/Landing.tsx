@@ -12,6 +12,7 @@ import {
   TELEGRAM_PHONE_DISPLAY,
   TELEGRAM_URL,
   INSTAGRAM_URL,
+  INSTAGRAM_DM_URL,
   telegramLink,
 } from "@/lib/contacts";
 import { track } from "@/lib/analytics";
@@ -511,6 +512,7 @@ export default function Landing() {
                 <p className="offer-eyebrow">{t.priceTitle}</p>
                 <div className="offer-price">{t.priceBig}</div>
                 <p className="offer-tagline">{t.priceText}</p>
+                <p className="offer-second">{t.secondOffer}</p>
                 <p className="offer-price-anchor">
                   <span>{t.priceAnchor}</span>
                 </p>
@@ -591,6 +593,7 @@ export default function Landing() {
               </div>
             </div>
 
+            <div className="offer-chat-links">
             <a
               className="offer-tg offer-tg-btn"
               href={telegramLink(
@@ -605,6 +608,21 @@ export default function Landing() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
               {lang === "ru" ? "Написать в Telegram" : "Scrie pe Telegram"}
             </a>
+            <a
+              className="offer-tg offer-tg-btn"
+              href={INSTAGRAM_DM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("instagram_click", { source: "price_secondary" })}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                <circle cx="17" cy="7" r="1.2" fill="currentColor" />
+              </svg>
+              {lang === "ru" ? "Написать в Instagram" : "Scrie pe Instagram"}
+            </a>
+            </div>
 
             <div className="offer-bottom">
             <div className="offer-delivery">

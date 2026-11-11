@@ -16,10 +16,11 @@ function ThankYouContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId') || '';
+  const secondInOrder = searchParams.get('second') === '1';
   const { dict } = useLanguage();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>('pending');
+  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>(secondInOrder ? 'accepted' : 'pending');
   const [upsellError, setUpsellError] = useState<string | null>(null);
 
   const handleUpsell = async () => {

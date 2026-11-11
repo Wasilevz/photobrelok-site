@@ -11,8 +11,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { telegramLink } from "@/lib/contacts";
 import { metaEventId, track } from "@/lib/analytics";
 import { readSource } from "@/lib/source";
+import getCroppedImg, { createImage } from "@/utils/cropImage";
+import { readConstructorV2 } from "@/lib/flags";
+import { saveDraft, loadDraft, clearDraft } from "@/lib/draft";
 
 const MAX_SLOTS = 10;
+// Конструктор V2: если Cloudinary не отвечает дольше этого времени, показываем понятную ошибку
+const UPLOAD_TIMEOUT_MS = 45_000;
 
 export default function PhotoConstructor() {
   const router = useRouter();
@@ -38,8 +43,20 @@ export default function PhotoConstructor() {
   const [telegramFallback, setTelegramFallback] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Конструктор V2 (за флагом): автообрезка, сохранение черновика, таймаут загрузки.
+  // Пока флаг выключен, всё работает ровно как раньше.
+  const [v2, setV2] = useState(false);
+  useEffect(() => {
+    setV2(readConstructorV2());
+  }, []);
+  // обрезанный кадр -> исходное фото (чтобы можно было перекадрировать)
+  const origByCropped = useRef<Map<string, string>>(new Map());
+  const [restoredCount, setRestoredCount] = useState(0);
+  const draftReady = useRef(false);
+  const [persistFailed, setPersistFailed] = useState(false);
+
   // Батч-загрузка: очередь фото, ожидающих обрезки, каждое привязано к своему слоту
-  const [cropQueue, setCropQueue] = useState<{ url: string; slotIndex: number; hash: string }[]>([]);
+  const [cropQueue, setCropQueue] = useState<{ url: string; slotIndex: number; hash: string; keepOriginal?: boolean }[]>([]);
   const [totalInBatch, setTotalInBatch] = useState(0);
   const imageToCrop = cropQueue[0]?.url ?? null;
   const photoCount = slots.filter(Boolean).length;
@@ -79,8 +96,17 @@ export default function PhotoConstructor() {
   const revokeOldUrl = useCallback((url: string | null) => {
     if (url && url.startsWith("blob:")) {
       URL.revokeObjectURL(url);
+      // V2: вместе с обрезанным кадром освобождаем и исходное фото
+      const original = origByCropped.current.get(url);
+      if (original) {
+        URL.revokeObjectURL(original);
+        origByCropped.current.delete(url);
+      }
     }
   }, []);
+
+  const slotsRef = useRef(slots);
+  slotsRef.current = slots;
 
   /** Хэш содержимого файла — одинаковое фото даёт одинаковый хэш даже с разными именами */
   const hashFile = async (file: File): Promise<string> => {
@@ -93,6 +119,64 @@ export default function PhotoConstructor() {
       return `${file.size}:${file.lastModified}:${file.name}`;
     }
   };
+
+  // V2: вернуть фото, сохранённые на этом устройстве (обновили страницу или вернулись позже)
+  useEffect(() => {
+    if (!v2) return;
+    let cancelled = false;
+    (async () => {
+      const draft = await loadDraft();
+      if (cancelled) return;
+      if (draft && draft.items.length > 0 && !slotsRef.current.some(Boolean)) {
+        const nextSlots: (string | null)[] = Array(MAX_SLOTS).fill(null);
+        const nextHashes: (string | null)[] = Array(MAX_SLOTS).fill(null);
+        for (const it of draft.items) {
+          if (it.index >= 0 && it.index < MAX_SLOTS) {
+            nextSlots[it.index] = URL.createObjectURL(it.blob);
+            nextHashes[it.index] = it.hash;
+          }
+        }
+        setSlots(nextSlots);
+        setSlotHashes(nextHashes);
+        setRestoredCount(nextSlots.filter(Boolean).length);
+      }
+      draftReady.current = true;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [v2]);
+
+  // V2: сохранять черновик после каждого изменения (с небольшой задержкой)
+  useEffect(() => {
+    if (!v2 || !draftReady.current) return;
+    const timer = window.setTimeout(async () => {
+      const items: { index: number; blob: Blob; hash: string | null }[] = [];
+      for (let i = 0; i < slots.length; i++) {
+        const url = slots[i];
+        if (!url) continue;
+        try {
+          items.push({ index: i, blob: await (await fetch(url)).blob(), hash: slotHashes[i] });
+        } catch {
+          // кадр уже заменён или удалён — пропускаем
+        }
+      }
+      if (items.length === 0) await clearDraft();
+      else setPersistFailed(!(await saveDraft(items)));
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [v2, slots, slotHashes]);
+
+  // V2: если сохранить черновик нельзя (например, приватный режим), предупреждаем при уходе со страницы
+  useEffect(() => {
+    if (!v2 || !persistFailed || photoCount === 0) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [v2, persistFailed, photoCount]);
 
   useEffect(() => {
     handleCarouselScroll();
@@ -132,6 +216,65 @@ export default function PhotoConstructor() {
       return next;
     });
     setSelectedSlot(to);
+  };
+
+  /** V2: фото сразу ложатся в слоты, обрезка по центру (портреты чуть выше центра, чтобы не терять лица) */
+  const autoCropItems = async (items: { url: string; slotIndex: number; hash: string }[]) => {
+    const failed: typeof items = [];
+    // по одному, чтобы не держать в памяти много больших снимков сразу
+    for (const item of items) {
+      try {
+        const img = await createImage(item.url);
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        const side = Math.min(w, h);
+        if (!side) throw new Error("пустое изображение");
+        const x = Math.round((w - side) / 2);
+        const y = Math.round((h - side) * (h > w ? 0.35 : 0.5));
+        const blob = await getCroppedImg(item.url, { x, y, width: side, height: side });
+        if (!blob) throw new Error("не удалось обрезать");
+        const cropped = URL.createObjectURL(blob);
+        origByCropped.current.set(cropped, item.url);
+        setSlots((prev) => {
+          const next = [...prev];
+          revokeOldUrl(next[item.slotIndex]);
+          next[item.slotIndex] = cropped;
+          return next;
+        });
+        setSlotHashes((prev) => {
+          const next = [...prev];
+          next[item.slotIndex] = item.hash;
+          return next;
+        });
+      } catch {
+        failed.push(item);
+      }
+    }
+    // что не получилось обработать автоматически, обрезается вручную, как раньше
+    if (failed.length > 0) {
+      setCropQueue(failed);
+      setTotalInBatch(failed.length);
+    }
+  };
+
+  /** V2: открыть обрезку для выделенного кадра с исходным фото */
+  const handleRecropSelected = () => {
+    if (selectedSlot === null) return;
+    const current = slots[selectedSlot];
+    const original = current ? origByCropped.current.get(current) : undefined;
+    if (!original) return;
+    setCropQueue([{ url: original, slotIndex: selectedSlot, hash: slotHashes[selectedSlot] ?? "", keepOriginal: true }]);
+    setTotalInBatch(1);
+  };
+
+  /** V2: убрать вернувшиеся фото и начать заново */
+  const handleDiscardDraft = () => {
+    slots.forEach(revokeOldUrl);
+    setSlots(Array(MAX_SLOTS).fill(null));
+    setSlotHashes(Array(MAX_SLOTS).fill(null));
+    setSelectedSlot(null);
+    setRestoredCount(0);
+    void clearDraft();
   };
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,6 +328,11 @@ export default function PhotoConstructor() {
     if (messages.length > 0) setShowError(messages.join(" · "));
 
     if (queue.length === 0) return;
+    setRestoredCount(0);
+    if (v2) {
+      await autoCropItems(queue);
+      return;
+    }
     setCropQueue(queue);
     setTotalInBatch(queue.length);
     } finally {
@@ -194,7 +342,25 @@ export default function PhotoConstructor() {
 
   const handleCropDone = (croppedImageUrl: string) => {
     const current = cropQueue[0];
-    if (current) {
+    if (current && current.keepOriginal) {
+      // Перекадрирование (V2): исходное фото остаётся, чтобы кадр можно было править снова
+      origByCropped.current.set(croppedImageUrl, current.url);
+      setSlots((prev) => {
+        const newSlots = [...prev];
+        const old = newSlots[current.slotIndex];
+        if (old && old !== croppedImageUrl) {
+          origByCropped.current.delete(old);
+          if (old.startsWith("blob:")) URL.revokeObjectURL(old);
+        }
+        newSlots[current.slotIndex] = croppedImageUrl;
+        return newSlots;
+      });
+      setSlotHashes((prev) => {
+        const next = [...prev];
+        next[current.slotIndex] = current.hash;
+        return next;
+      });
+    } else if (current) {
       // The cropper creates a new object URL; release the original upload URL.
       revokeOldUrl(current.url);
       setSlots((prev) => {
@@ -217,7 +383,7 @@ export default function PhotoConstructor() {
   /** Пропустить только текущий кадр, остальные продолжить обрезку */
   const handleCropSkip = () => {
     const current = cropQueue[0];
-    if (current) revokeOldUrl(current.url);
+    if (current && !current.keepOriginal) revokeOldUrl(current.url);
     const rest = cropQueue.slice(1);
     setCropQueue(rest);
     if (rest.length === 0) setTotalInBatch(0);
@@ -226,7 +392,7 @@ export default function PhotoConstructor() {
   /** Отменить всю оставшуюся пачку */
   const handleCropCancel = () => {
     const current = cropQueue[0];
-    if (current) revokeOldUrl(current.url);
+    if (current && !current.keepOriginal) revokeOldUrl(current.url);
 
     const rest = cropQueue.slice(1);
 
@@ -353,7 +519,7 @@ export default function PhotoConstructor() {
     setSelectedSlot((prev) => (prev === index ? null : prev));
   };
 
-  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; website: string }) => {
+  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string }) => {
     setIsSubmitting(true);
     try {
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -380,7 +546,7 @@ export default function PhotoConstructor() {
 
       let uploadedCounter = 0;
       const photoUrls: string[] = [];
-      const uploadOne = async (blobUrl: string) => {
+      const uploadOneRaw = async (blobUrl: string): Promise<string> => {
         // Повторная отправка после сбоя не заливает уже загруженные фото заново
         const cached = uploadedUrls.current.get(blobUrl);
         if (cached) {
@@ -395,7 +561,7 @@ export default function PhotoConstructor() {
         formData.append("upload_preset", uploadPreset);
         const cloudRes = await fetch(
           `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          { method: "POST", body: formData }
+          { method: "POST", body: formData, ...(v2 ? { signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS) } : {}) }
         );
         const data = await cloudRes.json();
         if (!cloudRes.ok) throw new Error(dict.errors.uploadFailed);
@@ -403,6 +569,22 @@ export default function PhotoConstructor() {
         setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
         uploadedUrls.current.set(blobUrl, data.secure_url as string);
         return data.secure_url as string;
+      };
+
+      // V2: зависшая загрузка и сетевые сбои превращаются в понятное сообщение, а не «Failed to fetch»
+      const uploadOne = async (blobUrl: string): Promise<string> => {
+        if (!v2) return uploadOneRaw(blobUrl);
+        try {
+          const url = await uploadOneRaw(blobUrl);
+          if (!url) throw new Error(dict.errors.uploadFailed);
+          return url;
+        } catch (e) {
+          if (e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError")) {
+            throw new Error(dict.errors.uploadTimeout);
+          }
+          if (e instanceof Error && e.message === dict.errors.uploadFailed) throw e;
+          throw new Error(dict.errors.uploadFailed);
+        }
       };
 
       const batch = 3;
@@ -427,6 +609,7 @@ export default function PhotoConstructor() {
           delivery: userData.delivery,
           metaEventIds,
           marketingConsent: userData.marketingConsent,
+          second: userData.second,
           website: userData.website,
         }),
       });
@@ -451,12 +634,14 @@ export default function PhotoConstructor() {
       });
 
       slots.forEach(revokeOldUrl);
+      if (v2) void clearDraft();
       setSlots(Array(MAX_SLOTS).fill(null));
       setSlotHashes(Array(MAX_SLOTS).fill(null));
       setSelectedSlot(null);
       setIsModalOpen(false);
       setTelegramFallback(null);
-      router.push(`/thanks?orderId=${orderId}`);
+      // Если второй брелок уже выбран в форме, страница спасибо не предлагает его повторно
+      router.push(`/thanks?orderId=${orderId}${userData.second ? "&second=1" : ""}`);
 
     } catch (err: unknown) {
       setUploadProgress(null);
@@ -493,6 +678,14 @@ export default function PhotoConstructor() {
       {/* Title/subtitle/price live in the landing section above — keep constructor UI only */}
 
       {/* Film strip + Kodak canister: film feeds into the keychain body */}
+      {v2 && restoredCount > 0 && photoCount > 0 && (
+        <div role="status" className="max-w-md mx-auto mb-4 px-4 py-2 bg-white border-2 border-[#191715] rounded-xl flex items-center justify-between gap-3 text-sm text-[#191715]">
+          <span>{dict.home.draftRestored(restoredCount)}</span>
+          <button type="button" onClick={handleDiscardDraft} className="shrink-0 min-h-[44px] px-2 text-sm font-semibold underline underline-offset-2">
+            {dict.home.draftClear}
+          </button>
+        </div>
+      )}
       {isReadingFiles && (
         <div className="max-w-md mx-auto mb-4 px-4 py-3 bg-[#FFC400]/25 border-2 border-[#191715] rounded-xl flex items-center justify-center gap-2.5 text-xs font-bold text-[#191715] animate-pulse shadow-sm">
           <span className="inline-block size-3.5 rounded-full border-2 border-[#191715] border-t-transparent animate-spin" />
@@ -775,11 +968,11 @@ export default function PhotoConstructor() {
         {/* Панель управления выделенным кадром — удобные кнопки под палец (44x44px min) */}
         {selectedSlot !== null && slots[selectedSlot] && (
           <div className="mx-auto mt-3 max-w-[420px] rounded-xl border-2 border-[#191715] bg-white px-3 py-2.5 shadow-md">
-            <div className="flex items-center justify-between gap-2">
+            <div className={`flex items-center justify-between gap-2${v2 ? " flex-wrap" : ""}`}>
               <span className="text-[12px] font-semibold text-[#5C564E] shrink-0">
                 {lang === "ru" ? `Кадр ${selectedSlot + 1}` : `Cadrul ${selectedSlot + 1}`}
               </span>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className={v2 ? "flex flex-wrap items-center justify-end gap-1.5" : "flex items-center gap-1.5 shrink-0"}>
                 <button
                   type="button"
                   onClick={() => moveSlot(selectedSlot, -1)}
@@ -798,6 +991,15 @@ export default function PhotoConstructor() {
                 >
                   →
                 </button>
+                {v2 && slots[selectedSlot] && origByCropped.current.has(slots[selectedSlot] as string) && (
+                  <button
+                    type="button"
+                    onClick={handleRecropSelected}
+                    className="h-11 px-3.5 rounded-lg border-2 border-[#191715] bg-white text-[#191715] text-[13px] font-semibold active:bg-[#FFC400]/40 flex items-center justify-center shrink-0"
+                  >
+                    {dict.home.recrop}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleReplaceSelected}

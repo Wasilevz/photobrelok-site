@@ -22,7 +22,7 @@ export interface UploadProgress {
 interface OrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; website: string }) => void;
+  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string }) => void;
   isSubmitting: boolean;
   uploadProgress?: UploadProgress | null;
 }
@@ -77,6 +77,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const [dataConsent, setDataConsent] = useState(false);
   const [photoConsent, setPhotoConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
+  // Второй такой же брелок со скидкой: по умолчанию выключено
+  const [second, setSecond] = useState(false);
 
   const [errors, setErrors] = useState<Errors>({});
   const [website, setWebsite] = useState(''); // honeypot
@@ -86,7 +88,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const isDirty =
     name.trim() !== '' || phone.trim() !== '' || surname !== '' || postalCode !== '' ||
     street !== '' || city !== '' || district !== '' || novaPostBranch !== '' ||
-    dataConsent || photoConsent || marketingConsent;
+    dataConsent || photoConsent || marketingConsent || second;
 
   // Закрытие: не во время отправки; если что-то введено — спрашиваем, чтобы не потерять данные
   const requestClose = () => {
@@ -181,7 +183,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
       ? `${name.trim()} ${surname.trim()}`
       : name.trim();
 
-    onSubmit({ name: fullName, phone: phone.trim(), delivery, marketingConsent, website });
+    onSubmit({ name: fullName, phone: phone.trim(), delivery, marketingConsent, second, website });
   };
 
   const methodCardClass =
@@ -420,6 +422,20 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             )}
           </div>
         </fieldset>
+
+        <label className="flex items-start gap-3 cursor-pointer min-h-[44px] rounded-xl border border-[#D9D0BF] bg-white px-3 py-3 has-[:checked]:border-[#191715] has-[:checked]:bg-[#FFC400]/25">
+          <input
+            id="second-keychain"
+            type="checkbox"
+            checked={second}
+            onChange={(e) => setSecond(e.target.checked)}
+            className="mt-0.5 size-6 shrink-0 accent-[#191715] cursor-pointer"
+          />
+          <span className="text-sm leading-relaxed text-[#191715]">
+            <span className="font-semibold">{dict.orderModal.secondLabel}</span>
+            <span className="mt-0.5 block text-xs text-[#5C564E]">{dict.orderModal.secondHint}</span>
+          </span>
+        </label>
 
         <fieldset className="mt-2 rounded-2xl border border-[#E5DCCB] bg-[#F5F1E8] p-4 min-w-0">
           <legend className="sr-only">{lang === 'ru' ? 'Согласия' : 'Acorduri'}</legend>

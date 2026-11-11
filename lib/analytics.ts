@@ -19,6 +19,7 @@ export type AnalyticsEvent =
   | "preview_view"
   | "checkout_start"
   | "telegram_click"
+  | "instagram_click"
   | "order_submit"
   | "order_api_success"
   | "video_play"

@@ -13,6 +13,8 @@ export const WORK_HOURS = "12:00–21:00";
 export const WHATSAPP_URL = "https://wa.me/37378238455";
 export const VIBER_URL = "viber://chat?number=%2B37378238455";
 export const INSTAGRAM_URL = "https://www.instagram.com/fotobrelok.md/";
+/** Личные сообщения Instagram (Direct). Ник нужно подтвердить: в отзывах встречается @photobrelokmd. */
+export const INSTAGRAM_DM_URL = "https://ig.me/m/fotobrelok.md";
 
 export const DELIVERY_OPTIONS = {
   pickup: { label: "pickup", price: 0, days: null as string | null },

@@ -10,6 +10,7 @@ import {
   cleanText,
   getTopicConfig,
   createUpsellToken,
+  withUpsell,
   isDeliveryMethod,
   keyboard,
   type UpsellRef,
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: t("Некорректные данные заказа", "Datele comenzii sunt incorecte") }, { status: 400 });
     }
 
-    const { name, phone, photoUrls, lang, delivery, marketingConsent, website, source } = body as Record<string, unknown>;
+    const { name, phone, photoUrls, lang, delivery, marketingConsent, website, source, second } = body as Record<string, unknown>;
     if (lang === "ro") isRo = true;
 
     // Honeypot: человек это поле не видит и не заполняет. Боту отвечаем «успехом», ничего не отправляя.
@@ -264,7 +265,8 @@ export async function POST(request: Request) {
 
     // Откуда пришёл клиент (utm/реферер, без персональных данных): строка в подписи заказа
     const safeSource = cleanText(source, 80);
-    const captionText = buildOrderCaption({
+    const hasSecond = second === true;
+    const baseCaption = buildOrderCaption({
       orderId,
       name: safeName,
       phone: safePhone,
@@ -272,6 +274,8 @@ export async function POST(request: Request) {
       sourceLine: safeSource ? `📣 Источник: ${safeSource}` : undefined,
       deliveryBlock: deliveryText,
     });
+    // Второй брелок, выбранный в форме, сразу попадает в подпись так же, как при добавлении на странице «Спасибо»
+    const captionText = hasSecond ? withUpsell(baseCaption) : baseCaption;
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
     let deliveredToAtLeastOne = false;
@@ -281,7 +285,7 @@ export async function POST(request: Request) {
       tgFormData.append("chat_id", chatId);
       if (topics && chatId === topics.chatId) {
         tgFormData.append("message_thread_id", String(topics.threads.work));
-        tgFormData.append("reply_markup", JSON.stringify({ inline_keyboard: keyboard("work", topics) }));
+        tgFormData.append("reply_markup", JSON.stringify({ inline_keyboard: keyboard("work", topics, hasSecond) }));
       }
       tgFormData.append("document", new Blob([pdfBuffer], { type: "application/pdf" }), `Brelok_${orderId}.pdf`);
       tgFormData.append("caption", captionText);
@@ -343,7 +347,8 @@ export async function POST(request: Request) {
       });
     }
 
-    const upsellToken = createUpsellToken({ orderId, caption: captionText, refs: upsellRefs });
+    // Токен для «добавить второй брелок» на странице «Спасибо» нужен, только если второй ещё не выбран
+    const upsellToken = hasSecond ? null : createUpsellToken({ orderId, caption: captionText, refs: upsellRefs });
     return NextResponse.json({ success: true, orderId, upsellToken });
   } catch (error) {
     console.error("Order generation failed:", error);

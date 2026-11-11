@@ -24,6 +24,9 @@ export interface Dict {
     photoAlreadyAdded: (n: number) => string;
     photosAlreadyAdded: (list: string) => string;
     uploadTruncated: (added: number, total: number) => string;
+    recrop: string;
+    draftRestored: (n: number) => string;
+    draftClear: string;
   };
   cropper: {
     progress: (cur: number, total: number) => string;
@@ -46,6 +49,8 @@ export interface Dict {
     phoneRequired: string;
     phoneHint: string;
     unsavedConfirm: string;
+    secondLabel: string;
+    secondHint: string;
     submitting: string;
     submit: string;
     close: string;
@@ -88,6 +93,7 @@ export interface Dict {
     genericSubmit: string;
     unknown: string;
     uploadFailed: string;
+    uploadTimeout: string;
   };
   thanks: {
     orderAccepted: string;
@@ -151,6 +157,9 @@ export const translations: Record<Locale, Dict> = {
         `Эти фото уже добавлены (кадры ${list}) — пропущены`,
       uploadTruncated: (added: number, total: number) =>
         `Добавлено ${added} из ${total} фото — все слоты заполнены (максимум 10)`,
+      recrop: "Кадрировать",
+      draftRestored: (n: number) => `Вернули ваши фото: ${n}`,
+      draftClear: "Начать заново",
     },
     cropper: {
       progress: (cur: number, total: number) => `Фото ${cur} из ${total}`,
@@ -174,6 +183,8 @@ export const translations: Record<Locale, Dict> = {
       phoneRequired: "Введите телефон, мы свяжемся по поводу макета",
       phoneHint: "Например: 60 123 456 или +373 60 123 456",
       unsavedConfirm: "Закрыть форму? Введённые данные будут потеряны.",
+      secondLabel: "Добавить второй такой же брелок — +150 лей (−40%)",
+      secondHint: "С теми же фото. Доставка одна на весь заказ.",
       submitting: "Отправка...",
       submit: "Получить бесплатный макет",
       close: "Закрыть",
@@ -218,6 +229,7 @@ export const translations: Record<Locale, Dict> = {
       genericSubmit: "Сбой отправки заказа. Попробуйте ещё раз.",
       unknown: "Неизвестная ошибка",
       uploadFailed: "Не удалось загрузить фото. Попробуйте ещё раз.",
+      uploadTimeout: "Загрузка зависла. Проверьте интернет и нажмите ещё раз: уже загруженные фото не пропадут.",
     },
     thanks: {
       orderAccepted: "Заявка",
@@ -282,6 +294,9 @@ export const translations: Record<Locale, Dict> = {
         `Aceste poze sunt deja adăugate (cadrurile ${list}) — au fost sărite`,
       uploadTruncated: (added: number, total: number) =>
         `Adăugate ${added} din ${total} poze — toate sloturile sunt ocupate (maxim 10)`,
+      recrop: "Decupează",
+      draftRestored: (n: number) => `Ți-am păstrat pozele: ${n}`,
+      draftClear: "O iau de la capăt",
     },
     cropper: {
       progress: (cur: number, total: number) => `Poza ${cur} din ${total}`,
@@ -305,6 +320,8 @@ export const translations: Record<Locale, Dict> = {
       phoneRequired: "Introdu telefonul, te contactăm pentru machetă",
       phoneHint: "De exemplu: 069 123 456 sau +373 69 123 456",
       unsavedConfirm: "Închizi formularul? Datele introduse se vor pierde.",
+      secondLabel: "Adaugă al doilea breloc identic — +150 lei (−40%)",
+      secondHint: "Cu aceleași poze. Livrarea e una singură pentru toată comanda.",
       submitting: "Se trimite...",
       submit: "Primește macheta gratuită",
       close: "Închide",
@@ -349,6 +366,7 @@ export const translations: Record<Locale, Dict> = {
       genericSubmit: "Comanda nu a putut fi trimisă. Încearcă din nou.",
       unknown: "Eroare necunoscută",
       uploadFailed: "Nu s-a putut încărca poza. Încearcă din nou.",
+      uploadTimeout: "Încărcarea s-a blocat. Verifică internetul și încearcă din nou: pozele deja încărcate nu se pierd.",
     },
     thanks: {
       orderAccepted: "Cererea",
