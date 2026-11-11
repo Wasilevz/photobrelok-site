@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 import {
   withUpsell,
@@ -10,6 +10,26 @@ import {
 } from "@/lib/telegram-orders";
 
 const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
+
+const NOTICE_TTL_MS = 60_000; // функция на Vercel живёт недолго, поэтому ждём всего минуту
+
+/** Ответ на сообщение заказа со звуком; через минуту удаляется. Ошибки не важны: блок в подписи уже есть. */
+function notifyUpsell(orderId: string, ref: { chatId: string; messageId: number; threadId?: number }) {
+  after(async () => {
+    try {
+      const sent = await tg<{ message_id: number }>("sendMessage", {
+        chat_id: ref.chatId,
+        text: `⚠️ К заказу #${orderId} добавлен ВТОРОЙ БРЕЛОК. Смотрите блок «АПСЕЛЛ» в заказе.`,
+        reply_parameters: { message_id: ref.messageId, allow_sending_without_reply: true },
+        ...(ref.threadId !== undefined ? { message_thread_id: ref.threadId } : {}),
+      });
+      await new Promise((resolve) => setTimeout(resolve, NOTICE_TTL_MS));
+      await tg("deleteMessage", { chat_id: ref.chatId, message_id: sent.message_id });
+    } catch (error) {
+      console.error(`Upsell ${orderId}: notice failed: ${error instanceof Error ? error.message : error}`);
+    }
+  });
+}
 
 export async function POST(req: Request) {
   try {
@@ -48,7 +68,7 @@ export async function POST(req: Request) {
       const topics = getTopicConfig();
       const caption = withUpsell(payload.caption);
       const edits = await Promise.allSettled(
-        payload.refs.map(async (ref) => {
+        payload.refs.map(async (ref): Promise<"edited" | "same"> => {
           const withKeyboard = topics && ref.chatId === topics.chatId && ref.threadId !== undefined;
           try {
             await tg("editMessageCaption", {
@@ -57,9 +77,10 @@ export async function POST(req: Request) {
               caption,
               ...(withKeyboard ? { reply_markup: { inline_keyboard: keyboard("work", topics) } } : {}),
             });
+            return "edited";
           } catch (error) {
             // Повторное нажатие даёт ту же подпись — это не ошибка
-            if (error instanceof Error && /message is not modified/i.test(error.message)) return;
+            if (error instanceof Error && /message is not modified/i.test(error.message)) return "same";
             throw error;
           }
         }),
@@ -70,6 +91,12 @@ export async function POST(req: Request) {
         }
       });
       if (edits.some((r) => r.status === "fulfilled")) {
+        // Правка подписи не даёт уведомления, поэтому шлём короткий ответ на заказ: он приходит
+        // со звуком и сам удаляется. Сам блок апселла остаётся в подписи и едет вместе с заказом.
+        payload.refs.forEach((ref, i) => {
+          const edit = edits[i];
+          if (edit.status === "fulfilled" && edit.value === "edited") notifyUpsell(orderId, ref);
+        });
         return NextResponse.json({ success: true });
       }
       // Сообщение заказа уже перенесено или удалено — падаем на отдельное уведомление ниже
