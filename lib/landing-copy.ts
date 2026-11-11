@@ -50,8 +50,6 @@ export const landingCopy = {
     riskItem1Text: "Сначала согласуете дизайн, потом подтверждаете заказ.",
     riskItem2Title: "Оплата при получении",
     riskItem2Text: "Без предоплаты.",
-    riskItem3Title: "Не подошло — ничего не платите",
-    riskItem3Text: "Откажетесь при получении — не платите ни за брелок, ни за доставку.",
     includeLead: "Полный комплект готов к подарку — без сюрпризов «в коробке пусто».",
     includeItems: [
       "Брелок-катушка Kodak с 6–10 вашими фото на плёнке",
@@ -147,8 +145,6 @@ export const landingCopy = {
     riskItem1Text: "Mai întâi confirmi designul, apoi confirmi comanda.",
     riskItem2Title: "Plata la primire",
     riskItem2Text: "Fără avans.",
-    riskItem3Title: "Nu se potrivește — nu plătești nimic",
-    riskItem3Text: "Refuzi la primire — nu plătești nici brelocul, nici livrarea.",
     includeLead: "Setul complet e gata de cadou — fără surprize „în cutie e gol”.",
     includeItems: [
       "Breloc-casetă Kodak cu 6–10 poze pe film",
@@ -209,7 +205,7 @@ export const faqCopy = {
     },
     {
       q: "А если не понравится?",
-      a: "Решаете вы. Макет бесплатный. Если при получении брелок не подошёл, вы ничего не платите: ни за брелок, ни за доставку.",
+      a: "Макет бесплатный: сначала вы видите результат и решаете, делать ли брелок. Если хочется что-то изменить, напишите нам, поправим.",
     },
     {
       q: "Какие фото подойдут?",
@@ -247,7 +243,7 @@ export const faqCopy = {
     },
     {
       q: "Dacă nu-mi place?",
-      a: "Decizi tu. Macheta e gratuită. Dacă la primire brelocul nu ți se potrivește, nu plătești nimic: nici brelocul, nici livrarea.",
+      a: "Macheta e gratuită: mai întâi vezi rezultatul și decizi dacă facem brelocul. Dacă vrei să schimbi ceva, scrie-ne și corectăm.",
     },
     {
       q: "Ce poze sunt potrivite?",

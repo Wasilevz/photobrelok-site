@@ -564,18 +564,6 @@ export default function Landing() {
                       <span>{t.riskItem2Text}</span>
                     </div>
                   </li>
-                  <li>
-                    <span className="offer-icon" aria-hidden="true">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 8h10a4 4 0 010 8H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        <path d="M7 5L4 8l3 3M17 19l3-3-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <div>
-                      <strong>{t.riskItem3Title}</strong>
-                      <span>{t.riskItem3Text}</span>
-                    </div>
-                  </li>
                 </ul>
 
                 <button
@@ -760,6 +748,8 @@ export default function Landing() {
           <div className="wrap-narrow">
             <h2>{t.faqTitle}</h2>
             {faq.map((item, i) => {
+              // вопрос «А если не понравится?» (индекс 2) не показываем: обещание «не платите» снято
+              if (i === 2) return null;
               const isOpen = openFaq.includes(i);
               return (
                 <div className="faq-item" key={item.q}>
