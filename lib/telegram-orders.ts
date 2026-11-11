@@ -110,20 +110,21 @@ export type DeliveryDetails = {
 export function buildDeliveryText(method: DeliveryMethod, d: DeliveryDetails = {}): string {
   switch (method) {
     case "posta":
-      return `🚚 Способ получения: Poșta Moldovei — 30 лей\n📮 Индекс: ${d.postalCode}\n🏘 ${d.city}, р-н ${d.district}${d.street ? `\n🏠 Улица: ${d.street}` : ""}`;
+      // Порядок адреса: улица, район, индекс, город; способ получения идёт последним (см. replaceDelivery)
+      return `${d.street ? `🏠 Улица: ${d.street}\n` : ""}🏘 Район: ${d.district}\n📮 Индекс: ${d.postalCode}\n🏙 Город: ${d.city}\n🚚 Способ получения: Poșta Moldovei — 30 лей`;
     case "novapost":
       return `🚚 Способ получения: Nova Poshta — 60 лей\n📦 Отделение №${d.branch}`;
     case "taxi":
       return `🚚 Способ получения: Такси по Кишинёву\n🏠 Адрес: ${d.address}`;
     case "pickup":
-      return "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (12:00–21:00)";
+      return "🚚 Способ получения: Самовывоз";
     default:
       return "🚚 Способ получения: клиент уточнит после макета";
   }
 }
 
 // Строки блока доставки начинаются с этих эмодзи — по ним блок находится и заменяется.
-const DELIVERY_PREFIXES = ["🚚", "📮", "🏘", "🏠", "📦", "📍"];
+const DELIVERY_PREFIXES = ["🚚", "📮", "🏘", "🏙", "🏠", "📦", "📍"];
 
 export function methodFromCaption(caption: string): DeliveryMethod {
   const line = caption.split("\n").find((l) => l.startsWith("🚚 Способ получения:")) || "";
@@ -134,12 +135,43 @@ export function methodFromCaption(caption: string): DeliveryMethod {
   return "later";
 }
 
+// Строки адреса для почты: стоят сразу под именем клиента, до телефона.
+const ADDRESS_PREFIXES = ["🏘", "🏠 Улица:", "🏙", "📮"];
+
+/**
+ * Собирает блок доставки в подписи заказа в таком порядке:
+ *   🔥 заказ → 👤 клиент → (почта: улица, район, индекс, город) → 📞 телефон →
+ *   🚚 способ получения и его детали (внизу, чтобы бросалось в глаза) → заметки и история.
+ * Вызывается и при создании заказа, и когда менеджер меняет доставку в боте.
+ */
 export function replaceDelivery(caption: string, deliveryBlock: string): string {
-  const lines = caption.split("\n").filter((l) => !DELIVERY_PREFIXES.some((p) => l.startsWith(p)));
-  const photosIdx = lines.findIndex((l) => l.startsWith("📸"));
-  const at = photosIdx === -1 ? lines.length : photosIdx + 1;
-  lines.splice(at, 0, ...deliveryBlock.split("\n"));
+  // Строку «📸 Фотографий» больше не показываем: убираем и из старых подписей при правке
+  const lines = caption
+    .split("\n")
+    .filter((l) => !DELIVERY_PREFIXES.some((p) => l.startsWith(p)) && !l.startsWith("📸"));
+  const blockLines = deliveryBlock.split("\n");
+  const top = blockLines.filter((l) => ADDRESS_PREFIXES.some((p) => l.startsWith(p)));
+  const bottom = blockLines.filter((l) => !top.includes(l));
+
+  // адрес: сразу после строки клиента (а если её нет — после заголовка)
+  const clientIdx = lines.findIndex((l) => l.startsWith("👤"));
+  lines.splice(clientIdx === -1 ? 1 : clientIdx + 1, 0, ...top);
+
+  // способ получения: перед заметками менеджера и историей, иначе в самом конце
+  const tailIdx = lines.findIndex((l) => l.startsWith("📝") || l.startsWith("🕒"));
+  lines.splice(tailIdx === -1 ? lines.length : tailIdx, 0, ...bottom);
   return lines.join("\n");
+}
+
+export function buildOrderCaption(o: {
+  orderId: string;
+  name: string;
+  phone: string;
+  langNote?: string;
+  deliveryBlock: string;
+}): string {
+  const base = `🔥 Новый заказ #${o.orderId}\n👤 Клиент: ${o.name}\n📞 Тел: ${o.phone}${o.langNote ?? ""}`;
+  return replaceDelivery(base, o.deliveryBlock);
 }
 
 const CAPTION_LIMIT = 1000; // у Telegram лимит 1024

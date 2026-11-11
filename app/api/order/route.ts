@@ -6,6 +6,7 @@ import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 import {
   type DeliveryMethod,
   buildDeliveryText,
+  buildOrderCaption,
   cleanText,
   getTopicConfig,
   createUpsellToken,
@@ -256,7 +257,7 @@ export async function POST(request: Request) {
       address: cleanText(deliveryData.address, 150),
     });
 
-    const captionText = `🔥 Новый заказ #${orderId}\n👤 Клиент: ${safeName}\n📞 Тел: ${safePhone}\n📸 Фотографий: ${numPhotos} шт.\n${deliveryText}${langNote}`;
+    const captionText = buildOrderCaption({ orderId, name: safeName, phone: safePhone, langNote, deliveryBlock: deliveryText });
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
     let deliveredToAtLeastOne = false;
