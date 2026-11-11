@@ -4889,3 +4889,9 @@ a { color: inherit; }
   font-size: 13px;
   color: var(--muted);
 }
+
+/* === Пакет 1: доступность — область касания расширена невидимым слоем, раскладка не меняется === */
+.pb .logo, .pb .lang-btn { position: relative; }
+.pb .logo::after { content: ""; position: absolute; inset: -14px -8px; }
+.pb .lang-btn::after { content: ""; position: absolute; inset: -4px; }
+.pb .foot-note { color: var(--muted); }

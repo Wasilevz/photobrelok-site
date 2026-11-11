@@ -49,6 +49,20 @@ export default function PhotoConstructor() {
     window.dispatchEvent(new CustomEvent("photobrelok_slots", { detail: photoCount }));
   }, [photoCount]);
 
+  // Воронка: первое добавленное фото и достижение минимума (по одному разу за визит)
+  const sentFirstPhoto = useRef(false);
+  const sentMinPhotos = useRef(false);
+  useEffect(() => {
+    if (photoCount >= 1 && !sentFirstPhoto.current) {
+      sentFirstPhoto.current = true;
+      track("photos_uploaded", { photos: photoCount });
+    }
+    if (photoCount >= 6 && !sentMinPhotos.current) {
+      sentMinPhotos.current = true;
+      track("reach_min_photos", { photos: photoCount });
+    }
+  }, [photoCount]);
+
   const revokeOldUrl = useCallback((url: string | null) => {
     if (url && url.startsWith("blob:")) {
       URL.revokeObjectURL(url);
@@ -349,6 +363,7 @@ export default function PhotoConstructor() {
       }
 
       setUploadProgress({ uploaded: 0, total: filled.length, stage: "uploading" });
+      track("submit_start", { photos: filled.length });
 
       let uploadedCounter = 0;
       const photoUrls: string[] = [];
@@ -432,6 +447,7 @@ export default function PhotoConstructor() {
     } catch (err: unknown) {
       setUploadProgress(null);
       const msg = err instanceof Error ? err.message : dict.errors.unknown;
+      track("submit_error", { message: msg.slice(0, 100) });
       setShowError(msg);
       setTelegramFallback(
         telegramLink(

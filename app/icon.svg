@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PHOTOBRELOK">
+  <rect width="64" height="64" rx="14" fill="#211D18"/>
+  <rect x="17" y="17" width="30" height="30" rx="2" fill="#F7BD18"/>
+  <g fill="#F5F1E8">
+    <rect x="9" y="7" width="8" height="5" rx="1"/><rect x="21" y="7" width="8" height="5" rx="1"/>
+    <rect x="33" y="7" width="8" height="5" rx="1"/><rect x="45" y="7" width="8" height="5" rx="1"/>
+    <rect x="9" y="52" width="8" height="5" rx="1"/><rect x="21" y="52" width="8" height="5" rx="1"/>
+    <rect x="33" y="52" width="8" height="5" rx="1"/><rect x="45" y="52" width="8" height="5" rx="1"/>
+  </g>
+</svg>

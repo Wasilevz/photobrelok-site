@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { Area } from "react-easy-crop";
 import getCroppedImg from "../utils/cropImage";
@@ -35,7 +35,7 @@ export default function ImageCropper({ imageSrc, onCropDone, onSkip, onCancel, c
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onCancel, onSkip, isBatch]);
 
-  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
@@ -101,6 +101,7 @@ export default function ImageCropper({ imageSrc, onCropDone, onSkip, onCancel, c
             max={3}
             step={0.1}
             onChange={(e) => setZoom(Number(e.target.value))}
+            aria-label={dict.cropper.zoomLabel}
             className="w-full accent-white"
           />
         </div>

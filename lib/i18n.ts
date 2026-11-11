@@ -29,6 +29,7 @@ export interface Dict {
     progress: (cur: number, total: number) => string;
     zoomLow: string;
     zoomHigh: string;
+    zoomLabel: string;
     skip: string;
     cancel: string;
     crop: string;
@@ -153,8 +154,9 @@ export const translations: Record<Locale, Dict> = {
     },
     cropper: {
       progress: (cur: number, total: number) => `Фото ${cur} из ${total}`,
-      zoomLow: "Мало",
-      zoomHigh: "Много",
+      zoomLow: "Отдалить",
+      zoomHigh: "Приблизить",
+      zoomLabel: "Масштаб фото",
       skip: "Не добавлять это фото",
       cancel: "Отмена",
       crop: "Обрезать",
@@ -283,8 +285,9 @@ export const translations: Record<Locale, Dict> = {
     },
     cropper: {
       progress: (cur: number, total: number) => `Poza ${cur} din ${total}`,
-      zoomLow: "Puțin",
-      zoomHigh: "Mult",
+      zoomLow: "Mai departe",
+      zoomHigh: "Mai aproape",
+      zoomLabel: "Mărirea pozei",
       skip: "Nu adăuga poza",
       cancel: "Anulează",
       crop: "Decupează",

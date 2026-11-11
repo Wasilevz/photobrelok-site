@@ -167,7 +167,6 @@ function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
           </svg>
         )}
       </button>
-      <span className="hero-video-badge">{lang === "ru" ? "Живой вид" : "În direct"}</span>
     </div>
   );
 }
@@ -272,9 +271,10 @@ export default function Landing() {
     };
   }, []);
 
-  const scrollToBuilder = () => {
-    track("hero_cta");
-    track("builder_start");
+  // source — какая именно кнопка нажата (hero, reviews, gift, final, sticky): нужно для воронки.
+  // builder_start теперь считает только реальное начало выбора фото (в конструкторе).
+  const scrollToBuilder = (source: string) => {
+    track("hero_cta", { source });
     const el = document.getElementById("constructor") || document.getElementById("builder");
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -322,7 +322,6 @@ export default function Landing() {
                   <div className="hero-price">{t.heroPrice}</div>
                   <p className="hero-price-note">{t.heroPriceNote}</p>
                   <p className="hero-price-anchor">
-                    <span className="hero-price-anchor-icon" aria-hidden="true">💐</span>
                     <span>{t.priceAnchor}</span>
                   </p>
                 </div>
@@ -366,7 +365,7 @@ export default function Landing() {
                     </div>
                   </li>
                 </ul>
-                <button type="button" className="hero-cta-btn" onClick={scrollToBuilder}>
+                <button type="button" className="hero-cta-btn" onClick={() => scrollToBuilder("hero")}>
                   <span>{photoCount > 0 ? t.priceCta : t.heroCta}</span>
                   <span aria-hidden="true">→</span>
                 </button>
@@ -413,14 +412,21 @@ export default function Landing() {
             <div className="reviews-wall occ-rail" role="region" tabIndex={0} aria-label={t.reviewsTitle}>
               {reviewShots.map((shot) => (
                 <figure key={shot.src} className="review-shot">
-                  <Image src={shot.src} alt={altFor(shot.alt, lang)} width={1200} height={1800} loading="lazy" />
+                  <Image
+                    src={shot.src}
+                    alt={altFor(shot.alt, lang)}
+                    width={1200}
+                    height={1800}
+                    sizes="(max-width: 767px) 72vw, 280px"
+                    loading="lazy"
+                  />
                 </figure>
               ))}
             </div>
 
             <p className="memories-hint">{t.reviewsHint}</p>
             <div style={{ textAlign: "center", marginTop: 32 }}>
-              <button type="button" className="hero-cta-btn" onClick={scrollToBuilder} style={{ display: "inline-flex" }}>
+              <button type="button" className="hero-cta-btn" onClick={() => scrollToBuilder("reviews")} style={{ display: "inline-flex" }}>
                 <span>{t.reviewsCta}</span>
                 <span aria-hidden="true">→</span>
               </button>
@@ -442,6 +448,7 @@ export default function Landing() {
                     alt={altFor(exampleMeta[i].alt, lang)}
                     width={900}
                     height={600}
+                    sizes="(max-width: 767px) 77vw, 340px"
                     loading="lazy"
                   />
                   <figcaption>
@@ -475,7 +482,7 @@ export default function Landing() {
             <h2>{t.giftTitle}</h2>
             <p className="lead">{t.giftLead}</p>
             <div style={{ marginTop: 32 }}>
-              <button type="button" className="hero-cta-btn" onClick={scrollToBuilder} style={{ display: "inline-flex" }}>
+              <button type="button" className="hero-cta-btn" onClick={() => scrollToBuilder("gift")} style={{ display: "inline-flex" }}>
                 <span>{t.giftCta}</span>
                 <span aria-hidden="true">→</span>
               </button>
@@ -492,7 +499,6 @@ export default function Landing() {
                 <div className="offer-price">{t.priceBig}</div>
                 <p className="offer-tagline">{t.priceText}</p>
                 <p className="offer-price-anchor">
-                  <span aria-hidden="true">💐</span>
                   <span>{t.priceAnchor}</span>
                 </p>
                 <div className="offer-divider" />
@@ -561,8 +567,7 @@ export default function Landing() {
                   type="button"
                   className="offer-cta"
                   onClick={() => {
-                    track("hero_cta");
-                    track("builder_start");
+                    track("hero_cta", { source: "price" });
                     const el = document.getElementById("constructor") || document.getElementById("builder");
                     el?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
@@ -646,7 +651,14 @@ export default function Landing() {
             >
               {memories.map((item) => (
                 <figure key={item.src}>
-                  <Image src={item.src} alt={altFor(item.alt, lang)} width={800} height={1000} loading="lazy" />
+                  <Image
+                    src={item.src}
+                    alt={altFor(item.alt, lang)}
+                    width={800}
+                    height={1000}
+                    sizes="(max-width: 767px) 62vw, 250px"
+                    loading="lazy"
+                  />
                 </figure>
               ))}
             </div>
@@ -752,7 +764,7 @@ export default function Landing() {
               <p className="final-lead">{t.finalLead}</p>
             </div>
             <div className="final-cta-actions">
-              <button type="button" className="hero-cta-btn final-btn" onClick={scrollToBuilder}>
+              <button type="button" className="hero-cta-btn final-btn" onClick={() => scrollToBuilder("final")}>
                 <span>{t.finalTg}</span>
                 <span aria-hidden="true">→</span>
               </button>
@@ -843,7 +855,7 @@ export default function Landing() {
                 : t.mobileCtaNote}
           </div>
         </div>
-        <button type="button" className="hero-cta-btn mobile-cta-button" onClick={scrollToBuilder}>
+        <button type="button" className="hero-cta-btn mobile-cta-button" onClick={() => scrollToBuilder("sticky")}>
           {photoCount > 0 ? t.priceCta : t.mobileCtaBtn}
         </button>
       </aside>

@@ -107,7 +107,10 @@ export function track(event: AnalyticsEvent, payload: Payload = {}) {
     metaEventIds?: unknown;
   };
   void _name; void _phone; void _ids;
-  if (readConsent()?.analytics && Array.isArray(window.dataLayer)) {
+  if (readConsent()?.analytics) {
+    // Создаём dataLayer сами: раньше события молча терялись, пока нет GTM.
+    // Подключённый позже менеджер тегов подхватит уже накопленную очередь.
+    window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event, ...safe, ts: Date.now() });
   }
   trackMeta(event, payload);

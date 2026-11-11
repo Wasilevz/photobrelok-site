@@ -317,7 +317,7 @@ export const legalCopy: Record<LegalLocale, LegalCopy> = {
     banner: {
       title: "Folosim cookie-uri",
       text: "Cookie-urile necesare asigură funcționarea site-ului. Analiza și publicitatea se activează doar cu acordul dumneavoastră. Detalii — în politica privind cookie-urile.",
-      acceptAll: "Accept toate",
+      acceptAll: "Acceptă toate",
       necessaryOnly: "Doar necesare",
       settings: "Setări",
       settingsTitle: "Setări cookie",
@@ -342,7 +342,7 @@ export const legalCopy: Record<LegalLocale, LegalCopy> = {
           paragraphs: [
             "PHOTOBRELOK (în continuare — „noi”, „Serviciul”) — serviciul care confecționează produsele comandate de dumneavoastră pe baza materialelor dumneavoastră.",
             "Stabilim scopurile și mijloacele de prelucrare a datelor cu caracter personal și acționăm ca operator de date în sensul legislației aplicabile privind protecția datelor cu caracter personal. Dacă vă aflați în UE/SEE, acționăm și ca operator în sensul GDPR.",
-            "Pentru orice întrebare privind prelucrarea datelor cu character personal folosiți contactele indicate în secțiunea „Contacte” de pe site.",
+            "Pentru orice întrebare privind prelucrarea datelor cu caracter personal folosiți contactele indicate în secțiunea „Contacte” de pe site.",
           ],
         },
         {
@@ -407,7 +407,7 @@ export const legalCopy: Record<LegalLocale, LegalCopy> = {
                 "Stocare temporară pentru pregătirea și confecționarea comenzii",
               ],
               [
-                "Messenger sau CRM pentru prelucrarea comenzilor",
+                "Aplicație de mesagerie sau CRM pentru prelucrarea comenzilor",
                 "Nume, telefon, adresa, fișierul comenzii",
                 "Transmiterea comenzii în canalul de lucru al producției",
               ],

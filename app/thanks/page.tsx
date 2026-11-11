@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, Package, ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from "@/context/LanguageContext";
@@ -42,7 +42,7 @@ function ThankYouContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8] py-12 px-4 text-[#191715] font-sans">
+    <main className="min-h-screen bg-[#F5F1E8] py-12 px-4 text-[#191715] font-sans">
       <div className="mx-auto w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
       {/* 1. Блок успеха */}
@@ -59,7 +59,7 @@ function ThankYouContent() {
         <p className="text-[#5C564E] font-medium">
           {dict.thanks.orderNumber} <span className="text-black bg-zinc-200 px-2 py-1 rounded font-mono">#{orderId}</span>
         </p>
-        <p className="text-[#7A7368] text-sm">
+        <p className="text-[#5C564E] text-sm">
           {dict.thanks.willContact}
         </p>
       </div>
@@ -67,7 +67,7 @@ function ThankYouContent() {
       {/* 2. Оффер-апселл — без таймера и ложной срочности */}
       {status === 'pending' ? (
         <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFDF8] border-[3px] border-[#191715] rounded-[40px] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
-          <div className="absolute top-0 right-0 bg-[#FFC400] text-white px-6 py-2 rounded-bl-3xl font-black text-xs uppercase tracking-widest">
+          <div className="absolute top-0 right-0 bg-[#FFC400] text-[#191715] px-6 py-2 rounded-bl-3xl font-black text-xs uppercase tracking-widest">
             {dict.thanks.sameOrderBadge}
           </div>
 
@@ -79,7 +79,7 @@ function ThankYouContent() {
 
           <h2 className="text-2xl font-black leading-[1.1] mb-4">
             {dict.thanks.upsellTitle1}<br />
-            <span className="text-[#FFC400]">{dict.thanks.upsellDiscount}</span>
+            <span className="bg-[#FFC400] text-[#191715] px-2 rounded-lg">{dict.thanks.upsellDiscount}</span>
           </h2>
 
           <p className="text-[#3D3832] mb-6 leading-relaxed text-sm">
@@ -89,11 +89,11 @@ function ThankYouContent() {
           <div className="space-y-3 mb-6 bg-[#FFF6D6] p-5 rounded-3xl border border-[#E8D48A]">
             <div className="flex justify-between items-center text-sm">
               <span className="text-[#5C564E]">{dict.thanks.regularPrice}</span>
-              <span className="font-bold line-through text-[#7A7368]">250 {dict.thanks.currency}</span>
+              <span className="font-bold line-through text-[#5C564E]">250 {dict.thanks.currency}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-bold text-black">{dict.thanks.discountPrice}</span>
-              <span className="text-3xl font-black text-[#FFC400]">150 {dict.thanks.currency}</span>
+              <span className="text-3xl font-black text-[#191715]">150 {dict.thanks.currency}</span>
             </div>
           </div>
 
@@ -145,7 +145,7 @@ function ThankYouContent() {
             <CheckCircle2 className="w-8 h-8 text-[#B8B0A4]" />
           </div>
           <h2 className="text-xl font-bold">{dict.thanks.neutralTitle}</h2>
-          <p className="text-[#7A7368] mt-2 text-sm">{dict.thanks.neutralDeclined}</p>
+          <p className="text-[#5C564E] mt-2 text-sm">{dict.thanks.neutralDeclined}</p>
         </div>
       )}
 
@@ -156,8 +156,8 @@ function ThankYouContent() {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-bold text-sm">{dict.thanks.paymentTitle}</h4>
-            <p className="text-xs text-[#7A7368]">{dict.thanks.paymentSub}</p>
+            <h3 className="font-bold text-sm">{dict.thanks.paymentTitle}</h3>
+            <p className="text-xs text-[#5C564E]">{dict.thanks.paymentSub}</p>
           </div>
         </div>
       </div>
@@ -169,7 +169,7 @@ function ThankYouContent() {
         {dict.thanks.backToSite}
       </button>
       </div>
-    </div>
+    </main>
   );
 }
 
