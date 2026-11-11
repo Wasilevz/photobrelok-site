@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
-import { getOrderRecipients, tg } from "@/lib/telegram-orders";
+import {
+  UPSELL_CAPTION_LINE,
+  appendLine,
+  getOrderRecipients,
+  getTopicConfig,
+  keyboard,
+  readUpsellToken,
+  tg,
+} from "@/lib/telegram-orders";
 
 const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 
@@ -14,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const contentLength = Number(req.headers.get("content-length") || 0);
-    if (contentLength > 1024) {
+    if (contentLength > 8192) {
       return NextResponse.json({ error: "Слишком большой запрос" }, { status: 413 });
     }
 
@@ -34,6 +42,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Некорректный номер заказа" }, { status: 400 });
     }
 
+    // 1) Основной путь: дописываем апселл прямо в сообщение заказа. Дальше бот переносит заказ
+    //    по темам вместе с подписью, то есть апселл едет туда же, куда и сам заказ.
+    const payload = readUpsellToken((body as Record<string, unknown>).token, orderId);
+    if (payload && payload.refs.length > 0) {
+      const topics = getTopicConfig();
+      const caption = appendLine(payload.caption, UPSELL_CAPTION_LINE);
+      const edits = await Promise.allSettled(
+        payload.refs.map(async (ref) => {
+          const withKeyboard = topics && ref.chatId === topics.chatId && ref.threadId !== undefined;
+          try {
+            await tg("editMessageCaption", {
+              chat_id: ref.chatId,
+              message_id: ref.messageId,
+              caption,
+              ...(withKeyboard ? { reply_markup: { inline_keyboard: keyboard("work", topics) } } : {}),
+            });
+          } catch (error) {
+            // Повторное нажатие даёт ту же подпись — это не ошибка
+            if (error instanceof Error && /message is not modified/i.test(error.message)) return;
+            throw error;
+          }
+        }),
+      );
+      edits.forEach((r) => {
+        if (r.status === "rejected") {
+          console.error(`Upsell ${orderId}: caption edit failed: ${r.reason instanceof Error ? r.reason.message : r.reason}`);
+        }
+      });
+      if (edits.some((r) => r.status === "fulfilled")) {
+        return NextResponse.json({ success: true });
+      }
+      // Сообщение заказа уже перенесено или удалено — падаем на отдельное уведомление ниже
+    }
+
+    // 2) Запасной путь: нет токена (старая вкладка, sessionStorage недоступен) или заказ уже переехал.
     const recipients = getOrderRecipients();
     if (!process.env.TELEGRAM_BOT_TOKEN || recipients.length === 0) {
       console.error("Upsell: Telegram is not configured (token or chat id is missing)");

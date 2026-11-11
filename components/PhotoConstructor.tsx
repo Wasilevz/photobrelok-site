@@ -407,7 +407,13 @@ export default function PhotoConstructor() {
         throw new Error(errData?.error || dict.errors.genericSubmit);
       }
 
-      const { orderId } = await apiRes.json();
+      const { orderId, upsellToken } = await apiRes.json();
+      try {
+        // Страница «Спасибо» по этому токену допишет апселл в сообщение заказа в Telegram
+        if (upsellToken) window.sessionStorage.setItem(`photobrelok_upsell_${orderId}`, upsellToken);
+      } catch {
+        // sessionStorage недоступен: апселл уйдёт отдельным сообщением
+      }
       track("order_api_success", {
         orderId,
         name: userData.name,

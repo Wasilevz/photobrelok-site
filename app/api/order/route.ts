@@ -8,8 +8,10 @@ import {
   buildDeliveryText,
   cleanText,
   getTopicConfig,
+  createUpsellToken,
   isDeliveryMethod,
   keyboard,
+  type UpsellRef,
 } from "@/lib/telegram-orders";
 
 const MIN_PHOTOS = 6;
@@ -258,6 +260,7 @@ export async function POST(request: Request) {
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
     let deliveredToAtLeastOne = false;
+    const upsellRefs: UpsellRef[] = [];
     for (const chatId of chatIds) {
       const tgFormData = new FormData();
       tgFormData.append("chat_id", chatId);
@@ -276,6 +279,15 @@ export async function POST(request: Request) {
         });
         if (tgRes.ok) {
           deliveredToAtLeastOne = true;
+          const sent = (await tgRes.json().catch(() => null)) as { result?: { message_id?: number } } | null;
+          const messageId = sent?.result?.message_id;
+          if (typeof messageId === "number") {
+            upsellRefs.push({
+              chatId,
+              messageId,
+              threadId: topics && chatId === topics.chatId ? topics.threads.work : undefined,
+            });
+          }
         } else {
           const detail = await tgRes.json().catch(() => null) as { description?: string } | null;
           console.error(`Telegram delivery failed for order ${orderId}: ${tgRes.status} (chat ${chatId}) ${detail?.description ?? ""}`);
@@ -316,7 +328,8 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, orderId });
+    const upsellToken = createUpsellToken({ orderId, caption: captionText, refs: upsellRefs });
+    return NextResponse.json({ success: true, orderId, upsellToken });
   } catch (error) {
     console.error("Order generation failed:", error);
     return NextResponse.json({ error: "Не удалось подготовить заказ. Попробуйте ещё раз." }, { status: 500 });
