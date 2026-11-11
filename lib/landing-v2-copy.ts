@@ -35,7 +35,9 @@ export const landingV2Copy = {
     reviewsTitle: "Клиенты о брелоках",
     reviewsLead: "Скриншоты из чатов и сторис.",
     offerLabel: "Комплект и условия",
-    offerTitle: "Что входит за 250 лей",
+    offerTitle: "В комплекте",
+    factsTitle: "Что ещё важно",
+    facts2: "Рассчитан более чем на 1000 вытягиваний плёнки.",
     includeItems: ["Брелок с 6–10 вашими фото", "Деревянная коробочка", "Две жвачки Love is"],
     faqLabel: "Вопросы",
     finalLabel: "Ваш брелок",
@@ -50,6 +52,8 @@ export const landingV2Copy = {
     madeIn: "Сделано в Кишинёве.",
     // индексы вопросов из faqCopy: фото, срок, правка макета, мало фото, как пользоваться
     faqPick: [3, 1, 5, 4, 8],
+    // более точные формулировки вопросов (ответы берутся из faqCopy)
+    faqQ: { 1: "Сколько ждать?", 4: "Что делать, если фото мало?" } as Record<number, string>,
   },
   ro: {
     heroEyebrow: "Imprimat pe Epson · făcut în Moldova",
@@ -84,7 +88,9 @@ export const landingV2Copy = {
     reviewsTitle: "Clienții despre brelocuri",
     reviewsLead: "Capturi din chat-uri și stories.",
     offerLabel: "Set și condiții",
-    offerTitle: "Ce primești pentru 250 lei",
+    offerTitle: "În set",
+    factsTitle: "Ce mai e important",
+    facts2: "Conceput pentru peste 1000 de extrageri ale peliculei.",
     includeItems: ["Breloc cu 6–10 poze ale tale", "Cutie din lemn", "Două gume Love is"],
     faqLabel: "Întrebări",
     finalLabel: "Brelocul tău",
@@ -98,5 +104,6 @@ export const landingV2Copy = {
     quick: "Comandă rapidă",
     madeIn: "Făcut la Chișinău.",
     faqPick: [3, 1, 5, 4, 8],
+    faqQ: { 1: "Cât durează?", 4: "Dacă am puține poze?" } as Record<number, string>,
   },
 } as const;

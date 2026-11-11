@@ -159,11 +159,13 @@ export default function LandingV2() {
 
   const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
   const [heroCtaVisible, setHeroCtaVisible] = useState(true);
+  const [finalVisible, setFinalVisible] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
   const [ytOpen, setYtOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number[]>([]);
   const builderRef = useRef<HTMLElement>(null);
   const heroCtaRef = useRef<HTMLButtonElement>(null);
+  const finalRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     track("hero_view", { layout: "v2" });
@@ -176,6 +178,7 @@ export default function LandingV2() {
 
     let builderIo: IntersectionObserver | null = null;
     let heroIo: IntersectionObserver | null = null;
+    let finalIo: IntersectionObserver | null = null;
     if (typeof IntersectionObserver !== "undefined") {
       if (builderRef.current) {
         builderIo = new IntersectionObserver(([entry]) => setMobileCtaHidden(entry.isIntersecting), { threshold: 0.15 });
@@ -185,11 +188,17 @@ export default function LandingV2() {
         heroIo = new IntersectionObserver(([entry]) => setHeroCtaVisible(entry.isIntersecting), { threshold: 0.6 });
         heroIo.observe(heroCtaRef.current);
       }
+      // Внизу страницы своя кнопка: нижнюю панель прячем, чтобы не было двух кнопок подряд
+      if (finalRef.current) {
+        finalIo = new IntersectionObserver(([entry]) => setFinalVisible(entry.isIntersecting), { threshold: 0.3 });
+        finalIo.observe(finalRef.current);
+      }
     }
     return () => {
       window.removeEventListener("photobrelok_slots", onSlots);
       builderIo?.disconnect();
       heroIo?.disconnect();
+      finalIo?.disconnect();
     };
   }, []);
 
@@ -304,7 +313,7 @@ export default function LandingV2() {
             <h2 className="v2-h2">{v.builderTitle}</h2>
             <p className="v2-lead">{v.builderLead}</p>
           </div>
-          <PhotoConstructor />
+          <PhotoConstructor compact />
         </section>
 
         {/* 4. Работы и отзывы */}
@@ -476,9 +485,9 @@ export default function LandingV2() {
               </div>
 
               <div className="offer-facts">
-                <p className="offer-facts-title">{t.factsTitle}</p>
+                <p className="offer-facts-title">{v.factsTitle}</p>
                 <p>{t.factsText1}</p>
-                <p>{t.factsText2}</p>
+                <p>{v.facts2}</p>
               </div>
             </div>
           </div>
@@ -500,7 +509,7 @@ export default function LandingV2() {
                     aria-expanded={isOpen}
                     onClick={() => setOpenFaq((cur) => (cur.includes(idx) ? cur.filter((x) => x !== idx) : [...cur, idx]))}
                   >
-                    <span>{item.q}</span>
+                    <span>{(v.faqQ as Record<number, string>)[idx] ?? item.q}</span>
                     <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
                   </button>
                   <div className="faq-a" hidden={!isOpen}>
@@ -513,7 +522,7 @@ export default function LandingV2() {
         </section>
 
         {/* 7. Финал */}
-        <section className="final final-cta v2-final" id="order">
+        <section className="final final-cta v2-final" id="order" ref={finalRef}>
           <div className="wrap final-cta-grid">
             <div className="final-cta-copy">
               <p className="final-eyebrow">Кадр 07 / 07 · {v.finalLabel}</p>
@@ -586,7 +595,7 @@ export default function LandingV2() {
         </div>
       </footer>
 
-      <aside className={`mobile-cta ${mobileCtaHidden || heroCtaVisible || !cookiesDecided ? "hidden" : ""}`} aria-label={v.quick}>
+      <aside className={`mobile-cta ${mobileCtaHidden || heroCtaVisible || finalVisible || !cookiesDecided ? "hidden" : ""}`} aria-label={v.quick}>
         <div className="mobile-cta-price">
           <div className="mobile-cta-amount">{t.priceChip}</div>
           <div className="mobile-cta-note">

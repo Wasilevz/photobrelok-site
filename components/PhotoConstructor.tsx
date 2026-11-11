@@ -18,7 +18,8 @@ const MAX_SLOTS = 10;
 // Конструктор V2: если Cloudinary не отвечает дольше этого времени, показываем понятную ошибку
 const UPLOAD_TIMEOUT_MS = 45_000;
 
-export default function PhotoConstructor() {
+// compact: в новом макете убираем две подсказки, повторяющие текст секции и счётчик (логика не меняется)
+export default function PhotoConstructor({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const { lang, dict } = useLanguage();
   const [slots, setSlots] = useState<(string | null)[]>(Array(MAX_SLOTS).fill(null));
@@ -930,11 +931,13 @@ export default function PhotoConstructor() {
           </div>
         )}
 
-        <p className="text-center text-[12px] text-[#6B6560] mt-3">
-          {lang === "ru"
-            ? "Плёнка с фото наматывается внутрь катушки — как в настоящем брелоке"
-            : "Filmul cu poze se învârte în interiorul casetei — ca la brelocul real"}
-        </p>
+        {!compact && (
+          <p className="text-center text-[12px] text-[#6B6560] mt-3">
+            {lang === "ru"
+              ? "Плёнка с фото наматывается внутрь катушки — как в настоящем брелоке"
+              : "Filmul cu poze se învârte în interiorul casetei — ca la brelocul real"}
+          </p>
+        )}
       </div>
 
       <div className="max-w-xs sm:max-w-md mx-auto mt-12 px-4">
@@ -996,7 +999,7 @@ export default function PhotoConstructor() {
                     ? (lang === "ru" ? `Добавить ещё ${6 - count} фото (мин. 6)` : `Mai adaugă ${6 - count} poze (min. 6)`)
                     : dict.home.ctaOrder}
               </button>
-              {count === 0 && (
+              {count === 0 && !compact && (
                 <p className="text-center text-[12px] text-gray-600 mt-2" aria-live="polite">
                   {lang === "ru"
                     ? "Загрузите от 6 до 10 фото через конструктор — макет подготовим бесплатно"
