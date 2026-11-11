@@ -1,5 +1,3 @@
-export type LandingLocale = "ru" | "ro";
-
 export const landingCopy = {
   ru: {
     eyebrow: "Подарок, который останется на годы",
@@ -7,50 +5,14 @@ export const landingCopy = {
     heroLead: "6–10 ваших кадров на плёнке. Макет бесплатно, платите при получении.",
     heroPrice: "250 лей",
     heroPriceNote: "Деревянная коробочка и 2 жвачки Love is в комплекте",
-    heroFeat1Title: "Бесплатный макет",
-    heroFeat1Text: "Сначала увидите результат, затем решите.",
-    heroFeat2Title: "Макет за 24 часа",
-    heroFeat2Text: "Брелок — 1–2 дня после вашего «да».",
-    heroFeat3Title: "Оплата при получении",
-    heroFeat3Text: "Заказывать можно без предоплаты.",
     priceChip: "250 лей",
     heroCta: "Собрать брелок",
-    reviewsCta: "Собрать брелок",
-    giftCta: "Собрать брелок",
-    priceAnchor: "Как букет цветов — но останется на годы",
-    trustLine: "Печать на Epson · сделано в Молдове",
-    occasionSelected: "Повод",
-    occasionChange: "изменить",
-    painTitle: "Лучшие кадры лежат между скриншотами и чеками",
-    painHand: "Галерея — склад. Плёнка — витрина.",
-    painLead:
-      "В телефоне тысячи фото. Когда вы в последний раз открывали то, где смеялись по-настоящему? Шести кадров достаточно, чтобы тот день снова оказался рядом.",
-    occTitle: "О чём будет ваш подарок?",
-    occLead: "Выберите, для кого собираете подарок — и мы подскажем, какие кадры трогают сильнее всего.",
-    giftTitle: "Подарок, который достают из кармана",
-    giftLead:
-      "Он или она достанет плёнку, найдёт первый кадр, и вы услышите тихое: «Это же тот самый день…» А потом весь вечер будете вспоминать остальные.",
     builderTitle: "Соберите свой брелок бесплатно",
     builderLead:
       "Примерьте ваши фото на плёнку. Выберите от 6 до 10 кадров. Не знаете, какие взять? Загрузите любые — на макете подскажем, что заменить. Фото остаются на телефоне до отправки заявки.",
-    step1: "Выберите 6–10 моментов.",
-    step1t:
-      "Не знаете, какие? Пришлите больше — подскажем, какие кадры лучше смотрятся на плёнке.",
-    step2: "Скажите «да» макету.",
-    step2t:
-      "Соберите плёнку выше — макет уйдёт нам автоматически. Платите только после того, как макет понравился.",
-    step3: "Получите брелок за 1–2 дня.",
-    step3t:
-      "Изготовим за 1–2 дня после вашего «да». Доставка по Молдове — ещё 2–4 дня, самовывоз — сразу. Оплата при получении.",
-    priceTitle: "Ваши воспоминания внутри",
     priceBig: "250 лей",
-    priceText: "Маленький подарок. Большая история.",
-    riskTitle: "Без риска для вас",
-    riskItem1Title: "Бесплатный макет",
-    riskItem1Text: "Сначала согласуете дизайн, потом подтверждаете заказ.",
     riskItem2Title: "Оплата при получении",
     riskItem2Text: "Без предоплаты.",
-    includeLead: "Полный комплект готов к подарку — без сюрпризов «в коробке пусто».",
     includeItems: [
       "Брелок-катушка Kodak с 6–10 вашими фото на плёнке",
       "Деревянная шкатулка",
@@ -69,24 +31,12 @@ export const landingCopy = {
     deliveryNovaPrice: "60 лей",
     factsTitle: "Ещё два важных факта",
     factsText1: "Ваши фото используются только для этого заказа. Подробности — в политике конфиденциальности.",
-    factsText2: "Плёнка выдерживает не менее 1000 сворачиваний.",
     priceCta: "Получить макет",
-    memoriesTitle: "Так выглядят воспоминания",
-    memoriesHint: "Листайте вбок — как плёнку",
     reviewsTitle: "Что говорят клиенты",
     reviewsLead: "Настоящие сообщения и фото клиентов — как есть, из чатов и сторис.",
-    reviewsHint: "Настоящие отзывы из Telegram и Instagram",
-    howUseTitle: "Как пользоваться брелком",
-    howUseLead: "На видео — как открыть катушку, достать плёнку с кадрами и закрыть обратно.",
-    howUseHint: "Откройте перед первым вручением подарка — 30 секунд, и всё понятно.",
     faqTitle: "Частые вопросы",
-    finalEyebrow: "Ваши воспоминания — рядом",
     finalTitle: "Лучшие моменты — всегда с вами",
     finalLead: "Соберите плёнку из 6–10 фото. Сначала покажем макет — решать вам.",
-    finalTg: "Собрать брелок",
-    finalCallLabel: "Или позвоните:",
-    finalNote: "Без предоплаты · Решение после макета",
-    footerNote: "Сделано в Кишинёве.",
     trademarkNote: "Kodak и Love is — торговые марки их владельцев. Сайт с ними не связан.",
     footerHours: "Ежедневно, 12:00–21:00",
     mobileCtaNote: "Макет бесплатно",
@@ -94,7 +44,6 @@ export const landingCopy = {
     mobileCtaMore: "Добавить фото",
     offerCta: "Собрать брелок",
     secondOffer: "Два брелока — 400 лей: второй такой же, с теми же фото, со скидкой 40% (150 лей). Доставка одна на весь заказ.",
-    conditionsLine: "Самовывоз в Кишинёве — бесплатно · Доставка по Молдове",
   },
   ro: {
     eyebrow: "Un cadou care rămâne ani întregi",
@@ -102,50 +51,14 @@ export const landingCopy = {
     heroLead: "6–10 cadre ale tale pe film. Machetă gratuită, plătești la primire.",
     heroPrice: "250 lei",
     heroPriceNote: "Cutie din lemn și 2 gume Love is incluse",
-    heroFeat1Title: "Machetă gratuită",
-    heroFeat1Text: "Mai întâi vezi rezultatul, apoi decizi.",
-    heroFeat2Title: "Macheta în 24 de ore",
-    heroFeat2Text: "Brelocul — 1–2 zile după „da”-ul tău.",
-    heroFeat3Title: "Plata la primire",
-    heroFeat3Text: "Poți comanda fără avans.",
     priceChip: "250 lei",
     heroCta: "Creează-ți brelocul",
-    reviewsCta: "Creează-ți brelocul",
-    giftCta: "Creează-ți brelocul",
-    priceAnchor: "Ca un buchet de flori — dar rămâne ani întregi",
-    trustLine: "Imprimat pe Epson · făcut în Moldova",
-    occasionSelected: "Prilej",
-    occasionChange: "schimbă",
-    painTitle: "Cele mai bune cadre stau între capturi de ecran și bonuri",
-    painHand: "Galeria — depozitul. Filmul — vitrina.",
-    painLead:
-      "În telefon ai mii de poze. Când ai deschis ultima oară una în care râdeai cu adevărat? Șase cadre sunt de ajuns ca ziua aceea să fie din nou aproape.",
-    occTitle: "Despre ce va fi cadoul tău?",
-    occLead: "Alege pentru cine e cadoul — și îți spunem ce cadre emoționează cel mai tare.",
-    giftTitle: "Un cadou care se scoate din buzunar",
-    giftLead:
-      "Ea sau el va scoate filmul, va găsi primul cadru, și vei auzi în șoaptă: „Ăsta e chiar ziua aia…” Apoi toată seara vă veți aminti restul.",
     builderTitle: "Vezi-ți brelocul înainte de comandă",
     builderLead:
       "Încearcă pozele tale pe film. Alege de la 6 la 10 cadre. Nu știi ce să alegi? Încarcă oricare — pe machetă îți spunem ce să schimbi. Pozele rămân pe telefon până la trimitere.",
-    step1: "Alege 6–10 momente.",
-    step1t:
-      "Nu știi care? Trimite mai multe — îți spunem ce cadre se văd mai bine pe film.",
-    step2: "Spune „da” machetei.",
-    step2t:
-      "Compune filmul mai sus — macheta ajunge la noi automat. Plătești doar după ce îți place macheta.",
-    step3: "Primești brelocul în 1–2 zile.",
-    step3t:
-      "Îl facem în 1–2 zile după „da”-ul tău. Livrarea în Moldova — încă 2–4 zile, ridicarea personală — imediat. Plata la primire.",
-    priceTitle: "Amintirile tale înăuntru",
     priceBig: "250 lei",
-    priceText: "Un cadou mic. O poveste mare.",
-    riskTitle: "Fără riscuri pentru tine",
-    riskItem1Title: "Machetă gratuită",
-    riskItem1Text: "Mai întâi confirmi designul, apoi confirmi comanda.",
     riskItem2Title: "Plata la primire",
     riskItem2Text: "Fără avans.",
-    includeLead: "Setul complet e gata de cadou — fără surprize „în cutie e gol”.",
     includeItems: [
       "Breloc-casetă Kodak cu 6–10 poze pe film",
       "Cutie din lemn",
@@ -164,24 +77,12 @@ export const landingCopy = {
     deliveryNovaPrice: "60 lei",
     factsTitle: "Încă două fapte importante",
     factsText1: "Pozele tale sunt folosite doar pentru această comandă. Detalii — în politica de confidențialitate.",
-    factsText2: "Filmul rezistă la cel puțin 1000 de răsuciri.",
     priceCta: "Primește macheta",
-    memoriesTitle: "Așa arată amintirile",
-    memoriesHint: "Glisează lateral — ca filmul",
     reviewsTitle: "Ce spun clienții",
     reviewsLead: "Mesaje și poze reale de la clienți — exact așa cum au venit, din chat și stories.",
-    reviewsHint: "Recenzii reale din Telegram și Instagram",
-    howUseTitle: "Cum folosești brelocul",
-    howUseLead: "În video — cum deschizi caseta, scoți filmul cu cadrele și închizi la loc.",
-    howUseHint: "Deschide înainte de a oferi cadoul — 30 de secunde și e clar.",
     faqTitle: "Întrebări frecvente",
-    finalEyebrow: "Amintirile tale — aproape",
     finalTitle: "Cele mai bune momente — totdeauna cu tine",
     finalLead: "Compune filmul din 6–10 poze. Mai întâi îți arătăm macheta — decizi tu.",
-    finalTg: "Creează-ți brelocul",
-    finalCallLabel: "Sau sună-ne:",
-    finalNote: "Fără avans · Decizie după machetă",
-    footerNote: "Făcut la Chișinău.",
     trademarkNote: "Kodak și Love is sunt mărci comerciale ale proprietarilor lor. Site-ul nu este afiliat acestora.",
     footerHours: "Zilnic, 12:00–21:00",
     mobileCtaNote: "Machetă gratuită",
@@ -189,7 +90,6 @@ export const landingCopy = {
     mobileCtaMore: "Adaugă poze",
     offerCta: "Creează-ți brelocul",
     secondOffer: "Două brelocuri — 400 lei: al doilea identic, cu aceleași poze, cu reducere de 40% (150 lei). Livrarea e una singură pentru toată comanda.",
-    conditionsLine: "Ridicare din Chișinău — gratuit · Livrare în Moldova",
   },
 } as const;
 
@@ -268,45 +168,6 @@ export const faqCopy = {
     {
       q: "Cum folosești brelocul?",
       a: "Scoate filmul cu grijă din casetă, privește cadrele și învârte-l la loc.",
-    },
-  ],
-} as const;
-
-export const occasionCopy = {
-  ru: [
-    {
-      title: "О любви",
-      text: "Первое свидание, поездка, смех, который не забыть. История двоих в нескольких кадрах.",
-    },
-    {
-      title: "О семье",
-      text: "Первая улыбка, первые шаги, лето у бабушки. Пока дети не выросли.",
-    },
-    {
-      title: "О питомцах",
-      text: "Питомец живёт в вашем сердце. Теперь ещё и на ключах.",
-    },
-    {
-      title: "О достижениях",
-      text: "Выпускной, медаль, первый рабочий день. Момент, которым гордятся.",
-    },
-  ],
-  ro: [
-    {
-      title: "Despre dragoste",
-      text: "Prima întâlnire, o călătorie, râsul care nu se uită. Povestea a doi în câteva cadre.",
-    },
-    {
-      title: "Despre familie",
-      text: "Primul zâmbet, primii pași, vara la bunica. Cât copiii sunt încă mici.",
-    },
-    {
-      title: "Despre animale",
-      text: "Animalul trăiește în inima ta. Acum și pe chei.",
-    },
-    {
-      title: "Despre reușite",
-      text: "Absolvirea, medalia, prima zi de lucru. Momentul de care ești mândru.",
     },
   ],
 } as const;

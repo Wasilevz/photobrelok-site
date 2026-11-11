@@ -9,12 +9,7 @@ export interface Dict {
   home: {
     title: string;
     subtitle: string;
-    priceLine: (price: number) => string;
     slotHint: string;
-    helperEmpty: string;
-    helperMore: (n: number) => string;
-    helperReady: string;
-    ctaUpload: string;
     ctaOrder: string;
     photoCount: (n: number) => string;
     replace: string;
@@ -63,8 +58,6 @@ export interface Dict {
       pickupPrice: string;
       pickupAddress: string;
       pickupHours: string;
-      later: string;
-      laterHint: string;
       postalCodeLabel: string;
       postalCodePlaceholder: string;
       surnameLabel: string;
@@ -78,7 +71,6 @@ export interface Dict {
       branchLabel: string;
       branchPlaceholder: string;
       fieldRequired: string;
-      chooseMethod: string;
     };
     consent: {
       dataLabel: string;
@@ -109,8 +101,6 @@ export interface Dict {
     regularPrice: string;
     discountPrice: string;
     currency: string;
-    youSave: string;
-    saveAmount: string;
     adding: string;
     addUpsell: string;
     noThanks: string;
@@ -119,7 +109,6 @@ export interface Dict {
     acceptedDescLine1: string;
     acceptedDescLine2: string;
     neutralTitle: string;
-    neutralExpired: string;
     neutralDeclined: string;
     paymentTitle: string;
     paymentSub: string;
@@ -138,12 +127,7 @@ export const translations: Record<Locale, Dict> = {
       title: "Брелок из катушки Kodak с вашими фото",
       subtitle:
         "Загрузите от 6 до 10 любимых фото — мы напечатаем их на плёнке и сделаем уникальный брелок",
-      priceLine: (price: number) => `${price} лей · Оплата при получении`,
       slotHint: "+ фото",
-      helperEmpty: "Нажмите на кадр → выберите от 6 до 10 фото",
-      helperMore: (n: number) => `Ещё ${n} фото до заказа (минимум 6)`,
-      helperReady: "Отлично! Минимум 6 фото есть — можно оформить заказ",
-      ctaUpload: "Выбрать фото",
       ctaOrder: "Получить бесплатный макет",
       photoCount: (n: number) => `${n}/10 фото`,
       replace: "Заменить",
@@ -196,8 +180,6 @@ export const translations: Record<Locale, Dict> = {
         pickupPrice: "Бесплатно",
         pickupAddress: "ул. A. Bernardazzi 64, Кишинёв",
         pickupHours: "Ежедневно с 12:00 до 21:00",
-        later: "Уточню позже",
-        laterHint: "Способ получения согласуем после макета — без обязательств",
         postalCodeLabel: "Почтовый индекс",
         postalCodePlaceholder: "MD-2001",
         surnameLabel: "Фамилия (нужна для почты)",
@@ -211,7 +193,6 @@ export const translations: Record<Locale, Dict> = {
         branchLabel: "Номер отделения Nova Poshta",
         branchPlaceholder: "Например, 25",
         fieldRequired: "Заполните это поле",
-        chooseMethod: "Выберите способ получения",
       },
       consent: {
         dataLabel:
@@ -245,8 +226,6 @@ export const translations: Record<Locale, Dict> = {
       regularPrice: "Обычная цена:",
       discountPrice: "Со скидкой:",
       currency: "лей",
-      youSave: "Вы экономите",
-      saveAmount: "100 лей",
       adding: "Добавляем...",
       addUpsell: "Да, добавить со скидкой",
       noThanks: "Нет, спасибо",
@@ -256,8 +235,6 @@ export const translations: Record<Locale, Dict> = {
       acceptedDescLine1: "Мы добавили второй брелок к вашему заказу.",
       acceptedDescLine2: "Вы сэкономили 100 лей!",
       neutralTitle: "Хорошо, увидимся!",
-      neutralExpired:
-        "Предложение по второму брелоку больше не активно, но ваша заявка уже у нас в работе.",
       neutralDeclined: "Ваша заявка уже у нас в работе — менеджер пришлёт макет.",
       paymentTitle: "Оплата при получении",
       paymentSub: "Никаких предоплат",
@@ -274,12 +251,7 @@ export const translations: Record<Locale, Dict> = {
       title: "Breloc din casetă Kodak cu pozele tale",
       subtitle:
         "Încarcă de la 6 la 10 poze preferate — le imprimăm pe film și facem un breloc unic",
-      priceLine: (price: number) => `${price} lei · Plată la livrare`,
       slotHint: "+ poză",
-      helperEmpty: "Apasă pe cadru → alege de la 6 la 10 poze",
-      helperMore: (n: number) => `Încă ${n} poze până la comandă (minim 6)`,
-      helperReady: "Perfect! Minim 6 poze încărcate — poți comanda",
-      ctaUpload: "Alege pozele",
       ctaOrder: "Primește macheta gratuită",
       photoCount: (n: number) => `${n}/10 poze`,
       replace: "Înlocuiește",
@@ -332,8 +304,6 @@ export const translations: Record<Locale, Dict> = {
         pickupPrice: "Gratuit",
         pickupAddress: "str. A. Bernardazzi 64, Chișinău",
         pickupHours: "Zilnic, 12:00–21:00",
-        later: "Spun mai târziu",
-        laterHint: "Metoda o stabilim după machetă — fără obligații",
         postalCodeLabel: "Cod poștal",
         postalCodePlaceholder: "MD-2001",
         surnameLabel: "Numele de familie (necesar pentru poștă)",
@@ -347,7 +317,6 @@ export const translations: Record<Locale, Dict> = {
         branchLabel: "Numărul filialei Nova Poshta",
         branchPlaceholder: "De exemplu, 25",
         fieldRequired: "Completează acest câmp",
-        chooseMethod: "Alege metoda de livrare",
       },
       consent: {
         dataLabel:
@@ -381,8 +350,6 @@ export const translations: Record<Locale, Dict> = {
       regularPrice: "Preț obișnuit:",
       discountPrice: "Cu reducere:",
       currency: "lei",
-      youSave: "Economisești",
-      saveAmount: "100 lei",
       adding: "Se adaugă...",
       addUpsell: "Da, adaugă cu reducere",
       noThanks: "Nu, mulțumesc",
@@ -392,8 +359,6 @@ export const translations: Record<Locale, Dict> = {
       acceptedDescLine1: "Am adăugat al doilea breloc la comanda ta.",
       acceptedDescLine2: "Ai economisit 100 lei!",
       neutralTitle: "Bine, pe curând!",
-      neutralExpired:
-        "Oferta pentru al doilea breloc nu mai e activă, dar cererea ta e deja în lucru.",
       neutralDeclined: "Cererea ta e deja în lucru — managerul îți trimite macheta.",
       paymentTitle: "Plată la livrare",
       paymentSub: "Fără avans",

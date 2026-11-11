@@ -202,12 +202,13 @@
 .pb2 .offer-second { margin: 10px 0 0; font-size: 15px; line-height: 1.45; font-weight: 500; }
 .pb2 .v2-pay { margin: 12px 0 0; font-size: 15px; line-height: 1.45; }
 .pb2 .offer-chat-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
+.pb2 .offer-chat-links { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+.pb2 .offer-chat-links .offer-tg { margin-top: 0; white-space: nowrap; }
 
 /* 7. Финал */
 .pb2 .v2-final .final-phone { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
 .pb2 .v2-final .final-phone a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
 .pb2 .v2-final .final-phone span { color: #f5f1e8; }
-
 
 /* Старые правила центрируют и сужают заголовки, в новом макете они выровнены по левому краю */
 .pb.pb2 .v2-h1, .pb.pb2 .v2-h2, .pb.pb2 .v2-h3 { text-align: left; max-width: none; }
