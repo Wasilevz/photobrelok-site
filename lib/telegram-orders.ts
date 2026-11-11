@@ -110,8 +110,8 @@ export type DeliveryDetails = {
 export function buildDeliveryText(method: DeliveryMethod, d: DeliveryDetails = {}): string {
   switch (method) {
     case "posta":
-      // Порядок адреса: район, улица, город, индекс; способ получения идёт последним (см. replaceDelivery)
-      return `🏘 Район: ${d.district}\n${d.street ? `🏠 Улица: ${d.street}\n` : ""}🏙 Город: ${d.city}\n📮 Индекс: ${d.postalCode}\n🚚 Способ получения: Poșta Moldovei — 30 лей`;
+      // Порядок адреса: улица, район, индекс, город; способ получения идёт последним (см. replaceDelivery)
+      return `${d.street ? `🏠 Улица: ${d.street}\n` : ""}🏘 Район: ${d.district}\n📮 Индекс: ${d.postalCode}\n🏙 Город: ${d.city}\n🚚 Способ получения: Poșta Moldovei — 30 лей`;
     case "novapost":
       return `🚚 Способ получения: Nova Poshta — 60 лей\n📦 Отделение №${d.branch}`;
     case "taxi":
@@ -140,7 +140,7 @@ const ADDRESS_PREFIXES = ["🏘", "🏠 Улица:", "🏙", "📮"];
 
 /**
  * Собирает блок доставки в подписи заказа в таком порядке:
- *   🔥 заказ → 👤 клиент → (почта: район, улица, город, индекс) → 📞 телефон →
+ *   🔥 заказ → 👤 клиент → (почта: улица, район, индекс, город) → 📞 телефон →
  *   🚚 способ получения и его детали (внизу, чтобы бросалось в глаза) → заметки и история.
  * Вызывается и при создании заказа, и когда менеджер меняет доставку в боте.
  */
