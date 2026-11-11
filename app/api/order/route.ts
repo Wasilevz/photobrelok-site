@@ -277,7 +277,8 @@ export async function POST(request: Request) {
         if (tgRes.ok) {
           deliveredToAtLeastOne = true;
         } else {
-          console.error(`Telegram delivery failed for order ${orderId}: ${tgRes.status}`);
+          const detail = await tgRes.json().catch(() => null) as { description?: string } | null;
+          console.error(`Telegram delivery failed for order ${orderId}: ${tgRes.status} (chat ${chatId}) ${detail?.description ?? ""}`);
         }
       } catch (error) {
         console.error(`Telegram request failed for order ${orderId}`, error);

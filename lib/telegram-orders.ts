@@ -54,6 +54,21 @@ export function getTopicConfig(): TopicConfig | null {
   return { chatId, threads, allowedUserIds };
 }
 
+/** Куда слать служебные сообщения о заказе: те же чаты, что и у /api/order, плюс тема «В работе». */
+export function getOrderRecipients(): { chatId: string; threadId?: number }[] {
+  const topics = getTopicConfig();
+  const ids = [
+    ...new Set([
+      ...(process.env.TELEGRAM_CHAT_ID || "").split(",").map((id) => id.trim()).filter(Boolean),
+      ...(topics ? [topics.chatId] : []),
+    ]),
+  ];
+  return ids.map((chatId) => ({
+    chatId,
+    threadId: topics && chatId === topics.chatId ? topics.threads.work : undefined,
+  }));
+}
+
 export function stageOfThread(cfg: TopicConfig, threadId: number | undefined): Stage | null {
   if (threadId === undefined) return null;
   for (const stage of Object.keys(cfg.threads) as Stage[]) {

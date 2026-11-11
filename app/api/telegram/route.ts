@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
+import { getOrderRecipients, tg } from "@/lib/telegram-orders";
 
 const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 
@@ -33,28 +34,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Некорректный номер заказа" }, { status: 400 });
     }
 
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatIds = (process.env.TELEGRAM_CHAT_ID || "").split(",").map((id) => id.trim()).filter(Boolean);
-    if (!botToken || chatIds.length === 0) {
+    const recipients = getOrderRecipients();
+    if (!process.env.TELEGRAM_BOT_TOKEN || recipients.length === 0) {
+      console.error("Upsell: Telegram is not configured (token or chat id is missing)");
       return NextResponse.json({ error: "Telegram не настроен" }, { status: 500 });
     }
 
     // Never forward arbitrary user-supplied text to the internal Telegram chat.
-    const message = `🔥 <b>АПСЕЛЛ! Заявка #${orderId}</b>\nКлиент добавил второй брелок со скидкой 40%.\nПоложите 2 шт. в заказ.`;
+    const text = `🔥 <b>АПСЕЛЛ! Заявка #${orderId}</b>\nКлиент добавил второй брелок со скидкой 40%.\nПоложите 2 шт. в заказ.`;
     const results = await Promise.allSettled(
-      chatIds.map(async (chatId) => {
-        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" }),
-          signal: AbortSignal.timeout(10_000),
-        });
-        if (!response.ok) throw new Error(`Telegram returned ${response.status}`);
+      recipients.map(async ({ chatId, threadId }) => {
+        const base = { chat_id: chatId, text, parse_mode: "HTML" };
+        try {
+          // В группе с темами апселл ложится рядом с заказами, в тему «В работе»
+          await tg("sendMessage", threadId ? { ...base, message_thread_id: threadId } : base);
+        } catch (error) {
+          if (!threadId) throw error;
+          console.error(`Upsell ${orderId}: send to topic failed (${error instanceof Error ? error.message : error}), retrying without topic`);
+          await tg("sendMessage", base);
+        }
       }),
     );
 
-    if (!results.some((result) => result.status === "fulfilled")) {
-      console.error("Upsell notification could not be delivered to Telegram");
+    const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+    failures.forEach((r) =>
+      console.error(`Upsell ${orderId}: Telegram delivery failed: ${r.reason instanceof Error ? r.reason.message : r.reason}`),
+    );
+    if (failures.length === results.length) {
       return NextResponse.json({ error: "Не удалось передать добавление менеджеру" }, { status: 502 });
     }
 
