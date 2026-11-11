@@ -509,8 +509,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             </div>
             <p className="text-xs text-[#5C564E] text-center leading-tight">
               {lang === 'ru'
-                ? 'Пожалуйста, не закрывайте вкладку — фото отправляются на печать'
-                : 'Vă rugăm să nu închideți pagina — pozele se trimit pentru tipar'}
+                ? 'Пожалуйста, не закрывайте вкладку — идёт загрузка фото'
+                : 'Nu închide pagina — se încarcă pozele'}
             </p>
           </div>
         )}

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from "@/context/LanguageContext";
 import { telegramLink } from "@/lib/contacts";
 import { metaEventId, track } from "@/lib/analytics";
+import { readSource } from "@/lib/source";
 
 const MAX_SLOTS = 10;
 
@@ -47,6 +48,18 @@ export default function PhotoConstructor() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(new CustomEvent("photobrelok_slots", { detail: photoCount }));
+  }, [photoCount]);
+
+  // Нижняя панель лендинга при 6 и более фото просит открыть форму сразу (без повторного скролла к кнопке)
+  useEffect(() => {
+    const onOpenOrder = () => {
+      if (photoCount < 6) return;
+      track("checkout_start", { photos: photoCount, source: "sticky" });
+      setTelegramFallback(null);
+      setIsModalOpen(true);
+    };
+    window.addEventListener("photobrelok_open_order", onOpenOrder);
+    return () => window.removeEventListener("photobrelok_open_order", onOpenOrder);
   }, [photoCount]);
 
   // Воронка: первое добавленное фото и достижение минимума (по одному разу за визит)
@@ -404,12 +417,13 @@ export default function PhotoConstructor() {
       const metaEventIds = { lead: metaEventId(), purchase: metaEventId() };
       const apiRes = await fetch("/api/order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Lang": lang },
         body: JSON.stringify({
           name: userData.name,
           phone: userData.phone,
           photoUrls,
           lang,
+          source: readSource(),
           delivery: userData.delivery,
           metaEventIds,
           marketingConsent: userData.marketingConsent,

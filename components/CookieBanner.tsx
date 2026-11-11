@@ -66,9 +66,9 @@ export default function CookieBanner() {
       aria-label={c.title}
       className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-3 sm:px-6 sm:pb-6"
     >
-      <div className="mx-auto w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[20px] border-2 border-[#191715] bg-[#FFFDF8] p-4 shadow-[0_-4px_24px_rgba(25,23,21,0.16)] sm:p-6">
-        <h2 className="text-[#191715] text-base sm:text-lg font-bold leading-tight">{c.title}</h2>
-        <p className="mt-1.5 text-[#5C564E] text-[13px] sm:text-sm leading-snug sm:leading-relaxed">
+      <div className="mx-auto w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border-2 border-[#191715] bg-[#FFFDF8] p-3 shadow-[0_-4px_24px_rgba(25,23,21,0.16)] sm:rounded-[20px] sm:p-6">
+        <h2 className="sr-only sm:not-sr-only text-[#191715] text-base sm:text-lg font-bold leading-tight">{c.title}</h2>
+        <p className="sm:mt-1.5 text-[#5C564E] text-xs sm:text-sm leading-snug sm:leading-relaxed">
           {c.text}{" "}
           <Link
             href="/cookies"
@@ -76,6 +76,18 @@ export default function CookieBanner() {
           >
             {legalNav.cookies}
           </Link>
+          {!showSettings && (
+            <>
+              {" · "}
+              <button
+                type="button"
+                onClick={() => setShowSettings(true)}
+                className="text-[#191715] font-semibold underline underline-offset-2 hover:text-[#E6B000]"
+              >
+                {c.settings}
+              </button>
+            </>
+          )}
         </p>
 
         {showSettings && (
@@ -114,7 +126,7 @@ export default function CookieBanner() {
           </div>
         )}
 
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-center">
+        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:mt-3 sm:flex sm:flex-row sm:items-center">
           <button
             type="button"
             onClick={acceptAll}
@@ -129,21 +141,13 @@ export default function CookieBanner() {
           >
             {c.necessaryOnly}
           </button>
-          {showSettings ? (
+          {showSettings && (
             <button
               type="button"
               onClick={() => save(analytics, marketing)}
               className="col-span-2 min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white px-5 py-2.5 text-[#191715] text-sm font-semibold hover:bg-[#F5F1E8] transition-colors sm:col-span-1 sm:w-auto"
             >
               {c.save}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowSettings(true)}
-              className="col-span-2 min-h-[44px] w-full px-2 py-2 text-[#5C564E] text-sm underline underline-offset-2 hover:text-[#191715] sm:col-span-1 sm:w-auto"
-            >
-              {c.settings}
             </button>
           )}
         </div>

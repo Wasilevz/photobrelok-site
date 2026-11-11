@@ -164,9 +164,9 @@ export const translations: Record<Locale, Dict> = {
     orderModal: {
       title: "Куда прислать бесплатный макет?",
       subtitle:
-        "Оставьте имя и телефон — подготовим PDF-макет за 24 часа. Платить сейчас ничего не нужно",
+        "Оставьте имя и телефон — подготовим макет за 24 часа. Платить сейчас ничего не нужно",
       nameLabel: "Ваше имя",
-      namePlaceholder: "Николай",
+      namePlaceholder: "Анна",
       phoneLabel: "Номер телефона",
       phonePlaceholder: "60 123 456",
       phoneError: "Проверьте номер: нужно 8–15 цифр, например 60 123 456",
@@ -295,9 +295,9 @@ export const translations: Record<Locale, Dict> = {
     orderModal: {
       title: "Unde îți trimitem macheta gratuită?",
       subtitle:
-        "Lasă numele și telefonul — pregătim macheta PDF în 24 de ore. Nu plătești nimic acum",
+        "Lasă numele și telefonul — pregătim macheta în 24 de ore. Nu plătești nimic acum",
       nameLabel: "Numele tău",
-      namePlaceholder: "Ion",
+      namePlaceholder: "Ana",
       phoneLabel: "Număr de telefon",
       phonePlaceholder: "069 123 456",
       phoneError: "Verifică numărul: 8–15 cifre, de exemplu 069 123 456",

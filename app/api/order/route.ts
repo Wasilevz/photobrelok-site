@@ -91,32 +91,37 @@ async function fetchPhotoAsBase64(url: string): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  // Язык ответа об ошибках: заголовок X-Lang от сайта, затем поле lang из тела запроса.
+  // Сообщения для менеджера (Telegram) остаются русскими.
+  let isRo = request.headers.get("x-lang") === "ro";
+  const t = (ru: string, ro: string) => (isRo ? ro : ru);
   try {
     if (!isSameOrigin(request)) {
-      return NextResponse.json({ error: "Запрос отклонён" }, { status: 403 });
+      return NextResponse.json({ error: t("Запрос отклонён", "Cererea a fost respinsă") }, { status: 403 });
     }
     // 5 заказов в час с одного IP — для живого клиента с запасом
     if (!rateLimit(`order:${clientIp(request)}`, 5, 60 * 60 * 1000)) {
-      return NextResponse.json({ error: "Слишком много заказов. Попробуйте позже или напишите нам в Telegram." }, { status: 429 });
+      return NextResponse.json({ error: t("Слишком много заказов. Попробуйте позже или напишите нам в Telegram.", "Prea multe comenzi. Încearcă mai târziu sau scrie-ne pe Telegram.") }, { status: 429 });
     }
 
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > 64 * 1024) {
-      return NextResponse.json({ error: "Слишком большой запрос" }, { status: 413 });
+      return NextResponse.json({ error: t("Слишком большой запрос", "Cererea este prea mare") }, { status: 413 });
     }
 
     let body: unknown;
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json({ error: "Некорректный JSON" }, { status: 400 });
+      return NextResponse.json({ error: t("Некорректный JSON", "Date incorecte") }, { status: 400 });
     }
 
     if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return NextResponse.json({ error: "Некорректные данные заказа" }, { status: 400 });
+      return NextResponse.json({ error: t("Некорректные данные заказа", "Datele comenzii sunt incorecte") }, { status: 400 });
     }
 
-    const { name, phone, photoUrls, lang, delivery, marketingConsent, website } = body as Record<string, unknown>;
+    const { name, phone, photoUrls, lang, delivery, marketingConsent, website, source } = body as Record<string, unknown>;
+    if (lang === "ro") isRo = true;
 
     // Honeypot: человек это поле не видит и не заполняет. Боту отвечаем «успехом», ничего не отправляя.
     if (typeof website === "string" && website.trim() !== "") {
@@ -124,10 +129,10 @@ export async function POST(request: Request) {
     }
 
     if (typeof name !== "string" || !name.trim() || name.length > 120) {
-      return NextResponse.json({ error: "Имя клиента обязательно" }, { status: 400 });
+      return NextResponse.json({ error: t("Имя клиента обязательно", "Numele este obligatoriu") }, { status: 400 });
     }
     if (typeof phone !== "string" || !phone.trim() || phone.length > 40) {
-      return NextResponse.json({ error: "Телефон обязателен" }, { status: 400 });
+      return NextResponse.json({ error: t("Телефон обязателен", "Telefonul este obligatoriu") }, { status: 400 });
     }
     if (!Array.isArray(photoUrls) || photoUrls.length < MIN_PHOTOS || photoUrls.length > MAX_PHOTOS) {
       const errorMsg =
@@ -139,11 +144,11 @@ export async function POST(request: Request) {
 
     const cloudinaryUrls = photoUrls.map(getCloudinaryPhotoUrl);
     if (cloudinaryUrls.some((url) => url === null)) {
-      return NextResponse.json({ error: "Одно или несколько фото имеют некорректный адрес. Загрузите их повторно." }, { status: 400 });
+      return NextResponse.json({ error: t("Одно или несколько фото имеют некорректный адрес. Загрузите их повторно.", "Una sau mai multe poze au o adresă incorectă. Încarcă-le din nou.") }, { status: 400 });
     }
 
     if (!delivery || typeof delivery !== "object" || Array.isArray(delivery) || typeof (delivery as Record<string, unknown>).method !== "string") {
-      return NextResponse.json({ error: "Не выбран способ получения" }, { status: 400 });
+      return NextResponse.json({ error: t("Не выбран способ получения", "Alege modul de primire") }, { status: 400 });
     }
     const deliveryData = delivery as Record<string, unknown>;
     const method = deliveryData.method;
@@ -154,18 +159,18 @@ export async function POST(request: Request) {
         typeof deliveryData.city !== "string" || !deliveryData.city.trim() ||
         typeof deliveryData.district !== "string" || !deliveryData.district.trim()
       ) {
-        return NextResponse.json({ error: "Заполните адрес для Poșta Moldovei (индекс, город/село, район)" }, { status: 400 });
+        return NextResponse.json({ error: t("Заполните адрес для Poșta Moldovei (индекс, город/село, район)", "Completează adresa pentru Poșta Moldovei (cod poștal, oraș/sat, raion)") }, { status: 400 });
       }
     } else if (method === "novapost") {
       if (typeof deliveryData.novaPostBranch !== "string" || !deliveryData.novaPostBranch.trim()) {
-        return NextResponse.json({ error: "Укажите номер отделения Nova Poshta" }, { status: 400 });
+        return NextResponse.json({ error: t("Укажите номер отделения Nova Poshta", "Indică numărul filialei Nova Poshta") }, { status: 400 });
       }
     } else if (method === "taxi") {
       if (typeof deliveryData.address !== "string" || !deliveryData.address.trim()) {
-        return NextResponse.json({ error: "Укажите адрес для доставки такси" }, { status: 400 });
+        return NextResponse.json({ error: t("Укажите адрес для доставки такси", "Indică adresa pentru livrarea cu taxiul") }, { status: 400 });
       }
     } else if (method !== "pickup" && method !== "later") {
-      return NextResponse.json({ error: "Некорректный способ получения" }, { status: 400 });
+      return NextResponse.json({ error: t("Некорректный способ получения", "Mod de primire incorect") }, { status: 400 });
     }
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -179,7 +184,7 @@ export async function POST(request: Request) {
     ];
     if (!token || chatIds.length === 0) {
       console.error("Order delivery is not configured: missing Telegram token or chat ID");
-      return NextResponse.json({ error: "Не удалось принять заказ. Попробуйте позже или свяжитесь с нами напрямую." }, { status: 500 });
+      return NextResponse.json({ error: t("Не удалось принять заказ. Попробуйте позже или свяжитесь с нами напрямую.", "Nu am putut prelua comanda. Încearcă mai târziu sau contactează-ne direct.") }, { status: 500 });
     }
 
     const orderId = generateOrderId();
@@ -229,7 +234,7 @@ export async function POST(request: Request) {
     if (failedPhotos > 0) {
       console.error(`Order ${orderId}: ${failedPhotos} of ${numPhotos} photos could not be downloaded`);
       return NextResponse.json(
-        { error: "Не удалось подготовить все фотографии. Пожалуйста, отправьте заказ ещё раз." },
+        { error: t("Не удалось подготовить все фотографии. Пожалуйста, отправьте заказ ещё раз.", "Nu am putut pregăti toate pozele. Trimite comanda încă o dată.") },
         { status: 502 },
       );
     }
@@ -246,7 +251,7 @@ export async function POST(request: Request) {
 
     const deliveryMethod = method as DeliveryMethod;
     if (!isDeliveryMethod(deliveryMethod)) {
-      return NextResponse.json({ error: "Некорректный способ получения" }, { status: 400 });
+      return NextResponse.json({ error: t("Некорректный способ получения", "Mod de primire incorect") }, { status: 400 });
     }
     const deliveryText = buildDeliveryText(deliveryMethod, {
       postalCode: cleanText(deliveryData.postalCode, 20),
@@ -257,7 +262,16 @@ export async function POST(request: Request) {
       address: cleanText(deliveryData.address, 150),
     });
 
-    const captionText = buildOrderCaption({ orderId, name: safeName, phone: safePhone, langNote, deliveryBlock: deliveryText });
+    // Откуда пришёл клиент (utm/реферер, без персональных данных): строка в подписи заказа
+    const safeSource = cleanText(source, 80);
+    const captionText = buildOrderCaption({
+      orderId,
+      name: safeName,
+      phone: safePhone,
+      langNote,
+      sourceLine: safeSource ? `📣 Источник: ${safeSource}` : undefined,
+      deliveryBlock: deliveryText,
+    });
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
     let deliveredToAtLeastOne = false;
@@ -300,7 +314,7 @@ export async function POST(request: Request) {
 
     if (!deliveredToAtLeastOne) {
       return NextResponse.json(
-        { error: "Заказ не удалось передать менеджеру. Попробуйте ещё раз или свяжитесь с нами напрямую." },
+        { error: t("Заказ не удалось передать менеджеру. Попробуйте ещё раз или свяжитесь с нами напрямую.", "Nu am putut transmite comanda managerului. Încearcă din nou sau contactează-ne direct.") },
         { status: 502 },
       );
     }
@@ -333,6 +347,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, orderId, upsellToken });
   } catch (error) {
     console.error("Order generation failed:", error);
-    return NextResponse.json({ error: "Не удалось подготовить заказ. Попробуйте ещё раз." }, { status: 500 });
+    return NextResponse.json({ error: t("Не удалось подготовить заказ. Попробуйте ещё раз.", "Nu am putut pregăti comanda. Încearcă din nou.") }, { status: 500 });
   }
 }

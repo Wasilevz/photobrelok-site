@@ -4895,3 +4895,6 @@ a { color: inherit; }
 .pb .logo::after { content: ""; position: absolute; inset: -14px -8px; }
 .pb .lang-btn::after { content: ""; position: absolute; inset: -4px; }
 .pb .foot-note { color: var(--muted); }
+
+/* === Пакет 2: строка условий под главной кнопкой === */
+.pb .hero-conditions { margin: 10px 0 0; font-size: 14px; line-height: 1.4; color: var(--muted); }

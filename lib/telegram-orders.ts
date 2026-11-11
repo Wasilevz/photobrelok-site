@@ -168,9 +168,10 @@ export function buildOrderCaption(o: {
   name: string;
   phone: string;
   langNote?: string;
+  sourceLine?: string;
   deliveryBlock: string;
 }): string {
-  const base = `🔥 Новый заказ #${o.orderId}\n👤 Клиент: ${o.name}\n📞 Тел: ${o.phone}${o.langNote ?? ""}`;
+  const base = `🔥 Новый заказ #${o.orderId}\n👤 Клиент: ${o.name}\n📞 Тел: ${o.phone}${o.langNote ?? ""}${o.sourceLine ? `\n${o.sourceLine}` : ""}`;
   return replaceDelivery(base, o.deliveryBlock);
 }
 

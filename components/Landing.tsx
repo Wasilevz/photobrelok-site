@@ -18,6 +18,8 @@ import { track } from "@/lib/analytics";
 import { landingCopy, faqCopy, occasionCopy } from "@/lib/landing-copy";
 import { legalCopy } from "@/lib/legal-copy";
 import { useOccasion } from "@/lib/occasion-store";
+import { useConsent } from "@/lib/consent";
+import { captureSource } from "@/lib/source";
 
 function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -226,6 +228,10 @@ export default function Landing() {
   const faq = faqCopy[lang];
   const occasions = occasionCopy[lang];
   const [mobileCtaHidden, setMobileCtaHidden] = useState(false);
+  // Нижняя панель не должна перекрывать главную кнопку: показываем её, только когда кнопка героя ушла с экрана
+  const [heroCtaVisible, setHeroCtaVisible] = useState(true);
+  const heroCtaRef = useRef<HTMLButtonElement>(null);
+  const { decided: cookiesDecided } = useConsent();
   const [photoCount, setPhotoCount] = useState(0);
   const [ytReady, setYtReady] = useState(false);
   const howVideoRef = useRef<HTMLDivElement>(null);
@@ -235,6 +241,7 @@ export default function Landing() {
 
   useEffect(() => {
     track("hero_view");
+    captureSource();
     const el = builderRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
@@ -242,6 +249,10 @@ export default function Landing() {
       { threshold: 0.15 }
     );
     io.observe(el);
+
+    const heroBtn = heroCtaRef.current;
+    const heroIo = new IntersectionObserver(([entry]) => setHeroCtaVisible(entry.isIntersecting), { threshold: 0.6 });
+    if (heroBtn) heroIo.observe(heroBtn);
 
     // Auto-play how-to video as soon as user scrolls down to it
     const videoEl = howVideoRef.current;
@@ -266,6 +277,7 @@ export default function Landing() {
     window.addEventListener("photobrelok_slots", onSlots);
     return () => {
       io.disconnect();
+      heroIo.disconnect();
       videoIo?.disconnect();
       window.removeEventListener("photobrelok_slots", onSlots);
     };
@@ -365,10 +377,11 @@ export default function Landing() {
                     </div>
                   </li>
                 </ul>
-                <button type="button" className="hero-cta-btn" onClick={() => scrollToBuilder("hero")}>
-                  <span>{photoCount > 0 ? t.priceCta : t.heroCta}</span>
+                <button type="button" ref={heroCtaRef} className="hero-cta-btn" onClick={() => scrollToBuilder("hero")}>
+                  <span>{photoCount >= 6 ? t.priceCta : t.heroCta}</span>
                   <span aria-hidden="true">→</span>
                 </button>
+                <p className="hero-conditions">{t.conditionsLine}</p>
                 <p className="hero-trust">{t.trustLine}</p>
               </div>
               <div className="hero-unified-media">
@@ -572,7 +585,7 @@ export default function Landing() {
                     el?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
                 >
-                  <span>{t.priceCta}</span>
+                  <span>{t.offerCta}</span>
                   <span aria-hidden="true">→</span>
                 </button>
               </div>
@@ -844,7 +857,7 @@ export default function Landing() {
         </div>
       </footer>
 
-      <aside className={`mobile-cta ${mobileCtaHidden ? "hidden" : ""}`} aria-label={lang === "ru" ? "Быстрый заказ" : "Comandă rapidă"}>
+      <aside className={`mobile-cta ${mobileCtaHidden || heroCtaVisible || !cookiesDecided ? "hidden" : ""}`} aria-label={lang === "ru" ? "Быстрый заказ" : "Comandă rapidă"}>
         <div className="mobile-cta-price">
           <div className="mobile-cta-amount">{t.priceChip}</div>
           <div className="mobile-cta-note">
@@ -855,8 +868,16 @@ export default function Landing() {
                 : t.mobileCtaNote}
           </div>
         </div>
-        <button type="button" className="hero-cta-btn mobile-cta-button" onClick={() => scrollToBuilder("sticky")}>
-          {photoCount > 0 ? t.priceCta : t.mobileCtaBtn}
+        <button
+          type="button"
+          className="hero-cta-btn mobile-cta-button"
+          onClick={() => {
+            // 6 и больше фото: сразу открываем форму заказа, иначе ведём к конструктору
+            if (photoCount >= 6) window.dispatchEvent(new CustomEvent("photobrelok_open_order"));
+            else scrollToBuilder("sticky");
+          }}
+        >
+          {photoCount >= 6 ? t.priceCta : photoCount > 0 ? t.mobileCtaMore : t.mobileCtaBtn}
         </button>
       </aside>
     </div>
