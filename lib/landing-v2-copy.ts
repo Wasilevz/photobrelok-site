@@ -48,8 +48,8 @@ export const landingV2Copy = {
     langShort: "RO",
     quick: "Быстрый заказ",
     madeIn: "Сделано в Кишинёве.",
-    // индексы вопросов из faqCopy: фото, срок, «не понравится», правка макета, мало фото, как пользоваться
-    faqPick: [3, 1, 2, 5, 4, 8],
+    // индексы вопросов из faqCopy: фото, срок, правка макета, мало фото, как пользоваться
+    faqPick: [3, 1, 5, 4, 8],
   },
   ro: {
     heroEyebrow: "Imprimat pe Epson · făcut în Moldova",
@@ -97,6 +97,6 @@ export const landingV2Copy = {
     langShort: "RU",
     quick: "Comandă rapidă",
     madeIn: "Făcut la Chișinău.",
-    faqPick: [3, 1, 2, 5, 4, 8],
+    faqPick: [3, 1, 5, 4, 8],
   },
 } as const;

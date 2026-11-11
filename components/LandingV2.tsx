@@ -391,8 +391,6 @@ export default function LandingV2() {
               </div>
 
               <div className="offer-side">
-                <h2 className="offer-risk-title">{lang === "ru" ? "Если не подойдёт" : "Dacă nu se potrivește"}</h2>
-                <p className="v2-risk">{t.riskItem3Text}</p>
                 <button type="button" className="offer-cta" onClick={() => scrollToBuilder("price")}>
                   <span>{t.offerCta}</span>
                   <span aria-hidden="true">→</span>

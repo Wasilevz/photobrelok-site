@@ -174,7 +174,6 @@
 
 /* 5. Предложение: используем прежние классы offer-*, добавляем отступы новых строк */
 .pb2 .offer-second { margin: 10px 0 0; font-size: 15px; line-height: 1.45; font-weight: 500; }
-.pb2 .v2-risk { margin: 0 0 16px; font-size: 16px; line-height: 1.5; }
 .pb2 .v2-pay { margin: 12px 0 0; font-size: 15px; line-height: 1.45; }
 .pb2 .offer-chat-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
 
