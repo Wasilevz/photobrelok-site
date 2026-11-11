@@ -2,13 +2,16 @@ import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
 import { sendCapiEvents } from "@/lib/meta-capi";
+import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 import {
   type DeliveryMethod,
   buildDeliveryText,
   cleanText,
   getTopicConfig,
+  createUpsellToken,
   isDeliveryMethod,
   keyboard,
+  type UpsellRef,
 } from "@/lib/telegram-orders";
 
 const MIN_PHOTOS = 6;
@@ -88,6 +91,14 @@ async function fetchPhotoAsBase64(url: string): Promise<string> {
 
 export async function POST(request: Request) {
   try {
+    if (!isSameOrigin(request)) {
+      return NextResponse.json({ error: "Запрос отклонён" }, { status: 403 });
+    }
+    // 5 заказов в час с одного IP — для живого клиента с запасом
+    if (!rateLimit(`order:${clientIp(request)}`, 5, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Слишком много заказов. Попробуйте позже или напишите нам в Telegram." }, { status: 429 });
+    }
+
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > 64 * 1024) {
       return NextResponse.json({ error: "Слишком большой запрос" }, { status: 413 });
@@ -104,7 +115,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Некорректные данные заказа" }, { status: 400 });
     }
 
-    const { name, phone, photoUrls, lang, delivery, marketingConsent } = body as Record<string, unknown>;
+    const { name, phone, photoUrls, lang, delivery, marketingConsent, website } = body as Record<string, unknown>;
+
+    // Honeypot: человек это поле не видит и не заполняет. Боту отвечаем «успехом», ничего не отправляя.
+    if (typeof website === "string" && website.trim() !== "") {
+      return NextResponse.json({ success: true, orderId: generateOrderId() });
+    }
 
     if (typeof name !== "string" || !name.trim() || name.length > 120) {
       return NextResponse.json({ error: "Имя клиента обязательно" }, { status: 400 });
@@ -244,6 +260,7 @@ export async function POST(request: Request) {
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
     let deliveredToAtLeastOne = false;
+    const upsellRefs: UpsellRef[] = [];
     for (const chatId of chatIds) {
       const tgFormData = new FormData();
       tgFormData.append("chat_id", chatId);
@@ -262,8 +279,18 @@ export async function POST(request: Request) {
         });
         if (tgRes.ok) {
           deliveredToAtLeastOne = true;
+          const sent = (await tgRes.json().catch(() => null)) as { result?: { message_id?: number } } | null;
+          const messageId = sent?.result?.message_id;
+          if (typeof messageId === "number") {
+            upsellRefs.push({
+              chatId,
+              messageId,
+              threadId: topics && chatId === topics.chatId ? topics.threads.work : undefined,
+            });
+          }
         } else {
-          console.error(`Telegram delivery failed for order ${orderId}: ${tgRes.status}`);
+          const detail = await tgRes.json().catch(() => null) as { description?: string } | null;
+          console.error(`Telegram delivery failed for order ${orderId}: ${tgRes.status} (chat ${chatId}) ${detail?.description ?? ""}`);
         }
       } catch (error) {
         console.error(`Telegram request failed for order ${orderId}`, error);
@@ -301,7 +328,8 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, orderId });
+    const upsellToken = createUpsellToken({ orderId, caption: captionText, refs: upsellRefs });
+    return NextResponse.json({ success: true, orderId, upsellToken });
   } catch (error) {
     console.error("Order generation failed:", error);
     return NextResponse.json({ error: "Не удалось подготовить заказ. Попробуйте ещё раз." }, { status: 500 });

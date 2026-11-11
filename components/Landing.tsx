@@ -23,7 +23,10 @@ import { useOccasion } from "@/lib/occasion-store";
 function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(true);
   const [failed, setFailed] = useState(false);
+  // Если человек сам поставил на паузу, прокрутка не должна возобновлять видео
+  const userPaused = useRef(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -32,6 +35,7 @@ function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
     if (reduce) {
       video.removeAttribute("autoplay");
       video.pause();
+      userPaused.current = true;
       return;
     }
     video.play().then(() => track("video_play")).catch(() => {});
@@ -40,7 +44,7 @@ function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
       const io = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            video.play().catch(() => {});
+            if (!userPaused.current) video.play().catch(() => {});
           } else {
             video.pause();
           }
@@ -51,6 +55,20 @@ function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
       return () => io.disconnect();
     }
   }, []);
+
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      userPaused.current = false;
+      video.play().catch(() => {});
+    } else {
+      userPaused.current = true;
+      video.pause();
+    }
+    setPlaying(!video.paused);
+    track(video.paused ? "video_pause" : "video_resume");
+  };
 
   const toggleMute = () => {
     const video = videoRef.current;
@@ -90,6 +108,9 @@ function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
         preload="metadata"
         poster="/media/hero-product.jpg"
         onError={() => setFailed(true)}
+        onLoadedMetadata={() => setPlaying(!videoRef.current?.paused)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
         aria-label={
           lang === "ru"
             ? "Видео: как выглядит брелок-катушка с вашими фото"
@@ -98,6 +119,29 @@ function HeroProductVideo({ lang }: { lang: "ru" | "ro" }) {
       >
         <source src="/media/hero-product.mp4" type="video/mp4" />
       </video>
+      <button
+        type="button"
+        className="hero-video-mute hero-video-play"
+        onClick={togglePlay}
+        aria-pressed={!playing}
+        aria-label={
+          playing
+            ? lang === "ru"
+              ? "Пауза"
+              : "Pauză"
+            : lang === "ru"
+              ? "Воспроизвести видео"
+              : "Redă videoclipul"
+        }
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          {playing ? (
+            <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
+          ) : (
+            <path d="M8 5v14l11-7z" />
+          )}
+        </svg>
+      </button>
       <button
         type="button"
         className="hero-video-mute"
@@ -171,6 +215,12 @@ const exampleMeta = [
   { src: "/images/card-achievement.jpg", alt: "Брелок с фото выпускников / Breloc absolvire" },
 ];
 
+/** Двуязычные alt хранятся как «RU / RO»: берём только язык интерфейса, чтобы скринридер не читал оба */
+const altFor = (alt: string, lang: "ru" | "ro") => {
+  const [ru, ro] = alt.split(" / ");
+  return lang === "ro" ? (ro ?? ru) : ru;
+};
+
 export default function Landing() {
   const { lang, setLang } = useLanguage();
   const { occasion, setOccasion } = useOccasion();
@@ -232,6 +282,9 @@ export default function Landing() {
 
   return (
     <div className="pb">
+      <a className="skip-link" href="#top">
+        {lang === "ru" ? "Перейти к содержимому" : "Salt la conținut"}
+      </a>
       <header className="hd">
         <div className="wrap hd-bar">
           <a className="logo" href="#top">
@@ -247,9 +300,9 @@ export default function Landing() {
                 e.stopPropagation();
                 setLang(lang === "ru" ? "ro" : "ru");
               }}
-              aria-label={lang === "ru" ? "Переключить на румынский" : "Comută pe rusă"}
+              aria-label={lang === "ru" ? "Переключить на румынский" : "Comută pe rusă (Русский)"}
             >
-              {lang === "ru" ? "Румынский" : "Русский"}
+              <span lang={lang === "ro" ? "ru" : undefined}>{lang === "ru" ? "Румынский" : "Русский"}</span>
             </button>
           </nav>
         </div>
@@ -319,6 +372,7 @@ export default function Landing() {
                   <span>{photoCount > 0 ? t.priceCta : t.heroCta}</span>
                   <span aria-hidden="true">→</span>
                 </button>
+                <p className="hero-trust">{t.trustLine}</p>
               </div>
               <div className="hero-unified-media">
                 <HeroProductVideo lang={lang} />
@@ -358,10 +412,10 @@ export default function Landing() {
             <h2>{t.reviewsTitle}</h2>
             <p className="lead">{t.reviewsLead}</p>
 
-            <div className="reviews-wall occ-rail" aria-label={t.reviewsTitle}>
+            <div className="reviews-wall occ-rail" role="region" tabIndex={0} aria-label={t.reviewsTitle}>
               {reviewShots.map((shot) => (
                 <figure key={shot.src} className="review-shot">
-                  <Image src={shot.src} alt={shot.alt} width={1200} height={1800} loading="lazy" />
+                  <Image src={shot.src} alt={altFor(shot.alt, lang)} width={1200} height={1800} loading="lazy" />
                 </figure>
               ))}
             </div>
@@ -387,7 +441,7 @@ export default function Landing() {
                 <figure key={item.title}>
                   <Image
                     src={exampleMeta[i].src}
-                    alt={exampleMeta[i].alt}
+                    alt={altFor(exampleMeta[i].alt, lang)}
                     width={900}
                     height={600}
                     loading="lazy"
@@ -444,32 +498,21 @@ export default function Landing() {
                   <span>{t.priceAnchor}</span>
                 </p>
                 <div className="offer-divider" />
-                <ul className="offer-list">
-                  <li>
-                    <span className="offer-icon" aria-hidden="true">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-                        <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <div>
-                      <strong>{t.offerItem1Title}</strong>
-                      <span>{t.offerItem1Text}</span>
-                    </div>
-                  </li>
-                  <li>
-                    <span className="offer-icon" aria-hidden="true">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 10h16v10H4V10z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                        <path d="M2.5 7h19v3h-19V7zM12 7v13" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                        <path d="M12 7c-2-3-5-3-5 0M12 7c2-3 5-3 5 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                      </svg>
-                    </span>
-                    <div>
-                      <strong>{t.offerItem2Title}</strong>
-                      <span>{t.offerItem2Text}</span>
-                    </div>
-                  </li>
+                <p className="offer-include-title">{t.includeLead}</p>
+                <ul className="offer-list offer-include">
+                  {t.includeItems.map((item) => (
+                    <li key={item}>
+                      <span className="offer-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                          <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <div>
+                        <span>{item}</span>
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               </div>
 
@@ -605,7 +648,7 @@ export default function Landing() {
             >
               {memories.map((item) => (
                 <figure key={item.src}>
-                  <Image src={item.src} alt={item.alt} width={800} height={1000} loading="lazy" />
+                  <Image src={item.src} alt={altFor(item.alt, lang)} width={800} height={1000} loading="lazy" />
                 </figure>
               ))}
             </div>
@@ -750,6 +793,7 @@ export default function Landing() {
             </li>
           </ul>
           <p className="foot-note">{t.footerNote}</p>
+          <p className="foot-trademark">{t.trademarkNote}</p>
           <div className="foot-divider" />
           <ul className="foot-list">
             <li>
@@ -790,7 +834,7 @@ export default function Landing() {
         </div>
       </footer>
 
-      <div className={`mobile-cta ${mobileCtaHidden ? "hidden" : ""}`}>
+      <aside className={`mobile-cta ${mobileCtaHidden ? "hidden" : ""}`} aria-label={lang === "ru" ? "Быстрый заказ" : "Comandă rapidă"}>
         <div className="mobile-cta-price">
           <div className="mobile-cta-amount">{t.priceChip}</div>
           <div className="mobile-cta-note">
@@ -804,7 +848,7 @@ export default function Landing() {
         <button type="button" className="hero-cta-btn mobile-cta-button" onClick={scrollToBuilder}>
           {photoCount > 0 ? t.priceCta : t.mobileCtaBtn}
         </button>
-      </div>
+      </aside>
     </div>
   );
 }

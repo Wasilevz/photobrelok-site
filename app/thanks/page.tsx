@@ -4,6 +4,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, Package, ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from "@/context/LanguageContext";
 
+function readToken(orderId: string): string | undefined {
+  try {
+    return window.sessionStorage.getItem(`photobrelok_upsell_${orderId}`) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function ThankYouContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,7 +29,7 @@ function ThankYouContent() {
       const res = await fetch('/api/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId })
+        body: JSON.stringify({ orderId, token: readToken(orderId) })
       });
       if (!res.ok) throw new Error('Не получилось передать менеджеру');
       setStatus('accepted');
@@ -65,7 +73,7 @@ function ThankYouContent() {
 
           <div className="mb-4">
             <span className="inline-block bg-[#FFC400]/25 text-[#191715] text-xs font-bold px-3 py-1 rounded-full uppercase bg-[#FFC400]">
-              {dict.thanks.sameOrderBadge} · {dict.thanks.todayOnly}
+              {dict.thanks.todayOnly}
             </span>
           </div>
 

@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 // Общая логика Telegram-воркфлоу заказов: темы-стадии, подпись заказа, кнопки.
 // Используется и формой заказа (app/api/order), и вебхуком бота (app/api/telegram-webhook).
 
@@ -52,6 +53,21 @@ export function getTopicConfig(): TopicConfig | null {
     (process.env.TELEGRAM_ALLOWED_USER_IDS || "").split(",").map((id) => id.trim()).filter(Boolean),
   );
   return { chatId, threads, allowedUserIds };
+}
+
+/** Куда слать служебные сообщения о заказе: те же чаты, что и у /api/order, плюс тема «В работе». */
+export function getOrderRecipients(): { chatId: string; threadId?: number }[] {
+  const topics = getTopicConfig();
+  const ids = [
+    ...new Set([
+      ...(process.env.TELEGRAM_CHAT_ID || "").split(",").map((id) => id.trim()).filter(Boolean),
+      ...(topics ? [topics.chatId] : []),
+    ]),
+  ];
+  return ids.map((chatId) => ({
+    chatId,
+    threadId: topics && chatId === topics.chatId ? topics.threads.work : undefined,
+  }));
 }
 
 export function stageOfThread(cfg: TopicConfig, threadId: number | undefined): Stage | null {
@@ -149,6 +165,47 @@ export function historyLine(label: string, date = new Date()): string {
   }).format(date);
   return `🕒 ${stamp.replace(",", "")} · ${label}`;
 }
+
+/* -------------------- Подписанная ссылка на сообщение заказа -------------------- */
+
+// После оформления заказа сайт получает подписанный токен: id сообщений заказа и его подпись.
+// По нему апселл дописывается в подпись самого заказа (и переезжает вместе с ним по темам),
+// а подделать токен и править чужие сообщения бота нельзя.
+
+export type UpsellRef = { chatId: string; messageId: number; threadId?: number };
+export type UpsellPayload = { orderId: string; caption: string; refs: UpsellRef[] };
+
+function signingKey(): string {
+  return process.env.TELEGRAM_WEBHOOK_SECRET || process.env.TELEGRAM_BOT_TOKEN || "";
+}
+
+function sign(body: string): string {
+  return createHmac("sha256", signingKey()).update(body).digest("base64url");
+}
+
+export function createUpsellToken(payload: UpsellPayload): string | null {
+  if (!signingKey()) return null;
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return `${body}.${sign(body)}`;
+}
+
+export function readUpsellToken(token: unknown, orderId: string): UpsellPayload | null {
+  if (typeof token !== "string" || token.length > 6000 || !signingKey()) return null;
+  const [body, signature] = token.split(".");
+  if (!body || !signature) return null;
+  const expected = Buffer.from(sign(body));
+  const received = Buffer.from(signature);
+  if (expected.length !== received.length || !timingSafeEqual(expected, received)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString()) as UpsellPayload;
+    if (payload.orderId !== orderId || !Array.isArray(payload.refs) || typeof payload.caption !== "string") return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+export const UPSELL_CAPTION_LINE = "🔥 АПСЕЛЛ: клиент добавил 2-й такой же брелок (−40%, 150 лей). Положите 2 шт.";
 
 /* --------------------------------- Кнопки --------------------------------- */
 

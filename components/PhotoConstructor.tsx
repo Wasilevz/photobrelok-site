@@ -33,6 +33,7 @@ export default function PhotoConstructor() {
   const [scrollThumb, setScrollThumb] = useState({ width: 0.4, left: 0 });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showError, setShowError] = useState<string | null>(null);
+  const uploadedUrls = useRef<Map<string, string>>(new Map());
   const [telegramFallback, setTelegramFallback] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -325,7 +326,7 @@ export default function PhotoConstructor() {
     setSelectedSlot((prev) => (prev === index ? null : prev));
   };
 
-  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean }) => {
+  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; website: string }) => {
     setIsSubmitting(true);
     try {
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -352,6 +353,13 @@ export default function PhotoConstructor() {
       let uploadedCounter = 0;
       const photoUrls: string[] = [];
       const uploadOne = async (blobUrl: string) => {
+        // Повторная отправка после сбоя не заливает уже загруженные фото заново
+        const cached = uploadedUrls.current.get(blobUrl);
+        if (cached) {
+          uploadedCounter += 1;
+          setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
+          return cached;
+        }
         const res = await fetch(blobUrl);
         const blob = await res.blob();
         const formData = new FormData();
@@ -365,6 +373,7 @@ export default function PhotoConstructor() {
         if (!cloudRes.ok) throw new Error(dict.errors.uploadFailed);
         uploadedCounter += 1;
         setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
+        uploadedUrls.current.set(blobUrl, data.secure_url as string);
         return data.secure_url as string;
       };
 
@@ -389,6 +398,7 @@ export default function PhotoConstructor() {
           delivery: userData.delivery,
           metaEventIds,
           marketingConsent: userData.marketingConsent,
+          website: userData.website,
         }),
       });
 
@@ -397,7 +407,13 @@ export default function PhotoConstructor() {
         throw new Error(errData?.error || dict.errors.genericSubmit);
       }
 
-      const { orderId } = await apiRes.json();
+      const { orderId, upsellToken } = await apiRes.json();
+      try {
+        // Страница «Спасибо» по этому токену допишет апселл в сообщение заказа в Telegram
+        if (upsellToken) window.sessionStorage.setItem(`photobrelok_upsell_${orderId}`, upsellToken);
+      } catch {
+        // sessionStorage недоступен: апселл уйдёт отдельным сообщением
+      }
       track("order_api_success", {
         orderId,
         name: userData.name,
@@ -459,6 +475,9 @@ export default function PhotoConstructor() {
           <div
             id="film-scroll"
             ref={scrollContainerRef}
+            tabIndex={0}
+            role="region"
+            aria-label={lang === "ru" ? "Фотоплёнка, прокрутка стрелками" : "Film foto, derulare cu săgeți"}
             className="w-full min-w-0 overflow-x-auto no-scrollbar"
             style={{
               scrollbarWidth: 'none',
@@ -649,7 +668,7 @@ export default function PhotoConstructor() {
                     ) : (
                       <div className="flex flex-col items-center text-zinc-500 group-hover:text-gray-300">
                         <span className="text-3xl mb-1">+</span>
-                        <span className="text-[11px] font-semibold text-zinc-200">{dict.home.slotHint}</span>
+                        <span className="text-xs font-semibold text-zinc-200">{dict.home.slotHint}</span>
                       </div>
                     )}
                   </div>
@@ -892,10 +911,10 @@ export default function PhotoConstructor() {
 
       {showError && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] max-w-md w-[90%]">
-          <div className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex flex-col gap-2">
+          <div role="alert" className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-medium">{showError}</span>
-              <button onClick={() => { setShowError(null); setTelegramFallback(null); }} className="text-white/70 hover:text-white text-lg font-bold shrink-0" aria-label="Закрыть">
+              <button onClick={() => { setShowError(null); setTelegramFallback(null); }} className="text-white text-lg font-bold shrink-0 size-11 -mt-2 -mr-2 flex items-center justify-center" aria-label={dict.orderModal.close}>
                 ✕
               </button>
             </div>

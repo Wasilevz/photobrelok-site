@@ -1,18 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Rubik, Caveat } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import MetaPixel from "@/components/MetaPixel";
 import CookieBanner from "@/components/CookieBanner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["cyrillic", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["cyrillic", "latin"],
+  weight: "700",
+  display: "swap",
 });
 
 const siteUrl =
@@ -23,12 +27,13 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "PHOTOBRELOK — подарок с вашими фото на плёнке Kodak",
+  alternates: { canonical: "/" },
+  title: "Брелок из катушки Kodak с вашими фото | PHOTOBRELOK",
   description:
-    "Подарите день, который захочется пережить снова: брелок из катушки Kodak с 6–10 вашими фото. 250 лей. Макет бесплатно, оплата при получении, 1–2 дня.",
+    "6–10 ваших кадров на плёнке в катушке Kodak. 250 лей, макет бесплатно за 24 часа, брелок за 1–2 дня, оплата при получении.",
   openGraph: {
-    title: "PHOTOBRELOK — 10 фото в 1 брелоке Kodak",
-    description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 лей, бесплатный макет до оплаты.",
+    title: "Брелок из катушки Kodak с вашими фото | PHOTOBRELOK",
+    description: "6–10 ваших кадров на плёнке в катушке Kodak. 250 лей, макет бесплатно, оплата при получении.",
     url: siteUrl,
     siteName: "PHOTOBRELOK",
     locale: "ru_RU",
@@ -44,10 +49,44 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "PHOTOBRELOK — 10 фото в 1 брелоке Kodak",
-    description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 лей, бесплатный макет до оплаты.",
+    title: "Брелок из катушки Kodak с вашими фото | PHOTOBRELOK",
+    description: "6–10 ваших кадров на плёнке в катушке Kodak. 250 лей, макет бесплатно, оплата при получении.",
     images: ["/opengraph-image.png"],
   },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Product",
+      name: "PHOTOBRELOK — брелок из катушки Kodak с вашими фото",
+      description: "Брелок из катушки Kodak с 6–10 вашими фотографиями на плёнке. Макет бесплатно, оплата при получении.",
+      image: `${siteUrl}/opengraph-image.png`,
+      brand: { "@type": "Brand", name: "PHOTOBRELOK" },
+      offers: {
+        "@type": "Offer",
+        price: "250",
+        priceCurrency: "MDL",
+        availability: "https://schema.org/InStock",
+        url: siteUrl,
+      },
+    },
+    {
+      "@type": "LocalBusiness",
+      name: "PHOTOBRELOK",
+      url: siteUrl,
+      telephone: "+37378238455",
+      email: "fotobrelokmd@gmail.com",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "ул. Alexander Bernardazzi, 64",
+        addressLocality: "Chișinău",
+        addressCountry: "MD",
+      },
+      openingHours: "Mo-Su 09:00-23:00",
+    },
+  ],
 };
 
 export const viewport: Viewport = {
@@ -62,17 +101,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={`${rubik.variable} ${caveat.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Rubik:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <link rel="stylesheet" href="/landing.css" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className="antialiased">
         <LanguageProvider>
           {children}
           <MetaPixel />

@@ -47,7 +47,7 @@ export function UrgencyBanner() {
         <span className="urgency-text">
           {lang === "ru"
             ? `Успеть к ${name}: заказы принимаем до ${dateStr}.`
-            : `Prinde ${name}: primim comenzi până pe ${dateStr}.`}
+            : `Comandă pentru ${name}: primim comenzi până pe ${dateStr}.`}
         </span>{" "}
         <span className="urgency-count" aria-live="off">
           {lang === "ru" ? "Осталось" : "Au rămas"}{" "}

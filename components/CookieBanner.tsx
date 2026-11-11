@@ -32,7 +32,7 @@ function Switch({
       aria-label={label}
       disabled={disabled}
       onClick={() => !disabled && onChange?.(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-[#191715] transition-colors ${
+      className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-[#191715] transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#191715] ${
         checked ? "bg-[#FFC400]" : "bg-[#E8E0D0]"
       } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
     >
@@ -66,9 +66,9 @@ export default function CookieBanner() {
       aria-label={c.title}
       className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-3 sm:px-6 sm:pb-6"
     >
-      <div className="mx-auto w-full max-w-3xl rounded-[20px] border-2 border-[#191715] bg-[#FFFDF8] p-5 shadow-[0_-4px_24px_rgba(25,23,21,0.16)] sm:p-6">
-        <h2 className="text-[#191715] text-lg font-bold leading-tight">{c.title}</h2>
-        <p className="mt-2 text-[#5C564E] text-sm leading-relaxed">
+      <div className="mx-auto w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[20px] border-2 border-[#191715] bg-[#FFFDF8] p-4 shadow-[0_-4px_24px_rgba(25,23,21,0.16)] sm:p-6">
+        <h2 className="text-[#191715] text-base sm:text-lg font-bold leading-tight">{c.title}</h2>
+        <p className="mt-1.5 text-[#5C564E] text-[13px] sm:text-sm leading-snug sm:leading-relaxed">
           {c.text}{" "}
           <Link
             href="/cookies"
@@ -114,18 +114,18 @@ export default function CookieBanner() {
           </div>
         )}
 
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-center">
           <button
             type="button"
             onClick={acceptAll}
-            className="min-h-[44px] w-full rounded-xl border-2 border-[#191715] bg-[#FFC400] px-5 py-2.5 text-[#191715] text-sm font-bold hover:bg-[#E6B000] active:scale-[0.98] transition-all sm:w-auto"
+            className="min-h-[44px] w-full rounded-xl border-2 border-[#191715] bg-[#FFC400] px-3 sm:px-5 py-2.5 text-[#191715] text-sm font-bold hover:bg-[#E6B000] active:scale-[0.98] transition-all sm:w-auto"
           >
             {c.acceptAll}
           </button>
           <button
             type="button"
             onClick={acceptNecessary}
-            className="min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white px-5 py-2.5 text-[#191715] text-sm font-semibold hover:bg-[#F5F1E8] transition-colors sm:w-auto"
+            className="min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white px-3 sm:px-5 py-2.5 text-[#191715] text-sm font-semibold hover:bg-[#F5F1E8] transition-colors sm:w-auto"
           >
             {c.necessaryOnly}
           </button>
@@ -133,7 +133,7 @@ export default function CookieBanner() {
             <button
               type="button"
               onClick={() => save(analytics, marketing)}
-              className="min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white px-5 py-2.5 text-[#191715] text-sm font-semibold hover:bg-[#F5F1E8] transition-colors sm:w-auto"
+              className="col-span-2 min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white px-5 py-2.5 text-[#191715] text-sm font-semibold hover:bg-[#F5F1E8] transition-colors sm:col-span-1 sm:w-auto"
             >
               {c.save}
             </button>
@@ -141,7 +141,7 @@ export default function CookieBanner() {
             <button
               type="button"
               onClick={() => setShowSettings(true)}
-              className="min-h-[44px] w-full px-2 py-2.5 text-[#5C564E] text-sm underline underline-offset-2 hover:text-[#191715] sm:w-auto"
+              className="col-span-2 min-h-[44px] w-full px-2 py-2 text-[#5C564E] text-sm underline underline-offset-2 hover:text-[#191715] sm:col-span-1 sm:w-auto"
             >
               {c.settings}
             </button>

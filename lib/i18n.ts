@@ -41,6 +41,10 @@ export interface Dict {
     phoneLabel: string;
     phonePlaceholder: string;
     phoneError: string;
+    nameError: string;
+    phoneRequired: string;
+    phoneHint: string;
+    unsavedConfirm: string;
     submitting: string;
     submit: string;
     close: string;
@@ -120,12 +124,12 @@ export interface Dict {
 export const translations: Record<Locale, Dict> = {
   ru: {
     meta: {
-      title: "Фото-брелок из ваших фотографий | Photobrelok",
+      title: "Брелок из катушки Kodak с вашими фото | Photobrelok",
       description:
-        "Загрузите любимые фото и получите уникальный брелок с мини-фотографиями. Оплата при получении.",
+        "6–10 ваших кадров на плёнке в катушке Kodak. Макет бесплатно за 24 часа, брелок за 1–2 дня, оплата при получении.",
     },
     home: {
-      title: "Фото-брелок своими руками",
+      title: "Брелок из катушки Kodak с вашими фото",
       subtitle:
         "Загрузите от 6 до 10 любимых фото — мы напечатаем их на плёнке и сделаем уникальный брелок",
       priceLine: (price: number) => `${price} лей · Оплата при получении`,
@@ -151,7 +155,7 @@ export const translations: Record<Locale, Dict> = {
       progress: (cur: number, total: number) => `Фото ${cur} из ${total}`,
       zoomLow: "Мало",
       zoomHigh: "Много",
-      skip: "Пропустить",
+      skip: "Не добавлять это фото",
       cancel: "Отмена",
       crop: "Обрезать",
     },
@@ -163,7 +167,11 @@ export const translations: Record<Locale, Dict> = {
       namePlaceholder: "Николай",
       phoneLabel: "Номер телефона",
       phonePlaceholder: "60 123 456",
-      phoneError: "Формат: 60 123 456",
+      phoneError: "Проверьте номер: нужно 8–15 цифр, например 60 123 456",
+      nameError: "Введите имя, чтобы мы знали, как к вам обращаться",
+      phoneRequired: "Введите телефон, мы свяжемся по поводу макета",
+      phoneHint: "Например: 60 123 456 или +373 60 123 456",
+      unsavedConfirm: "Закрыть форму? Введённые данные будут потеряны.",
       submitting: "Отправка...",
       submit: "Получить бесплатный макет",
       close: "Закрыть",
@@ -214,19 +222,19 @@ export const translations: Record<Locale, Dict> = {
       accepted: "принята!",
       orderNumber: "Номер:",
       willContact:
-        "В течение 24 часов пришлём готовый PDF-макет на согласование в Telegram или по SMS. Мы на связи с 09:00 до 23:00",
+        "В течение 24 часов пришлём готовый макет на номер, который вы указали, — в Telegram или по SMS. Мы на связи с 09:00 до 23:00",
       sameOrderBadge: "В том же заказе",
       todayOnly: "Второй брелок",
       upsellTitle1: "Создайте парный комплект!",
       upsellDiscount: "−40%",
       upsellDescPre: "Добавьте второй такой же брелок со скидкой 40% — всего за",
-      upsellDescBold: "150 MDL вместо 250 MDL",
+      upsellDescBold: "150 лей вместо 250 лей",
       upsellDescPost: ". Для пары, подруги или себе. Упакуем вместе.",
       regularPrice: "Обычная цена:",
       discountPrice: "Со скидкой:",
       currency: "лей",
       youSave: "Вы экономите",
-      saveAmount: "100 леев",
+      saveAmount: "100 лей",
       adding: "Добавляем...",
       addUpsell: "Да, добавить со скидкой",
       noThanks: "Нет, спасибо",
@@ -234,7 +242,7 @@ export const translations: Record<Locale, Dict> = {
         "Не получилось оформить добавление. Попробуйте ещё раз — либо просто скажите об этом при звонке.",
       acceptedTitle: "Отличный выбор!",
       acceptedDescLine1: "Мы добавили второй брелок к вашему заказу.",
-      acceptedDescLine2: "Сэкономили 100 леев!",
+      acceptedDescLine2: "Вы сэкономили 100 лей!",
       neutralTitle: "Хорошо, увидимся!",
       neutralExpired:
         "Предложение по второму брелоку больше не активно, но ваша заявка уже у нас в работе.",
@@ -246,12 +254,12 @@ export const translations: Record<Locale, Dict> = {
   },
   ro: {
     meta: {
-      title: "Breloc foto personalizat | Photobrelok",
+      title: "Breloc din casetă Kodak cu pozele tale | Photobrelok",
       description:
-        "Încarcă pozele preferate și primești un breloc unic cu mini-fotografii. Plată la livrare.",
+        "6–10 cadre ale tale pe film într-o casetă Kodak. Machetă gratuită în 24 de ore, breloc în 1–2 zile, plata la primire.",
     },
     home: {
-      title: "Breloc foto personalizat",
+      title: "Breloc din casetă Kodak cu pozele tale",
       subtitle:
         "Încarcă de la 6 la 10 poze preferate — le imprimăm pe film și facem un breloc unic",
       priceLine: (price: number) => `${price} lei · Plată la livrare`,
@@ -277,7 +285,7 @@ export const translations: Record<Locale, Dict> = {
       progress: (cur: number, total: number) => `Poza ${cur} din ${total}`,
       zoomLow: "Puțin",
       zoomHigh: "Mult",
-      skip: "Sari peste",
+      skip: "Nu adăuga poza",
       cancel: "Anulează",
       crop: "Decupează",
     },
@@ -289,7 +297,11 @@ export const translations: Record<Locale, Dict> = {
       namePlaceholder: "Ion",
       phoneLabel: "Număr de telefon",
       phonePlaceholder: "069 123 456",
-      phoneError: "Format: 069 123 456",
+      phoneError: "Verifică numărul: 8–15 cifre, de exemplu 069 123 456",
+      nameError: "Introdu numele, ca să știm cum să ne adresăm",
+      phoneRequired: "Introdu telefonul, te contactăm pentru machetă",
+      phoneHint: "De exemplu: 069 123 456 sau +373 69 123 456",
+      unsavedConfirm: "Închizi formularul? Datele introduse se vor pierde.",
       submitting: "Se trimite...",
       submit: "Primește macheta gratuită",
       close: "Închide",
@@ -340,13 +352,13 @@ export const translations: Record<Locale, Dict> = {
       accepted: "a fost primită!",
       orderNumber: "Numărul:",
       willContact:
-        "În decurs de 24 de ore îți trimitem macheta PDF pe Telegram sau SMS. Suntem online între 09:00 și 23:00",
+        "În decurs de 24 de ore îți trimitem macheta pe numărul indicat — pe Telegram sau SMS. Suntem online între 09:00 și 23:00",
       sameOrderBadge: "În aceeași comandă",
       todayOnly: "Al doilea breloc",
       upsellTitle1: "Creează un set pentru cuplu!",
       upsellDiscount: "−40%",
       upsellDescPre: "Adaugă un al doilea breloc la fel cu 40% reducere — doar",
-      upsellDescBold: "150 MDL în loc de 250 MDL",
+      upsellDescBold: "150 lei în loc de 250 lei",
       upsellDescPost: ". Pentru voi doi, o prietenă sau pentru tine. Le împachetăm împreună.",
       regularPrice: "Preț obișnuit:",
       discountPrice: "Cu reducere:",
