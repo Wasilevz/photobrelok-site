@@ -8,10 +8,10 @@ import type { LegalDoc, LegalSection } from "@/lib/legal-copy";
 function Section({ section }: { section: LegalSection }) {
   return (
     <section className="mt-8">
-      <h2 className="text-[#191715] text-xl font-bold leading-snug">{section.heading}</h2>
+      <h2 className="text-[#141413] text-xl font-bold leading-snug">{section.heading}</h2>
 
       {section.paragraphs?.map((p, i) => (
-        <p key={i} className="mt-3 text-[#3D3832] text-[15px] leading-relaxed">
+        <p key={i} className="mt-3 text-[#3D3929] text-[15px] leading-relaxed">
           {p}
         </p>
       ))}
@@ -19,8 +19,8 @@ function Section({ section }: { section: LegalSection }) {
       {section.list && (
         <ul className="mt-3 space-y-2">
           {section.list.map((item, i) => (
-            <li key={i} className="flex gap-2.5 text-[#3D3832] text-[15px] leading-relaxed">
-              <span aria-hidden="true" className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFC400]" />
+            <li key={i} className="flex gap-2.5 text-[#3D3929] text-[15px] leading-relaxed">
+              <span aria-hidden="true" className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#C96442]" />
               <span>{item}</span>
             </li>
           ))}
@@ -28,15 +28,15 @@ function Section({ section }: { section: LegalSection }) {
       )}
 
       {section.table && (
-        <div className="mt-4 overflow-x-auto rounded-xl border border-[#E5DCCB]">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-[#DAD9D4]">
           <table className="w-full border-collapse text-left text-[13px]">
             <thead>
-              <tr className="bg-[#FFF6D6]">
+              <tr className="bg-[#F6E9E2]">
                 {section.table.head.map((h, i) => (
                   <th
                     key={i}
                     scope="col"
-                    className="border-b border-[#E5DCCB] px-3 py-2.5 font-semibold text-[#191715] whitespace-nowrap"
+                    className="border-b border-[#DAD9D4] px-3 py-2.5 font-semibold text-[#141413] whitespace-nowrap"
                   >
                     {h}
                   </th>
@@ -45,12 +45,12 @@ function Section({ section }: { section: LegalSection }) {
             </thead>
             <tbody>
               {section.table.rows.map((row, ri) => (
-                <tr key={ri} className={ri % 2 ? "bg-[#FFFDF8]" : "bg-white"}>
+                <tr key={ri} className={ri % 2 ? "bg-[#FFFFFF]" : "bg-white"}>
                   {row.map((cell, ci) => (
                     <td
                       key={ci}
-                      className={`border-b border-[#F0E9DA] px-3 py-2.5 align-top text-[#3D3832] leading-relaxed ${
-                        ci === 0 ? "font-medium text-[#191715]" : ""
+                      className={`border-b border-[#F0E9DA] px-3 py-2.5 align-top text-[#3D3929] leading-relaxed ${
+                        ci === 0 ? "font-medium text-[#141413]" : ""
                       }`}
                     >
                       {cell}
@@ -63,7 +63,7 @@ function Section({ section }: { section: LegalSection }) {
         </div>
       )}
       {section.after?.map((p, i) => (
-        <p key={i} className="mt-3 text-[#3D3832] text-[15px] leading-relaxed">
+        <p key={i} className="mt-3 text-[#3D3929] text-[15px] leading-relaxed">
           {p}
         </p>
       ))}
@@ -76,11 +76,11 @@ export default function LegalDocView({ doc }: { doc: LegalDoc }) {
   const { nav, contactLine } = legalCopy[lang];
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8] px-4 py-10 text-[#191715] sm:py-14">
+    <div className="min-h-screen bg-[#FAF9F5] px-4 py-10 text-[#141413] sm:py-14">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/"
-          className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-[#5C564E] hover:text-[#191715] transition-colors"
+          className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-[#535146] hover:text-[#141413] transition-colors"
         >
           <svg
             width="16"
@@ -94,22 +94,22 @@ export default function LegalDocView({ doc }: { doc: LegalDoc }) {
           {nav.backToSite}
         </Link>
 
-        <header className="mt-4 rounded-[28px] border-2 border-[#191715] bg-[#FFFDF8] p-7 shadow-xl sm:p-9">
+        <header className="mt-4 rounded-[28px] border-2 border-[#141413] bg-[#FFFFFF] p-7 shadow-xl sm:p-9">
           <h1 className="text-3xl font-black leading-[1.1] sm:text-4xl">{doc.title}</h1>
-          <p className="mt-3 text-sm text-[#7A7368]">
+          <p className="mt-3 text-sm text-[#64635C]">
             {nav.updatedPrefix} {doc.updated}
           </p>
-          <p className="mt-4 text-[15px] leading-relaxed text-[#3D3832]">{doc.intro}</p>
+          <p className="mt-4 text-[15px] leading-relaxed text-[#3D3929]">{doc.intro}</p>
         </header>
 
         <nav
           aria-label={doc.title}
-          className="mt-6 flex flex-wrap gap-x-5 gap-y-2 rounded-2xl border border-[#E5DCCB] bg-[#FFFDF8] px-5 py-4"
+          className="mt-6 flex flex-wrap gap-x-5 gap-y-2 rounded-2xl border border-[#DAD9D4] bg-[#FFFFFF] px-5 py-4"
         >
-          <a href="/privacy" className="text-sm font-semibold text-[#191715] underline underline-offset-2 hover:text-[#E6B000]">
+          <a href="/privacy" className="text-sm font-semibold text-[#141413] underline underline-offset-2 hover:text-[#B05730]">
             {nav.privacy}
           </a>
-          <a href="/cookies" className="text-sm font-semibold text-[#191715] underline underline-offset-2 hover:text-[#E6B000]">
+          <a href="/cookies" className="text-sm font-semibold text-[#141413] underline underline-offset-2 hover:text-[#B05730]">
             {nav.cookies}
           </a>
         </nav>
@@ -120,7 +120,7 @@ export default function LegalDocView({ doc }: { doc: LegalDoc }) {
           ))}
         </main>
 
-        <footer className="mt-12 rounded-2xl border border-[#E5DCCB] bg-[#FFFDF8] px-5 py-5 text-sm text-[#5C564E]">
+        <footer className="mt-12 rounded-2xl border border-[#DAD9D4] bg-[#FFFFFF] px-5 py-5 text-sm text-[#535146]">
           {contactLine}
         </footer>
       </div>

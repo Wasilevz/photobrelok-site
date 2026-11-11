@@ -32,12 +32,12 @@ function Switch({
       aria-label={label}
       disabled={disabled}
       onClick={() => !disabled && onChange?.(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-[#191715] transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#191715] ${
-        checked ? "bg-[#FFC400]" : "bg-[#E8E0D0]"
+      className={`relative h-7 w-12 shrink-0 rounded-full border-2 border-[#141413] transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#141413] ${
+        checked ? "bg-[#C96442]" : "bg-[#E9E6DC]"
       } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span
-        className={`absolute top-[3px] h-[17px] w-[17px] rounded-full bg-[#191715] transition-transform ${
+        className={`absolute top-[3px] h-[17px] w-[17px] rounded-full bg-[#141413] transition-transform ${
           checked ? "translate-x-[23px]" : "translate-x-[3px]"
         }`}
       />
@@ -66,31 +66,31 @@ export default function CookieBanner() {
       aria-label={c.title}
       className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-3 sm:px-6 sm:pb-6"
     >
-      <div className="mx-auto w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[20px] border-2 border-[#191715] bg-[#FFFDF8] p-4 shadow-[0_-4px_24px_rgba(25,23,21,0.16)] sm:p-6">
-        <h2 className="text-[#191715] text-base sm:text-lg font-bold leading-tight">{c.title}</h2>
-        <p className="mt-1.5 text-[#5C564E] text-[13px] sm:text-sm leading-snug sm:leading-relaxed">
+      <div className="mx-auto w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[20px] border-2 border-[#141413] bg-[#FFFFFF] p-4 shadow-[0_-4px_24px_rgba(20, 20, 19,0.16)] sm:p-6">
+        <h2 className="text-[#141413] text-base sm:text-lg font-bold leading-tight">{c.title}</h2>
+        <p className="mt-1.5 text-[#535146] text-[13px] sm:text-sm leading-snug sm:leading-relaxed">
           {c.text}{" "}
           <Link
             href="/cookies"
-            className="text-[#191715] font-semibold underline underline-offset-2 hover:text-[#E6B000]"
+            className="text-[#141413] font-semibold underline underline-offset-2 hover:text-[#B05730]"
           >
             {legalNav.cookies}
           </Link>
         </p>
 
         {showSettings && (
-          <div className="mt-4 space-y-3 rounded-2xl border border-[#E5DCCB] bg-[#F5F1E8] p-4">
+          <div className="mt-4 space-y-3 rounded-2xl border border-[#DAD9D4] bg-[#FAF9F5] p-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[#191715] text-sm font-semibold">{c.necessaryLabel}</p>
-                <p className="text-[#7A7368] text-xs leading-relaxed mt-0.5">{c.necessaryDesc}</p>
+                <p className="text-[#141413] text-sm font-semibold">{c.necessaryLabel}</p>
+                <p className="text-[#64635C] text-xs leading-relaxed mt-0.5">{c.necessaryDesc}</p>
               </div>
               <Switch checked disabled label={c.necessaryLabel} id="consent-necessary" />
             </div>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[#191715] text-sm font-semibold">{c.analyticsLabel}</p>
-                <p className="text-[#7A7368] text-xs leading-relaxed mt-0.5">{c.analyticsDesc}</p>
+                <p className="text-[#141413] text-sm font-semibold">{c.analyticsLabel}</p>
+                <p className="text-[#64635C] text-xs leading-relaxed mt-0.5">{c.analyticsDesc}</p>
               </div>
               <Switch
                 checked={analytics}
@@ -101,8 +101,8 @@ export default function CookieBanner() {
             </div>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[#191715] text-sm font-semibold">{c.marketingLabel}</p>
-                <p className="text-[#7A7368] text-xs leading-relaxed mt-0.5">{c.marketingDesc}</p>
+                <p className="text-[#141413] text-sm font-semibold">{c.marketingLabel}</p>
+                <p className="text-[#64635C] text-xs leading-relaxed mt-0.5">{c.marketingDesc}</p>
               </div>
               <Switch
                 checked={marketing}
@@ -118,14 +118,14 @@ export default function CookieBanner() {
           <button
             type="button"
             onClick={acceptAll}
-            className="min-h-[44px] w-full rounded-xl border-2 border-[#191715] bg-[#FFC400] px-3 sm:px-5 py-2.5 text-[#191715] text-sm font-bold hover:bg-[#E6B000] active:scale-[0.98] transition-all sm:w-auto"
+            className="min-h-[44px] w-full rounded-xl border-2 border-[#141413] bg-[#C96442] px-3 sm:px-5 py-2.5 text-[#141413] text-sm font-bold hover:bg-[#B05730] active:scale-[0.98] transition-all sm:w-auto"
           >
             {c.acceptAll}
           </button>
           <button
             type="button"
             onClick={acceptNecessary}
-            className="min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white px-3 sm:px-5 py-2.5 text-[#191715] text-sm font-semibold hover:bg-[#F5F1E8] transition-colors sm:w-auto"
+            className="min-h-[44px] w-full rounded-xl border border-[#DAD9D4] bg-white px-3 sm:px-5 py-2.5 text-[#141413] text-sm font-semibold hover:bg-[#FAF9F5] transition-colors sm:w-auto"
           >
             {c.necessaryOnly}
           </button>
@@ -133,7 +133,7 @@ export default function CookieBanner() {
             <button
               type="button"
               onClick={() => save(analytics, marketing)}
-              className="col-span-2 min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white px-5 py-2.5 text-[#191715] text-sm font-semibold hover:bg-[#F5F1E8] transition-colors sm:col-span-1 sm:w-auto"
+              className="col-span-2 min-h-[44px] w-full rounded-xl border border-[#DAD9D4] bg-white px-5 py-2.5 text-[#141413] text-sm font-semibold hover:bg-[#FAF9F5] transition-colors sm:col-span-1 sm:w-auto"
             >
               {c.save}
             </button>
@@ -141,7 +141,7 @@ export default function CookieBanner() {
             <button
               type="button"
               onClick={() => setShowSettings(true)}
-              className="col-span-2 min-h-[44px] w-full px-2 py-2 text-[#5C564E] text-sm underline underline-offset-2 hover:text-[#191715] sm:col-span-1 sm:w-auto"
+              className="col-span-2 min-h-[44px] w-full px-2 py-2 text-[#535146] text-sm underline underline-offset-2 hover:text-[#141413] sm:col-span-1 sm:w-auto"
             >
               {c.settings}
             </button>

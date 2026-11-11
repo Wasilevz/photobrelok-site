@@ -65,7 +65,7 @@ export default function ImageCropper({ imageSrc, onCropDone, onSkip, onCancel, c
           <>
             <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 z-20">
               <div
-                className="h-full bg-[#FFC400] transition-all duration-300"
+                className="h-full bg-[#C96442] transition-all duration-300"
                 style={{ width: `${((currentIndex ?? 1) / total) * 100}%` }}
               />
             </div>
