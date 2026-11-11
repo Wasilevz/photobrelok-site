@@ -124,12 +124,12 @@ function HeroLoop({ label, pauseLabel, playLabel }: { label: string; pauseLabel:
         loop
         playsInline
         preload="auto"
-        poster="/media/hero-poster-pull.jpg"
+        poster="/media/hero-poster.jpg"
         aria-label={label}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
       >
-        <source src="/media/hero-loop.mp4" type="video/mp4" />
+        <source src="/media/hero-film.mp4" type="video/mp4" />
       </video>
       <button type="button" className="v2-pause" onClick={toggle} aria-label={playing ? pauseLabel : playLabel}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

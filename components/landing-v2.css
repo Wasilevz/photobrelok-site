@@ -96,7 +96,7 @@
 @media (min-width: 900px) {
   .pb2 .v2-hero { padding: 28px 0 64px; }
   .pb2 .v2-hero-grid { grid-template-columns: 1.15fr 0.85fr; align-items: center; gap: 64px; }
-  .pb2 .v2-hero-media { order: 0; aspect-ratio: 9 / 16; max-height: 640px; width: min(100%, 360px); justify-self: end; }
+  .pb2 .v2-hero-media { order: 0; aspect-ratio: 5 / 4; max-height: none; width: min(100%, 520px); justify-self: end; }
   .pb2 .v2-cta { width: auto; display: inline-flex; }
   .pb2 .v2-note, .pb2 .v2-conditions { text-align: left; }
 }
