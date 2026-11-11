@@ -11,13 +11,15 @@ import { useLanguage } from "@/context/LanguageContext";
 import { telegramLink } from "@/lib/contacts";
 import { metaEventId, track } from "@/lib/analytics";
 import { readSource } from "@/lib/source";
+import { readConstructorV2 } from "@/lib/flags";
 import { saveDraft, loadDraft, clearDraft } from "@/lib/draft";
 
 const MAX_SLOTS = 10;
 // Конструктор V2: если Cloudinary не отвечает дольше этого времени, показываем понятную ошибку
 const UPLOAD_TIMEOUT_MS = 45_000;
 
-export default function PhotoConstructor() {
+// compact: в новом макете убираем две подсказки, повторяющие текст секции и счётчик (логика не меняется)
+export default function PhotoConstructor({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const { lang, dict } = useLanguage();
   const [slots, setSlots] = useState<(string | null)[]>(Array(MAX_SLOTS).fill(null));
@@ -41,6 +43,12 @@ export default function PhotoConstructor() {
   const [telegramFallback, setTelegramFallback] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Конструктор V2 (за флагом): сохранение черновика и таймаут загрузки. Обрезка остаётся ручной, как раньше.
+  // Пока флаг выключен, всё работает ровно как раньше.
+  const [v2, setV2] = useState(false);
+  useEffect(() => {
+    setV2(readConstructorV2());
+  }, []);
   const [restoredCount, setRestoredCount] = useState(0);
   const draftReady = useRef(false);
   const [persistFailed, setPersistFailed] = useState(false);
@@ -104,8 +112,9 @@ export default function PhotoConstructor() {
     }
   };
 
-  // Вернуть фото, сохранённые на этом устройстве (обновили страницу или вернулись позже)
+  // V2: вернуть фото, сохранённые на этом устройстве (обновили страницу или вернулись позже)
   useEffect(() => {
+    if (!v2) return;
     let cancelled = false;
     (async () => {
       const draft = await loadDraft();
@@ -128,11 +137,11 @@ export default function PhotoConstructor() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [v2]);
 
-  // Сохранять черновик после каждого изменения (с небольшой задержкой)
+  // V2: сохранять черновик после каждого изменения (с небольшой задержкой)
   useEffect(() => {
-    if (!draftReady.current) return;
+    if (!v2 || !draftReady.current) return;
     const timer = window.setTimeout(async () => {
       const items: { index: number; blob: Blob; hash: string | null }[] = [];
       for (let i = 0; i < slots.length; i++) {
@@ -148,18 +157,18 @@ export default function PhotoConstructor() {
       else setPersistFailed(!(await saveDraft(items)));
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [slots, slotHashes]);
+  }, [v2, slots, slotHashes]);
 
-  // Если сохранить черновик нельзя (например, приватный режим), предупреждаем при уходе со страницы
+  // V2: если сохранить черновик нельзя (например, приватный режим), предупреждаем при уходе со страницы
   useEffect(() => {
-    if (!persistFailed || photoCount === 0) return;
+    if (!v2 || !persistFailed || photoCount === 0) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [persistFailed, photoCount]);
+  }, [v2, persistFailed, photoCount]);
 
   useEffect(() => {
     handleCarouselScroll();
@@ -473,7 +482,7 @@ export default function PhotoConstructor() {
         formData.append("upload_preset", uploadPreset);
         const cloudRes = await fetch(
           `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          { method: "POST", body: formData, signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS) }
+          { method: "POST", body: formData, ...(v2 ? { signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS) } : {}) }
         );
         const data = await cloudRes.json();
         if (!cloudRes.ok) throw new Error(dict.errors.uploadFailed);
@@ -483,8 +492,9 @@ export default function PhotoConstructor() {
         return data.secure_url as string;
       };
 
-      // Зависшая загрузка и сетевые сбои превращаются в понятное сообщение, а не «Failed to fetch»
+      // V2: зависшая загрузка и сетевые сбои превращаются в понятное сообщение, а не «Failed to fetch»
       const uploadOne = async (blobUrl: string): Promise<string> => {
+        if (!v2) return uploadOneRaw(blobUrl);
         try {
           const url = await uploadOneRaw(blobUrl);
           if (!url) throw new Error(dict.errors.uploadFailed);
@@ -545,7 +555,7 @@ export default function PhotoConstructor() {
       });
 
       slots.forEach(revokeOldUrl);
-      void clearDraft();
+      if (v2) void clearDraft();
       setSlots(Array(MAX_SLOTS).fill(null));
       setSlotHashes(Array(MAX_SLOTS).fill(null));
       setSelectedSlot(null);
@@ -589,7 +599,7 @@ export default function PhotoConstructor() {
       {/* Title/subtitle/price live in the landing section above — keep constructor UI only */}
 
       {/* Film strip + Kodak canister: film feeds into the keychain body */}
-      {restoredCount > 0 && photoCount > 0 && (
+      {v2 && restoredCount > 0 && photoCount > 0 && (
         <div role="status" className="max-w-md mx-auto mb-4 px-4 py-2 bg-white border-2 border-[#191715] rounded-xl flex items-center justify-between gap-3 text-sm text-[#191715]">
           <span>{dict.home.draftRestored(restoredCount)}</span>
           <button type="button" onClick={handleDiscardDraft} className="shrink-0 min-h-[44px] px-2 text-sm font-semibold underline underline-offset-2">
@@ -920,6 +930,14 @@ export default function PhotoConstructor() {
             </div>
           </div>
         )}
+
+        {!compact && (
+          <p className="text-center text-[12px] text-[#6B6560] mt-3">
+            {lang === "ru"
+              ? "Плёнка с фото наматывается внутрь катушки — как в настоящем брелоке"
+              : "Filmul cu poze se învârte în interiorul casetei — ca la brelocul real"}
+          </p>
+        )}
       </div>
 
       <div className="max-w-xs sm:max-w-md mx-auto mt-12 px-4">
@@ -981,6 +999,13 @@ export default function PhotoConstructor() {
                     ? (lang === "ru" ? `Добавить ещё ${6 - count} фото (мин. 6)` : `Mai adaugă ${6 - count} poze (min. 6)`)
                     : dict.home.ctaOrder}
               </button>
+              {count === 0 && !compact && (
+                <p className="text-center text-[12px] text-gray-600 mt-2" aria-live="polite">
+                  {lang === "ru"
+                    ? "Загрузите от 6 до 10 фото через конструктор — макет подготовим бесплатно"
+                    : "Încarcă de la 6 la 10 poze prin constructor — pregătim macheta gratuit"}
+                </p>
+              )}
               {count > 0 && count < 6 && (
                 <p className="text-center text-[12px] text-gray-600 mt-2" aria-live="polite">
                   {lang === "ru"

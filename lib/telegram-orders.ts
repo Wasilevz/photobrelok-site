@@ -7,7 +7,7 @@ export type Stage = "work" | "pickup" | "ship" | "done" | "cancel";
 
 export type InlineButton = { text: string; callback_data: string };
 
-const METHOD_CODE: Record<DeliveryMethod, string> = {
+export const METHOD_CODE: Record<DeliveryMethod, string> = {
   pickup: "p",
   posta: "s",
   novapost: "n",

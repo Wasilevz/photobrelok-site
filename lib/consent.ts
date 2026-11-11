@@ -7,10 +7,10 @@ import { useSyncExternalStore, useCallback } from "react";
  * а не в cookie, — чтобы его можно было прочитать синхронно в <head>
  * до того, как браузер решит, грузить ли рекламный пиксель.
  */
-const CONSENT_KEY = "photobrelok_consent";
+export const CONSENT_KEY = "photobrelok_consent";
 
 /** Поднимать при изменении текстов политик, чтобы показать баннер заново. */
-const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 1;
 
 const CONSENT_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
@@ -69,7 +69,7 @@ export function readConsent(): ConsentState | null {
   return load();
 }
 
-function writeConsent(analytics: boolean, marketing: boolean): ConsentState {
+export function writeConsent(analytics: boolean, marketing: boolean): ConsentState {
   const next: ConsentState = {
     v: CONSENT_VERSION,
     analytics,

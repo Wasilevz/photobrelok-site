@@ -26,7 +26,7 @@ import {
 
 type TgUser = { id: number; is_bot?: boolean };
 type TgChat = { id: number };
-type TgMessage = {
+export type TgMessage = {
   message_id: number;
   message_thread_id?: number;
   chat: TgChat;
