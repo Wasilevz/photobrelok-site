@@ -28,12 +28,12 @@ const siteUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   alternates: { canonical: "/" },
-  title: "PHOTOBRELOK — подарок с вашими фото на плёнке Kodak",
+  title: "Брелок из катушки Kodak с вашими фото | PHOTOBRELOK",
   description:
-    "Подарите день, который захочется пережить снова: брелок из катушки Kodak с 6–10 вашими фото. 250 лей. Макет бесплатно, оплата при получении, 1–2 дня.",
+    "6–10 ваших кадров на плёнке в катушке Kodak. 250 лей, макет бесплатно за 24 часа, брелок за 1–2 дня, оплата при получении.",
   openGraph: {
-    title: "PHOTOBRELOK — 10 фото в 1 брелоке Kodak",
-    description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 лей, бесплатный макет до оплаты.",
+    title: "Брелок из катушки Kodak с вашими фото | PHOTOBRELOK",
+    description: "6–10 ваших кадров на плёнке в катушке Kodak. 250 лей, макет бесплатно, оплата при получении.",
     url: siteUrl,
     siteName: "PHOTOBRELOK",
     locale: "ru_RU",
@@ -49,8 +49,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "PHOTOBRELOK — 10 фото в 1 брелоке Kodak",
-    description: "Личный подарок: ваши фото на плёнке внутри катушки Kodak. 250 лей, бесплатный макет до оплаты.",
+    title: "Брелок из катушки Kodak с вашими фото | PHOTOBRELOK",
+    description: "6–10 ваших кадров на плёнке в катушке Kodak. 250 лей, макет бесплатно, оплата при получении.",
     images: ["/opengraph-image.png"],
   },
 };

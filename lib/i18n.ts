@@ -126,7 +126,7 @@ export const translations: Record<Locale, Dict> = {
     meta: {
       title: "Брелок из катушки Kodak с вашими фото | Photobrelok",
       description:
-        "Загрузите любимые фото и получите уникальный брелок с мини-фотографиями. Оплата при получении.",
+        "6–10 ваших кадров на плёнке в катушке Kodak. Макет бесплатно за 24 часа, брелок за 1–2 дня, оплата при получении.",
     },
     home: {
       title: "Брелок из катушки Kodak с вашими фото",
@@ -254,12 +254,12 @@ export const translations: Record<Locale, Dict> = {
   },
   ro: {
     meta: {
-      title: "Breloc foto personalizat | Photobrelok",
+      title: "Breloc din casetă Kodak cu pozele tale | Photobrelok",
       description:
-        "Încarcă pozele preferate și primești un breloc unic cu mini-fotografii. Plată la livrare.",
+        "6–10 cadre ale tale pe film într-o casetă Kodak. Machetă gratuită în 24 de ore, breloc în 1–2 zile, plata la primire.",
     },
     home: {
-      title: "Breloc foto personalizat",
+      title: "Breloc din casetă Kodak cu pozele tale",
       subtitle:
         "Încarcă de la 6 la 10 poze preferate — le imprimăm pe film și facem un breloc unic",
       priceLine: (price: number) => `${price} lei · Plată la livrare`,
