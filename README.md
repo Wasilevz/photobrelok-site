@@ -38,12 +38,40 @@ Dev: `npm run dev --webpack`
 ### Аналитика
 `lib/analytics.ts` → `window.dataLayer` (если подключён). События: hero_view, hero_cta, builder_start, photos_uploaded, photos_edited, preview_view, checkout_start, telegram_click, order_submit, order_api_success. PII в аналитику не уходит.
 
+## Заказы в Telegram по темам (бот с кнопками)
+
+Заказ приходит в тему «В работе» с кнопками. Стадии переключаются одним нажатием:
+
+```
+🛠 В работе --[✅ Готов]--> 🏪 Готовы к выдаче   (самовывоз)  --[🤝 Выдан]----> ✅ Завершены
+                      \--> 📦 Готовы к отправке (доставка)   --[🚚 Отправлен]-> ✅ Завершены
+```
+
+Развилку выдача/отправка бот делает сам по способу получения. Дополнительно под заказом есть
+**↩️ Назад**, **❌ Отмена** (тема «Отменены»), **✏️ Доставка** (клиент передумал: бот меняет способ,
+спрашивает адрес/отделение ответом на сообщение и сам переносит заказ в нужную тему) и **📝 Заметка**.
+Bot API не умеет переносить сообщения между темами, поэтому бот копирует заказ в новую тему и удаляет старое.
+
+### Настройка
+1. Включите в группе темы, создайте: *В работе, Готовы к выдаче, Готовы к отправке, Завершены* (и по желанию *Отменены*).
+2. Сделайте бота админом группы с правом **удалять сообщения**.
+3. Задайте `TELEGRAM_WEBHOOK_SECRET` (любая случайная строка) и задеплойте сайт.
+4. Подключите бота: откройте один раз `https://ваш-домен/api/telegram-webhook?setup=<TELEGRAM_WEBHOOK_SECRET>`
+   (или локально: `TELEGRAM_BOT_TOKEN=... TELEGRAM_WEBHOOK_SECRET=... npm run telegram:webhook -- https://ваш-домен`)
+5. Отправьте `/id` внутри каждой темы — бот ответит номерами `chat_id` и `thread_id`. Впишите их в `TELEGRAM_TOPIC_*`
+   (`TELEGRAM_CHAT_ID` или `TELEGRAM_TOPIC_CHAT_ID` — ID группы). Без `TELEGRAM_TOPIC_*` заказы приходят как раньше, без кнопок.
+
+Если `TELEGRAM_CHAT_ID` содержит несколько получателей, темы и кнопки работают только для группы
+(`TELEGRAM_TOPIC_CHAT_ID`, по умолчанию — первый ID). Ограничить, кто жмёт кнопки: `TELEGRAM_ALLOWED_USER_IDS`.
+
 ## Переменные окружения
 
 | Переменная | Назначение |
 |---|---|
 | `TELEGRAM_BOT_TOKEN` | Токен бота |
 | `TELEGRAM_CHAT_ID` | Куда падают заказы (можно несколько через запятую) |
+| `TELEGRAM_TOPIC_WORK/PICKUP/SHIP/DONE/CANCEL` | ID тем-стадий (см. выше) |
+| `TELEGRAM_WEBHOOK_SECRET` | Секрет вебхука бота |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Загрузка фото |
 | `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Unsigned preset |
 
@@ -73,5 +101,8 @@ components/Constructor.tsx    # пошаговый конструктор
 components/ImageCropper.tsx   # обрезка (react-easy-crop)
 public/landing.css            # дизайн-система
 app/api/order/                # PDF + Telegram (сервер)
+app/api/telegram-webhook/     # кнопки и правки заказов в Telegram
+lib/telegram-orders.ts        # стадии, подпись заказа, кнопки
+lib/telegram-bot.ts           # обработка нажатий и ответов
 lib/analytics.ts              # события воронки
 ```
