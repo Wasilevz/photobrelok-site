@@ -4901,4 +4901,5 @@ a { color: inherit; }
 
 /* === Пакет 3: второй брелок в предложении и две ссылки на чат === */
 .pb .offer-second { margin: 10px 0 0; font-size: 15px; line-height: 1.45; font-weight: 500; }
-.pb .offer-chat-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.pb .offer-chat-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
+.pb .offer-chat-links .offer-tg { margin-top: 0; }
