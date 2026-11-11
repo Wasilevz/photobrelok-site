@@ -33,6 +33,7 @@ export default function PhotoConstructor() {
   const [scrollThumb, setScrollThumb] = useState({ width: 0.4, left: 0 });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showError, setShowError] = useState<string | null>(null);
+  const uploadedUrls = useRef<Map<string, string>>(new Map());
   const [telegramFallback, setTelegramFallback] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -325,7 +326,7 @@ export default function PhotoConstructor() {
     setSelectedSlot((prev) => (prev === index ? null : prev));
   };
 
-  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean }) => {
+  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; website: string }) => {
     setIsSubmitting(true);
     try {
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -352,6 +353,13 @@ export default function PhotoConstructor() {
       let uploadedCounter = 0;
       const photoUrls: string[] = [];
       const uploadOne = async (blobUrl: string) => {
+        // Повторная отправка после сбоя не заливает уже загруженные фото заново
+        const cached = uploadedUrls.current.get(blobUrl);
+        if (cached) {
+          uploadedCounter += 1;
+          setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
+          return cached;
+        }
         const res = await fetch(blobUrl);
         const blob = await res.blob();
         const formData = new FormData();
@@ -365,6 +373,7 @@ export default function PhotoConstructor() {
         if (!cloudRes.ok) throw new Error(dict.errors.uploadFailed);
         uploadedCounter += 1;
         setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
+        uploadedUrls.current.set(blobUrl, data.secure_url as string);
         return data.secure_url as string;
       };
 
@@ -389,6 +398,7 @@ export default function PhotoConstructor() {
           delivery: userData.delivery,
           metaEventIds,
           marketingConsent: userData.marketingConsent,
+          website: userData.website,
         }),
       });
 
@@ -652,7 +662,7 @@ export default function PhotoConstructor() {
                     ) : (
                       <div className="flex flex-col items-center text-zinc-500 group-hover:text-gray-300">
                         <span className="text-3xl mb-1">+</span>
-                        <span className="text-[11px] font-semibold text-zinc-200">{dict.home.slotHint}</span>
+                        <span className="text-xs font-semibold text-zinc-200">{dict.home.slotHint}</span>
                       </div>
                     )}
                   </div>

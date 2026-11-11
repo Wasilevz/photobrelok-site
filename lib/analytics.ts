@@ -23,6 +23,8 @@ export type AnalyticsEvent =
   | "order_api_success"
   | "video_play"
   | "video_mute"
+  | "video_pause"
+  | "video_resume"
   | "video_unmute";
 
 type MetaEventIds = { lead?: string; purchase?: string };

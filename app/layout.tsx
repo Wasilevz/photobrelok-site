@@ -1,18 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Rubik, Caveat } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import MetaPixel from "@/components/MetaPixel";
 import CookieBanner from "@/components/CookieBanner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["cyrillic", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["cyrillic", "latin"],
+  weight: "700",
+  display: "swap",
 });
 
 const siteUrl =
@@ -51,6 +55,40 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Product",
+      name: "PHOTOBRELOK — брелок из катушки Kodak с вашими фото",
+      description: "Брелок из катушки Kodak с 6–10 вашими фотографиями на плёнке. Макет бесплатно, оплата при получении.",
+      image: `${siteUrl}/opengraph-image.png`,
+      brand: { "@type": "Brand", name: "PHOTOBRELOK" },
+      offers: {
+        "@type": "Offer",
+        price: "250",
+        priceCurrency: "MDL",
+        availability: "https://schema.org/InStock",
+        url: siteUrl,
+      },
+    },
+    {
+      "@type": "LocalBusiness",
+      name: "PHOTOBRELOK",
+      url: siteUrl,
+      telephone: "+37378238455",
+      email: "fotobrelokmd@gmail.com",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "ул. Alexander Bernardazzi, 64",
+        addressLocality: "Chișinău",
+        addressCountry: "MD",
+      },
+      openingHours: "Mo-Su 09:00-23:00",
+    },
+  ],
+};
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -65,15 +103,13 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Rubik:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <link rel="stylesheet" href="/landing.css" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${rubik.variable} ${caveat.variable} antialiased`}>
         <LanguageProvider>
           {children}
           <MetaPixel />

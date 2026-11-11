@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
+import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 
 const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 
 export async function POST(req: Request) {
   try {
+    if (!isSameOrigin(req)) {
+      return NextResponse.json({ error: "Запрос отклонён" }, { status: 403 });
+    }
+    if (!rateLimit(`upsell:${clientIp(req)}`, 5, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Слишком много запросов" }, { status: 429 });
+    }
+
     const contentLength = Number(req.headers.get("content-length") || 0);
     if (contentLength > 1024) {
       return NextResponse.json({ error: "Слишком большой запрос" }, { status: 413 });

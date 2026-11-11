@@ -22,7 +22,7 @@ export interface UploadProgress {
 interface OrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean }) => void;
+  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; website: string }) => void;
   isSubmitting: boolean;
   uploadProgress?: UploadProgress | null;
 }
@@ -79,6 +79,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const [marketingConsent, setMarketingConsent] = useState(false);
 
   const [errors, setErrors] = useState<Errors>({});
+  const [website, setWebsite] = useState(''); // honeypot
 
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -180,7 +181,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
       ? `${name.trim()} ${surname.trim()}`
       : name.trim();
 
-    onSubmit({ name: fullName, phone: phone.trim(), delivery, marketingConsent });
+    onSubmit({ name: fullName, phone: phone.trim(), delivery, marketingConsent, website });
   };
 
   const methodCardClass =
@@ -219,6 +220,13 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
 
       {/* noValidate: все проверки и тексты ошибок — наши, на языке интерфейса */}
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        {/* Honeypot от ботов: скрыт от людей, скринридеров и автозаполнения */}
+        <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+          <label>
+            Website
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+          </label>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="customer-name" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.nameLabel}</label>
