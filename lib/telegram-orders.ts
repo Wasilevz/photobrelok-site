@@ -117,7 +117,7 @@ export function buildDeliveryText(method: DeliveryMethod, d: DeliveryDetails = {
     case "taxi":
       return `🚚 Способ получения: Такси по Кишинёву\n🏠 Адрес: ${d.address}`;
     case "pickup":
-      return "🚚 Способ получения: Самовывоз — бесплатно\n📍 A. Bernardazzi 64, Кишинёв (12:00–21:00)";
+      return "🚚 Способ получения: Самовывоз";
     default:
       return "🚚 Способ получения: клиент уточнит после макета";
   }
