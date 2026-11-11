@@ -170,11 +170,18 @@ function buildPrompt(kind: string, caption: string, orderMessageId: number): str
 
 const PROMPT_RE = /^[^\n]+(?:\n[^\n]+)*\n\n([\s\S]*)\n\n#ref:(\d+):(\w+)$/;
 
-async function askDetails(msg: TgMessage, kind: string) {
+async function askDetails(msg: TgMessage, kind: string, userId: number) {
+  // force_reply + упоминание нажавшего: поле ответа открывается само, и только у него.
   await tg("sendMessage", {
     chat_id: msg.chat.id,
     ...(msg.message_thread_id ? { message_thread_id: msg.message_thread_id } : {}),
-    text: buildPrompt(kind, msg.caption ?? "", msg.message_id),
+    text: `👉 ${buildPrompt(kind, msg.caption ?? "", msg.message_id)}`,
+    entities: [{ type: "text_mention", offset: 0, length: 2, user: { id: userId } }],
+    reply_markup: {
+      force_reply: true,
+      selective: true,
+      input_field_placeholder: kind === "note" ? "Текст заметки" : "Введите данные",
+    },
   });
 }
 
@@ -215,7 +222,7 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
       );
       return;
     case "nt":
-      await askDetails(msg, "note");
+      await askDetails(msg, "note", cb.from.id);
       return;
     case "set": {
       const method = methodFromCode(arg || "");
@@ -229,7 +236,7 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
         }),
       );
       if (method === "posta" || method === "novapost" || method === "taxi") {
-        await askDetails(msg, arg as string);
+        await askDetails(msg, arg as string, cb.from.id);
         return;
       }
       const next = appendLine(
