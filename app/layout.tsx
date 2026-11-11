@@ -84,7 +84,7 @@ const jsonLd = {
         addressLocality: "Chișinău",
         addressCountry: "MD",
       },
-      openingHours: "Mo-Su 09:00-23:00",
+      openingHours: "Mo-Su 12:00-21:00",
     },
   ],
 };
