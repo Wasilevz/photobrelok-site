@@ -11,10 +11,6 @@ export const URGENCY = {
     { name: "1 июня", deadline: "2027-05-29T18:00:00", ro: "1 iunie" },
     { name: "1 сентября", deadline: "2027-08-29T18:00:00", ro: "1 septembrie" },
   ],
-  /** before this hour we show mockup the same day (Chisinau time) */
-  dailyCutoff: "18:00",
-  /** 1–6 = Mon–Sat */
-  workdays: [1, 2, 3, 4, 5, 6],
   /** slots for nearest holiday, or null to hide */
   slotsLeft: null as number | null,
 };
