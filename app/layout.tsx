@@ -23,6 +23,7 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  alternates: { canonical: "/" },
   title: "PHOTOBRELOK — подарок с вашими фото на плёнке Kodak",
   description:
     "Подарите день, который захочется пережить снова: брелок из катушки Kodak с 6–10 вашими фото. 250 лей. Макет бесплатно, оплата при получении, 1–2 дня.",

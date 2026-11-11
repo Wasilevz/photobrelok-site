@@ -98,9 +98,15 @@ function trackMeta(event: AnalyticsEvent, payload: Payload) {
 
 export function track(event: AnalyticsEvent, payload: Payload = {}) {
   if (typeof window === "undefined") return;
-  const data = { event, ...payload, ts: Date.now() };
-  if (Array.isArray(window.dataLayer)) {
-    window.dataLayer.push(data);
+  // В dataLayer не кладём имя, телефон и ID событий Meta, и только с согласием на аналитику
+  const { name: _name, phone: _phone, metaEventIds: _ids, ...safe } = payload as Payload & {
+    name?: string;
+    phone?: string;
+    metaEventIds?: unknown;
+  };
+  void _name; void _phone; void _ids;
+  if (readConsent()?.analytics && Array.isArray(window.dataLayer)) {
+    window.dataLayer.push({ event, ...safe, ts: Date.now() });
   }
   trackMeta(event, payload);
 }

@@ -459,6 +459,9 @@ export default function PhotoConstructor() {
           <div
             id="film-scroll"
             ref={scrollContainerRef}
+            tabIndex={0}
+            role="region"
+            aria-label={lang === "ru" ? "Фотоплёнка, прокрутка стрелками" : "Film foto, derulare cu săgeți"}
             className="w-full min-w-0 overflow-x-auto no-scrollbar"
             style={{
               scrollbarWidth: 'none',
@@ -892,10 +895,10 @@ export default function PhotoConstructor() {
 
       {showError && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] max-w-md w-[90%]">
-          <div className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex flex-col gap-2">
+          <div role="alert" className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-medium">{showError}</span>
-              <button onClick={() => { setShowError(null); setTelegramFallback(null); }} className="text-white/70 hover:text-white text-lg font-bold shrink-0" aria-label="Закрыть">
+              <button onClick={() => { setShowError(null); setTelegramFallback(null); }} className="text-white text-lg font-bold shrink-0 size-11 -mt-2 -mr-2 flex items-center justify-center" aria-label={dict.orderModal.close}>
                 ✕
               </button>
             </div>

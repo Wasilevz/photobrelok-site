@@ -4883,3 +4883,17 @@ a { color: inherit; }
   color: var(--ink);
   text-align: center;
 }
+
+/* a11y: зоны нажатия в футере не меньше 44px (WCAG 2.2 SC 2.5.8, рекомендация 44) */
+.pb .foot-list a,
+.pb .foot-social a,
+.pb .foot-legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+/* a11y: фокус на прокручиваемой ленте виден */
+#film-scroll:focus-visible {
+  outline: 3px solid var(--accent, #FFC400);
+  outline-offset: 2px;
+}

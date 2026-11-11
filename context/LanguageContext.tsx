@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useSyncExternalStore, useCallback, ReactNode } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore, useCallback, ReactNode } from "react";
 import { translations, Locale, Dict } from "@/lib/i18n";
 
 const STORAGE_KEY = "photobrelok_lang";
@@ -43,6 +43,11 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const lang = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  // Язык документа должен совпадать с языком интерфейса (WCAG 3.1.1)
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const setLang = useCallback((l: Locale) => {
     try {
