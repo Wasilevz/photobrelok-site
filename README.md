@@ -64,51 +64,17 @@ Bot API не умеет переносить сообщения между те�
 Если `TELEGRAM_CHAT_ID` содержит несколько получателей, темы и кнопки работают только для группы
 (`TELEGRAM_TOPIC_CHAT_ID`, по умолчанию — первый ID). Ограничить, кто жмёт кнопки: `TELEGRAM_ALLOWED_USER_IDS`.
 
-## Флаги (по умолчанию выключены, production работает как раньше)
+## Макет и конструктор
 
-| Флаг | Что включает | Как включить |
-|---|---|---|
-| `NEXT_PUBLIC_LAYOUT=v2` | Новый макет главной (`components/LandingV2.tsx`, 7 секций) вместо прежнего `Landing.tsx` | Переменная при сборке, либо адрес `?layout=v2` (на вкладку; `?layout=v1` возвращает прежний) |
-| `NEXT_PUBLIC_CONSTRUCTOR_V2=1` | Конструктор V2: сохранение фото на устройстве (переживают обновление страницы) и таймаут загрузки; обрезка ручная, как раньше | Переменная при сборке, либо адрес `?cv2=1` (на вкладку; `?cv2=0` выключает) |
-
-Адрес с `?layout=…` показывает прежнюю страницу на долю секунды до переключения; при включении переменной при сборке этого нет.
-Откат: убрать переменную и пересобрать (или `git revert`).
-
-## Переменные окружения
-
-| Переменная | Назначение |
-|---|---|
-| `TELEGRAM_BOT_TOKEN` | Токен бота |
-| `TELEGRAM_CHAT_ID` | Куда падают заказы (можно несколько через запятую) |
-| `TELEGRAM_TOPIC_WORK/PICKUP/SHIP/DONE/CANCEL` | ID тем-стадий (см. выше) |
-| `TELEGRAM_WEBHOOK_SECRET` | Секрет вебхука бота |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Загрузка фото |
-| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Unsigned preset |
-
-Без них сайт работает, заказ идёт через Telegram-ссылку с инструкцией.
-
-## Деплой (Vercel)
-
-1. Залейте папку в GitHub  
-2. Import на vercel.com  
-3. Environment Variables из `.env.example`  
-4. Deploy  
-
-## Контакты (не менять без подтверждения)
-
-- Telegram: https://t.me/+37378238455  
-- Телефон: 078 238 455  
-- Адрес: ул. Alexander Bernardazzi, 64, Кишинёв  
-- Почта: fotobrelokmd@gmail.com  
-
-Контакты в `lib/contacts.ts`.
+Флаги `NEXT_PUBLIC_LAYOUT` и `NEXT_PUBLIC_CONSTRUCTOR_V2` убраны: новый макет главной (`components/LandingV2.tsx`)
+и конструктор с сохранением фото на устройстве и таймаутом загрузки теперь работают всегда.
+Прежний макет остался только в истории git (откат: `git revert`). Переменные в Vercel можно удалить.
 
 ## Структура
 
 ```
-components/Landing.tsx        # секции лендинга
 components/PhotoConstructor.tsx # пошаговый конструктор
-components/LandingV2.tsx      # новый макет главной (за флагом)
+components/LandingV2.tsx      # главная страница (7 секций)
 components/ImageCropper.tsx   # обрезка (react-easy-crop)
 public/landing.css            # дизайн-система
 app/api/order/                # PDF + Telegram (сервер)

@@ -1,7 +1,7 @@
 import { Area } from "react-easy-crop";
 
 // Функция загрузки картинки в память браузера
-export const createImage = (url: string): Promise<HTMLImageElement> =>
+const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener("load", () => resolve(image));

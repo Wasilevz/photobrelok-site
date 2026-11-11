@@ -1,7 +1,6 @@
 "use client";
 
 // Новый макет главной (Пакет 4, «Quiet Conversion»): 7 секций вместо 11.
-// Включается флагом (см. lib/layout-flag.ts). Прежний Landing.tsx не менялся.
 // Конструктор, форма заказа и API используются те же, что и раньше.
 import "./landing-v2.css";
 import Image from "next/image";
@@ -313,7 +312,7 @@ export default function LandingV2() {
             <h2 className="v2-h2">{v.builderTitle}</h2>
             <p className="v2-lead">{v.builderLead}</p>
           </div>
-          <PhotoConstructor compact />
+          <PhotoConstructor />
         </section>
 
         {/* 4. Работы и отзывы */}

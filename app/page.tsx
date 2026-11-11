@@ -1,20 +1,19 @@
-import LandingSwitch from "@/components/LandingSwitch";
+import LandingV2 from "@/components/LandingV2";
 import { faqCopy } from "@/lib/landing-copy";
+import { landingV2Copy } from "@/lib/landing-v2-copy";
 
-// Разметка FAQPage: те же вопросы, что видны на странице (в Landing вопрос с индексом 2 скрыт)
+// Разметка FAQPage: ровно те вопросы и формулировки, что видны на странице (см. блок «Вопросы» в LandingV2)
+const v = landingV2Copy.ru;
 const faqJsonLd = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqCopy.ru
-    .filter((_, i) => i !== 2)
-    .map((item) => ({
-      "@type": "Question",
-      name: item.q,
-      acceptedAnswer: { "@type": "Answer", text: item.a },
-    })),
+  mainEntity: v.faqPick.map((idx) => ({
+    "@type": "Question",
+    name: (v.faqQ as Record<number, string>)[idx] ?? faqCopy.ru[idx].q,
+    acceptedAnswer: { "@type": "Answer", text: faqCopy.ru[idx].a },
+  })),
 };
 
-// LandingSwitch показывает прежний Landing, а новый макет (LandingV2) только по флагу (lib/layout-flag.ts)
 export default function Home() {
   return (
     <>
@@ -22,7 +21,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <LandingSwitch />
+      <LandingV2 />
     </>
   );
 }

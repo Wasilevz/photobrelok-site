@@ -210,7 +210,6 @@
 .pb2 .v2-final .final-phone a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
 .pb2 .v2-final .final-phone span { color: #f5f1e8; }
 
-
 /* Старые правила центрируют и сужают заголовки, в новом макете они выровнены по левому краю */
 .pb.pb2 .v2-h1, .pb.pb2 .v2-h2, .pb.pb2 .v2-h3 { text-align: left; max-width: none; }
 .pb.pb2 .v2-h1 { margin: 0 0 14px; }
