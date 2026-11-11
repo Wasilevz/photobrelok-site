@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 import {
-  UPSELL_CAPTION_LINE,
-  appendLine,
+  withUpsell,
   getOrderRecipients,
   getTopicConfig,
   keyboard,
@@ -47,7 +46,7 @@ export async function POST(req: Request) {
     const payload = readUpsellToken((body as Record<string, unknown>).token, orderId);
     if (payload && payload.refs.length > 0) {
       const topics = getTopicConfig();
-      const caption = appendLine(payload.caption, UPSELL_CAPTION_LINE);
+      const caption = withUpsell(payload.caption);
       const edits = await Promise.allSettled(
         payload.refs.map(async (ref) => {
           const withKeyboard = topics && ref.chatId === topics.chatId && ref.threadId !== undefined;
@@ -84,7 +83,7 @@ export async function POST(req: Request) {
     }
 
     // Never forward arbitrary user-supplied text to the internal Telegram chat.
-    const text = `🔥 <b>АПСЕЛЛ! Заявка #${orderId}</b>\nКлиент добавил второй брелок со скидкой 40%.\nПоложите 2 шт. в заказ.`;
+    const text = `⚠️⚠️ <b>АПСЕЛЛ! Заявка #${orderId}</b> ⚠️⚠️\nКлиент добавил второй брелок со скидкой 40% (150 лей).\n<b>Положите 2 шт. в заказ.</b>`;
     const results = await Promise.allSettled(
       recipients.map(async ({ chatId, threadId }) => {
         const base = { chat_id: chatId, text, parse_mode: "HTML" };
