@@ -152,13 +152,8 @@ async function transition(cfg: TopicConfig, msg: TgMessage, stage: Stage, action
       to = "done";
       label = stage === "pickup" ? "🤝 Выдан" : "🚚 Отправлен";
       break;
-    case "can":
-      if (stage === "done" || stage === "cancel") throw new UserError("Заказ уже завершён");
-      to = "cancel";
-      label = "❌ Отменён";
-      break;
     case "back":
-      if (stage === "pickup" || stage === "ship" || stage === "cancel") {
+      if (stage === "pickup" || stage === "ship") {
         to = "work";
         label = "↩️ Возврат в работу";
       } else if (stage === "done") {
@@ -224,7 +219,6 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
   switch (action) {
     case "rdy":
     case "fin":
-    case "can":
     case "back":
       await transition(cfg, msg, stage, action);
       return;

@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 // Используется и формой заказа (app/api/order), и вебхуком бота (app/api/telegram-webhook).
 
 export type DeliveryMethod = "pickup" | "posta" | "novapost" | "taxi" | "later";
-export type Stage = "work" | "pickup" | "ship" | "done" | "cancel";
+export type Stage = "work" | "pickup" | "ship" | "done";
 
 export type InlineButton = { text: string; callback_data: string };
 
@@ -46,7 +46,6 @@ export function getTopicConfig(): TopicConfig | null {
     pickup: parseThread(process.env.TELEGRAM_TOPIC_PICKUP),
     ship: parseThread(process.env.TELEGRAM_TOPIC_SHIP),
     done: parseThread(process.env.TELEGRAM_TOPIC_DONE),
-    cancel: parseThread(process.env.TELEGRAM_TOPIC_CANCEL),
   };
   if (!chatId || !threads.work || !threads.pickup || !threads.ship || !threads.done) return null;
   const allowedUserIds = new Set(
@@ -280,25 +279,22 @@ export function withoutUpsell(caption: string): string {
 export function keyboard(stage: Stage, cfg: TopicConfig, upsell = false): InlineButton[][] {
   const edit: InlineButton = { text: "✏️ Доставка", callback_data: "edm" };
   const note: InlineButton = { text: "📝 Заметка", callback_data: "nt" };
-  const cancel: InlineButton[] = cfg.threads.cancel ? [{ text: "❌ Отмена", callback_data: "can" }] : [];
   // Если клиент добавил второй брелок случайно, менеджер может его убрать (с подтверждением)
   const dropUpsell: InlineButton[][] = upsell ? [[{ text: "✂️ Убрать 2-й брелок", callback_data: "ups" }]] : [];
 
   switch (stage) {
     case "work":
-      return [[{ text: "✅ Готов", callback_data: "rdy" }], [edit, note, ...cancel], ...dropUpsell];
+      return [[{ text: "✅ Готов", callback_data: "rdy" }], [edit, note], ...dropUpsell];
     case "pickup":
     case "ship":
       return [
         [{ text: stage === "pickup" ? "🤝 Выдан" : "🚚 Отправлен", callback_data: "fin" }],
         [{ text: "↩️ Назад", callback_data: "back" }, edit],
-        [note, ...cancel],
+        [note],
         ...dropUpsell,
       ];
     case "done":
       return [[{ text: "↩️ Назад", callback_data: "back" }, note]];
-    case "cancel":
-      return [[{ text: "↩️ Вернуть в работу", callback_data: "back" }]];
   }
 }
 
