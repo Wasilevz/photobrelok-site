@@ -29,6 +29,24 @@ export function webApp(): TgWebApp | undefined {
   return typeof window === "undefined" ? undefined : window.Telegram?.WebApp;
 }
 
+/**
+ * Подпись входа Telegram. Telegram кладёт её и в адрес страницы (#tgWebAppData=…) — берём оттуда сразу,
+ * не дожидаясь telegram-web-app.js (на компьютере он бывает медленным). Запоминаем при первой загрузке:
+ * скрипт Telegram потом может очистить адрес.
+ */
+const HASH_INIT_DATA = (() => {
+  if (typeof window === "undefined") return "";
+  try {
+    return new URLSearchParams(window.location.hash.slice(1)).get("tgWebAppData") ?? "";
+  } catch {
+    return "";
+  }
+})();
+
+export function initData(): string {
+  return webApp()?.initData || HASH_INIT_DATA;
+}
+
 export type CrmComment = { authorName: string; text: string; createdAt: string };
 export type CrmHistoryItem = { actorName: string; action: string; details: Record<string, unknown>; createdAt: string };
 export type OrderDetails = { order: CrmOrder; comments: CrmComment[]; history: CrmHistoryItem[] };
@@ -45,7 +63,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     cache: "no-store",
     headers: {
       ...(init.body ? { "Content-Type": "application/json" } : {}),
-      "X-Telegram-Init-Data": webApp()?.initData ?? "",
+      "X-Telegram-Init-Data": initData(),
       ...init.headers,
     },
   });

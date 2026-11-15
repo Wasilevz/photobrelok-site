@@ -10,6 +10,7 @@ import { ApiError, downloadPdf, patchOrder, useOrders, webApp } from "@/componen
 
 export default function CrmPage() {
   const [tgReady, setTgReady] = useState(false);
+  const [tgLoaded, setTgLoaded] = useState(false);
   const [query, setQuery] = useState("");
   const [doneDays, setDoneDays] = useState(30);
   const [openCode, setOpenCode] = useState<string | null>(null);
@@ -30,9 +31,15 @@ export default function CrmPage() {
     const start = tg?.initDataUnsafe?.start_param;
     if (start && /^[A-Z0-9]{6}$/.test(start)) setOpenCode(start);
     setTgReady(true);
+    setTgLoaded(true);
   };
 
   const { orders, setOrders, error, reload } = useOrders(query, doneDays, tgReady);
+
+  // Скрипт Telegram догрузился после первого запроса (медленный компьютер) — запрашиваем заново, уже со входом.
+  useEffect(() => {
+    if (tgLoaded) void reload();
+  }, [tgLoaded, reload]);
 
   const notify = useCallback((text: string) => {
     setToast(text);
@@ -99,6 +106,12 @@ export default function CrmPage() {
         {denied && (
           <div className="mx-auto mt-10 max-w-md rounded-2xl bg-white p-5 text-center">
             <p className="text-lg font-semibold">{error.message}</p>
+            {error.status === 401 && (
+              <p className="mt-2 text-sm text-[#5C564E]">
+                CRM работает только внутри Telegram: откройте @photobrelok_bot и нажмите кнопку CRM. Если на компьютере ссылка открылась в браузере —
+                обновите Telegram Desktop до последней версии (или откройте web.telegram.org).
+              </p>
+            )}
             {error.status === 403 && (
               <p className="mt-2 text-sm text-[#5C564E]">Попросите владельца добавить ваш Telegram id. Узнать его: напишите боту команду /id.</p>
             )}
