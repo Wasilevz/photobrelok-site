@@ -91,6 +91,14 @@ export function orderPrice(o: Pick<CrmOrder, "qty" | "urgent" | "price">): numbe
   return BASE_PRICE + EXTRA_PRICE * (o.qty - 1) + (o.urgent ? URGENT_PRICE : 0);
 }
 
+/** Доставка Poșta Moldovei: всегда добавляется к сумме, которую платит клиент. */
+export const POST_DELIVERY_FEE = 30;
+
+/** Сколько платит клиент: цена заказа + 30 лей за доставку почтой Молдовы. */
+export function amountDue(o: Pick<CrmOrder, "qty" | "urgent" | "price" | "method">): number {
+  return orderPrice(o) + (o.method === "posta" ? POST_DELIVERY_FEE : 0);
+}
+
 /** Себестоимость единиц, задаётся в отчётах (crm_settings). */
 export type Costs = { keychain: number; box: number };
 export const ZERO_COSTS: Costs = { keychain: 0, box: 0 };

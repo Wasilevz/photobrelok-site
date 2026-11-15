@@ -44,12 +44,12 @@ test("formData: наложенный платёж и обычное отправ
   };
   const cod = formData(o, sender);
   assert.equal(cod.cod, true);
-  assert.equal(cod.amount, 400);
-  assert.equal(cod.amountDigits, "400");
-  assert.equal(cod.amountCents, "400,00");
-  assert.equal(cod.amountWords, "Patru sute lei, zero bani");
+  assert.equal(cod.amount, 430); // 400 за брелки + 30 доставка почтой
+  assert.equal(cod.amountDigits, "430");
+  assert.equal(cod.amountCents, "430,00");
+  assert.equal(cod.amountWords, "Patru sute treizeci lei, zero bani");
   assert.deepEqual(cod.recipient, { name: "Bogdan Capatina", street: "Nadejda Neaga 14", locality: "MD-4300, CĂUȘENI", phone: "068 866 772" });
-  assert.equal(cod.declaredDigits, "400");
+  assert.equal(cod.declaredDigits, "430");
   const paid = formData({ ...o, paid: true, city: "Tănătari" }, sender);
   assert.equal(paid.cod, false);
   assert.equal(paid.declaredDigits, "");

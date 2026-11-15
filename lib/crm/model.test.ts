@@ -8,6 +8,7 @@ import {
   nextStage,
   orderBoxes,
   orderCost,
+  amountDue,
   orderPrice,
   orderToRow,
   prevStage,
@@ -156,4 +157,12 @@ test("applyPatch/rowToOrder: оплачен", () => {
   assert.equal(rowToOrder({ code: "X", paid: true }).paid, true);
   assert.equal(rowToOrder({ code: "X" }).paid, false);
   assert.deepEqual(orderToRow({ paid: true }), { paid: true });
+});
+
+test("amountDue: почтой Молдовы +30 лей за доставку, остальные — цена заказа", () => {
+  assert.equal(amountDue(order({ method: "posta", qty: 2 })), 430);
+  assert.equal(amountDue(order({ method: "posta", qty: 1 })), 280);
+  assert.equal(amountDue(order({ method: "posta", price: 500 })), 530);
+  assert.equal(amountDue(order({ method: "pickup", qty: 2 })), 400);
+  assert.equal(amountDue(order({ method: "novapost" })), 250);
 });

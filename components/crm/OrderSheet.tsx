@@ -9,7 +9,9 @@ import {
   columnOf,
   nextStage,
   BASE_PRICE,
+  POST_DELIVERY_FEE,
   URGENT_PRICE,
+  amountDue,
   orderBoxes,
   orderPrice,
   prevStage,
@@ -283,7 +285,16 @@ export default function OrderSheet({
 
               <Row
                 label="💰 Цена"
-                value={<>{orderPrice(o)} лей{o.price === null ? <span className="text-xs text-[#5C564E]"> · авто</span> : null}</>}
+                value={
+                  <>
+                    {orderPrice(o)} лей{o.price === null ? <span className="text-xs text-[#5C564E]"> · авто</span> : null}
+                    {o.method === "posta" && (
+                      <div className="text-sm font-semibold">
+                        Клиент платит: {amountDue(o)} лей <span className="font-normal text-[#5C564E]">({orderPrice(o)} + {POST_DELIVERY_FEE} доставка почтой)</span>
+                      </div>
+                    )}
+                  </>
+                }
                 editing={editing === "price"}
                 onEdit={() => startEdit("price", { price: o.price === null ? "" : String(o.price) })}
               >

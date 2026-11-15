@@ -1,5 +1,5 @@
 // Данные для почтовых бланков Poșta Moldovei: что и как вписать. Чистые функции — без PDF и базы.
-import { type CrmOrder, orderPrice } from "../model.ts";
+import { type CrmOrder, amountDue } from "../model.ts";
 
 const UNITS = ["zero", "unu", "doi", "trei", "patru", "cinci", "șase", "șapte", "opt", "nouă"];
 const TEENS = [
@@ -111,7 +111,7 @@ export type FormData = {
 /** Неоплаченный — наложенный платёж на сумму заказа; оплаченный — обычное отправление без сумм. */
 export function formData(o: FormOrder, sender: Sender): FormData {
   const cod = !o.paid;
-  const amount = orderPrice(o);
+  const amount = amountDue(o); // с доставкой почтой (+30 лей)
   const city = (o.city ?? "").toUpperCase();
   const district = o.district && o.district.toLowerCase() !== (o.city ?? "").toLowerCase() ? `r-nul ${o.district}` : "";
   const declared = cod && sender.declareValue;
