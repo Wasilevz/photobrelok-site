@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type Costs, type CrmOrder, ZERO_COSTS, orderToRow, rowToOrder } from "./model.ts";
 import type { CrmUser } from "./auth.ts";
 import type { ReportRow } from "./reports.ts";
+import type { Expense, ExpenseInput } from "./expenses.ts";
 
 const BUCKET = "order-pdfs";
 
@@ -32,7 +33,7 @@ function fail(what: string, error: { message: string } | null): never {
   throw new Error(`CRM ${what}: ${error?.message ?? "unknown error"}`);
 }
 
-type NewOrder = Omit<CrmOrder, "commentsCount" | "boxesSingle" | "boxesDouble" | "extraCost">;
+type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost">;
 
 export async function insertOrder(o: NewOrder): Promise<void> {
   const { error } = await db().from("crm_orders").insert(orderToRow(o));
@@ -137,29 +138,62 @@ export async function downloadPdf(path: string): Promise<Buffer> {
   return Buffer.from(await data.arrayBuffer());
 }
 
-/** Строки для отчёта: заказы, пришедшие с from по to (с запасом в сутки на часовой пояс — точная граница в reports.ts). */
+/**
+ * Строки для отчёта: пришедшие за период ИЛИ завершённые за период (с запасом в сутки на часовой пояс —
+ * точные границы по Кишинёву считает reports.ts).
+ */
 export async function reportRows(fromDay: string, toDay: string): Promise<ReportRow[]> {
-  const since = new Date(`${fromDay}T00:00:00Z`).getTime() - 86400_000;
-  const until = new Date(`${toDay}T00:00:00Z`).getTime() + 2 * 86400_000;
+  const since = new Date(new Date(`${fromDay}T00:00:00Z`).getTime() - 86400_000).toISOString();
+  const until = new Date(new Date(`${toDay}T00:00:00Z`).getTime() + 2 * 86400_000).toISOString();
   const rows: ReportRow[] = [];
   for (let page = 0; page < 50; page++) {
     const { data, error } = await db()
       .from("crm_orders")
-      .select("created_at, qty, urgent, price, stage, method, boxes_single, boxes_double, extra_cost")
-      .gte("created_at", new Date(since).toISOString())
-      .lt("created_at", new Date(until).toISOString())
+      .select("code, created_at, stage_changed_at, qty, urgent, price, stage, method, boxes, extra_cost")
+      .or(
+        `and(created_at.gte."${since}",created_at.lt."${until}"),and(stage.eq.done,stage_changed_at.gte."${since}",stage_changed_at.lt."${until}")`,
+      )
       .order("created_at", { ascending: true })
       .range(page * 1000, page * 1000 + 999);
     if (error) fail("report", error);
     for (const r of data ?? []) {
       rows.push({
-        createdAt: r.created_at, qty: r.qty, urgent: r.urgent, price: r.price, stage: r.stage, method: r.method,
-        boxesSingle: r.boxes_single, boxesDouble: r.boxes_double, extraCost: r.extra_cost,
+        code: r.code, createdAt: r.created_at, stageChangedAt: r.stage_changed_at, qty: r.qty, urgent: r.urgent,
+        price: r.price, stage: r.stage, method: r.method, boxes: r.boxes, extraCost: r.extra_cost,
       });
     }
     if ((data ?? []).length < 1000) break;
   }
   return rows;
+}
+
+export async function listExpenses(fromDay: string, toDay: string): Promise<Expense[]> {
+  const { data, error } = await db()
+    .from("crm_expenses")
+    .select("id, day, amount, note, created_by")
+    .gte("day", fromDay)
+    .lte("day", toDay)
+    .order("day", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1000);
+  if (error) fail("expenses", error);
+  return (data ?? []).map((r) => ({ id: r.id, day: r.day, amount: r.amount, note: r.note, createdBy: r.created_by }));
+}
+
+export async function addExpense(e: ExpenseInput, actor: CrmUser): Promise<void> {
+  const { error } = await db().from("crm_expenses").insert({ ...e, created_by: actor.name, updated_by: actor.name });
+  if (error) fail("expense add", error);
+}
+
+/** Расходы не удаляются: ошибочный ставят в 0. */
+export async function updateExpense(id: string, patch: Partial<ExpenseInput>, actor: CrmUser): Promise<boolean> {
+  const { data, error } = await db()
+    .from("crm_expenses")
+    .update({ ...patch, updated_by: actor.name, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("id");
+  if (error) fail("expense update", error);
+  return (data ?? []).length > 0;
 }
 
 /** Себестоимость единиц (лей). Пока не задана — нули. */
@@ -180,8 +214,8 @@ export function parseCosts(value: unknown): Costs | null {
   const v = value as Record<string, unknown> | null;
   if (!v || typeof v !== "object") return null;
   const out = {} as Costs;
-  for (const k of ["keychain", "boxSingle", "boxDouble"] as const) {
-    const n = v[k];
+  for (const k of ["keychain", "box"] as const) {
+    const n = v[k] ?? 0;
     if (!Number.isFinite(n) || (n as number) < 0 || (n as number) > 100000) return null;
     out[k] = Math.round((n as number) * 100) / 100;
   }

@@ -1,74 +1,93 @@
-// Отчёты CRM: заказы, брелки и суммы за период, по дням Кишинёва. Чистые функции — без базы.
+// Отчёты CRM. Чистые функции — без базы.
+// «Пришло» — заказы по дню оформления. «Прибыль» — только завершённые, по дню завершения
+// (оплата при получении), минус расходы бизнеса за период (реклама и т. п.).
 import { addDays, chisinauToday, isDay } from "../delivery-dates.ts";
 import type { DeliveryMethod } from "../order-fields.ts";
-import { type Costs, type CrmOrder, METHODS, ZERO_COSTS, orderBoxes, orderCost, orderPrice } from "./model.ts";
+import { type Costs, type CrmOrder, METHODS, ZERO_COSTS, orderBoxes, orderPrice } from "./model.ts";
 
 export type ReportRow = Pick<
   CrmOrder,
-  "createdAt" | "qty" | "urgent" | "price" | "stage" | "method" | "boxesSingle" | "boxesDouble" | "extraCost"
+  "code" | "createdAt" | "stageChangedAt" | "qty" | "urgent" | "price" | "stage" | "method" | "boxes" | "extraCost"
 >;
-type Totals = { orders: number; keychains: number; revenue: number; cost: number; profit: number };
+export type ExpenseRow = { day: string; amount: number };
+
+type Totals = { orders: number; keychains: number; revenue: number };
 export type ReportDay = Totals & { day: string };
+export type Profit = Totals & {
+  boxes: number;
+  keychainCost: number;
+  boxCost: number;
+  extraCost: number;
+  expenses: number;
+  profit: number;
+};
 export type Report = Totals & {
   from: string;
   to: string;
   avgCheck: number;
   urgent: number;
-  boxesSingle: number;
-  boxesDouble: number;
-  costs: Costs;
-  done: Totals;
   days: ReportDay[];
   methods: (Totals & { method: DeliveryMethod })[];
+  done: Profit;
+  costs: Costs;
 };
 
-const zero = (): Totals => ({ orders: 0, keychains: 0, revenue: 0, cost: 0, profit: 0 });
-function add(t: Totals, r: ReportRow, c: Costs): void {
-  const price = orderPrice(r);
-  const cost = orderCost(r, c);
+const zero = (): Totals => ({ orders: 0, keychains: 0, revenue: 0 });
+function add(t: Totals, r: ReportRow): void {
   t.orders += 1;
   t.keychains += r.qty;
-  t.revenue += price;
-  t.cost += cost;
-  t.profit += price - cost;
+  t.revenue += orderPrice(r);
 }
+const dayOf = (iso: string) => chisinauToday(new Date(iso));
 
 export const MAX_REPORT_DAYS = 400;
 
-export function buildReport(rows: ReportRow[], from: string, to: string, costs: Costs = ZERO_COSTS): Report {
+export function buildReport(
+  rows: ReportRow[],
+  from: string,
+  to: string,
+  costs: Costs = ZERO_COSTS,
+  expenses: ExpenseRow[] = [],
+): Report {
+  const inPeriod = (day: string) => day >= from && day <= to;
   const total = zero();
-  const done = zero();
   const byDay = new Map<string, ReportDay>();
   for (let d = from; d <= to; d = addDays(d, 1)) byDay.set(d, { day: d, ...zero() });
   const byMethod = new Map(METHODS.map((m) => [m, { method: m, ...zero() }]));
   let urgent = 0;
-  let boxesSingle = 0;
-  let boxesDouble = 0;
+  const done: Profit = { ...zero(), boxes: 0, keychainCost: 0, boxCost: 0, extraCost: 0, expenses: 0, profit: 0 };
+
   for (const r of rows) {
-    const day = byDay.get(chisinauToday(new Date(r.createdAt)));
-    if (!day) continue; // вне периода (граница суток по Кишинёву)
-    add(total, r, costs);
-    add(day, r, costs);
-    const m = byMethod.get(r.method);
-    if (m) add(m, r, costs);
-    if (r.stage === "done") add(done, r, costs);
-    if (r.urgent) urgent += 1;
-    const b = orderBoxes(r);
-    boxesSingle += b.single;
-    boxesDouble += b.double;
+    const day = byDay.get(dayOf(r.createdAt));
+    if (day) {
+      add(total, r);
+      add(day, r);
+      const m = byMethod.get(r.method);
+      if (m) add(m, r);
+      if (r.urgent) urgent += 1;
+    }
+    if (r.stage === "done" && inPeriod(dayOf(r.stageChangedAt))) {
+      add(done, r);
+      const boxes = orderBoxes(r).count;
+      done.boxes += boxes;
+      done.keychainCost += r.qty * costs.keychain;
+      done.boxCost += boxes * costs.box;
+      done.extraCost += r.extraCost ?? 0;
+    }
   }
+  done.expenses = expenses.filter((e) => inPeriod(e.day)).reduce((s, e) => s + e.amount, 0);
+  done.profit = done.revenue - done.keychainCost - done.boxCost - done.extraCost - done.expenses;
+
   return {
     from,
     to,
     ...total,
     avgCheck: total.orders ? Math.round(total.revenue / total.orders) : 0,
     urgent,
-    boxesSingle,
-    boxesDouble,
-    costs,
-    done,
     days: [...byDay.values()],
     methods: [...byMethod.values()].filter((m) => m.orders > 0).sort((a, b) => b.orders - a.orders),
+    done,
+    costs,
   };
 }
 

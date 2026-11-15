@@ -8,6 +8,8 @@ import {
   columnLabel,
   columnOf,
   nextStage,
+  BASE_PRICE,
+  URGENT_PRICE,
   orderBoxes,
   orderPrice,
   prevStage,
@@ -23,7 +25,7 @@ const input =
 const FIELD_NAME: Record<string, string> = {
   name: "имя", phone: "телефон", wantedDate: "дата", urgent: "срочно", method: "способ", postalCode: "индекс",
   city: "город", district: "район", street: "улица", branch: "отделение", address: "адрес", qty: "брелков", price: "цена",
-  boxesSingle: "коробки", boxesDouble: "подарочные коробки", extraCost: "доп. расходы",
+  boxes: "коробки", extraCost: "доп. расходы",
 };
 
 function Row({ label, value, onEdit, children, editing }: {
@@ -60,19 +62,6 @@ function SaveCancel({ onSave, onCancel, saving }: { onSave: () => void; onCancel
       </button>
     </div>
   );
-}
-
-function plural(n: number, one: string, few: string, many: string): string {
-  const m10 = n % 10, m100 = n % 100;
-  return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
-}
-
-function boxesLabel(o: CrmOrder): string {
-  const b = orderBoxes(o);
-  const parts = [];
-  if (b.single) parts.push(`${b.single} ${plural(b.single, "обычная", "обычные", "обычных")}`);
-  if (b.double) parts.push(`${b.double} ${plural(b.double, "подарочная", "подарочные", "подарочных")} (на 2)`);
-  return parts.join(" + ") || "без коробки";
 }
 
 export default function OrderSheet({
@@ -262,37 +251,33 @@ export default function OrderSheet({
                 onEdit={() => startEdit("price", { price: o.price === null ? "" : String(o.price) })}
               >
                 <input className={input} inputMode="numeric" placeholder={`авто: ${orderPrice({ ...o, price: null })}`} value={String(draft.price ?? "")} onChange={(e) => setDraft({ price: e.target.value.replace(/\D/g, "") })} />
+                {o.qty > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setDraft({ price: String(BASE_PRICE * o.qty + (o.urgent ? URGENT_PRICE : 0)) })}
+                    className="mt-2 min-h-[44px] w-full rounded-lg border border-[#D9D0BF] bg-white text-sm"
+                  >
+                    Разные брелки, без скидки: {BASE_PRICE} × {o.qty}{o.urgent ? ` + ${URGENT_PRICE}` : ""} = {BASE_PRICE * o.qty + (o.urgent ? URGENT_PRICE : 0)} лей
+                  </button>
+                )}
+                <p className="mt-1 text-xs text-[#5C564E]">Пусто — авто ({orderPrice({ ...o, price: null })} лей).</p>
                 <SaveCancel saving={saving} onCancel={() => setEditing(null)} onSave={() => save({ price: draft.price ? Number(draft.price) : null })} />
               </Row>
 
               <Row
-                label="🎁 Коробки"
-                value={<>{boxesLabel(o)}{orderBoxes(o).auto ? <span className="text-xs text-[#5C564E]"> · авто</span> : null}</>}
+                label="🎁 Подарочных коробок"
+                value={<>{orderBoxes(o).count}{orderBoxes(o).auto ? <span className="text-xs text-[#5C564E]"> · авто</span> : null}</>}
                 editing={editing === "boxes"}
-                onEdit={() => {
-                  const b = orderBoxes(o);
-                  startEdit("boxes", { single: String(b.single), double: String(b.double) });
-                }}
+                onEdit={() => startEdit("boxes", { boxes: String(orderBoxes(o).count) })}
               >
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="text-xs text-[#5C564E]">
-                    Обычные (по 1 брелку)
-                    <input className={input} inputMode="numeric" value={String(draft.single ?? "")} onChange={(e) => setDraft((d) => ({ ...d, single: e.target.value.replace(/\D/g, "") }))} />
-                  </label>
-                  <label className="text-xs text-[#5C564E]">
-                    Подарочные (на 2)
-                    <input className={input} inputMode="numeric" value={String(draft.double ?? "")} onChange={(e) => setDraft((d) => ({ ...d, double: e.target.value.replace(/\D/g, "") }))} />
-                  </label>
-                </div>
-                <p className="mt-1 text-xs text-[#5C564E]">Авто: 1 брелок — обычная, 2 — одна подарочная, 3 и больше — каждому обычная.</p>
-                <SaveCancel
-                  saving={saving}
-                  onCancel={() => setEditing(null)}
-                  onSave={() => save({ boxesSingle: Number(draft.single || 0), boxesDouble: Number(draft.double || 0) })}
-                />
+                <input className={input} inputMode="numeric" value={String(draft.boxes ?? "")} onChange={(e) => setDraft({ boxes: e.target.value.replace(/\D/g, "") })} />
+                <p className="mt-1 text-xs text-[#5C564E]">
+                  Авто: 1 брелок — 1 коробка, 2 одинаковых — 1 на двоих, 3 и больше — каждому своя. Разные брелки или «каждый как подарок» — впишите число.
+                </p>
+                <SaveCancel saving={saving} onCancel={() => setEditing(null)} onSave={() => save({ boxes: Number(draft.boxes || 0) })} />
                 {!orderBoxes(o).auto && (
-                  <button type="button" disabled={saving} onClick={() => save({ boxesSingle: null, boxesDouble: null })} className="mt-2 min-h-[44px] w-full rounded-lg border border-[#D9D0BF] bg-white text-sm">
-                    Вернуть авто
+                  <button type="button" disabled={saving} onClick={() => save({ boxes: null })} className="mt-2 min-h-[44px] w-full rounded-lg border border-[#D9D0BF] bg-white text-sm">
+                    Вернуть авто ({o.qty === 2 ? 1 : o.qty})
                   </button>
                 )}
               </Row>
@@ -304,7 +289,7 @@ export default function OrderSheet({
                 onEdit={() => startEdit("extraCost", { extraCost: o.extraCost ? String(o.extraCost) : "" })}
               >
                 <input className={input} inputMode="numeric" placeholder="0" value={String(draft.extraCost ?? "")} onChange={(e) => setDraft({ extraCost: e.target.value.replace(/\D/g, "") })} />
-                <p className="mt-1 text-xs text-[#5C564E]">Всё, что сверх брелков и коробок: другой брелок, доп. материалы и т. п. Учитывается в чистой прибыли.</p>
+                <p className="mt-1 text-xs text-[#5C564E]">Расходы именно этого заказа сверх брелков и коробок (другой брелок, доставка за наш счёт…). Реклама — в Отчётах → Расходы.</p>
                 <SaveCancel saving={saving} onCancel={() => setEditing(null)} onSave={() => save({ extraCost: draft.extraCost ? Number(draft.extraCost) : null })} />
               </Row>
 
