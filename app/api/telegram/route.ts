@@ -4,10 +4,10 @@ import {
   withUpsell,
   getOrderRecipients,
   getTopicConfig,
-  keyboard,
   readUpsellToken,
   tg,
 } from "@/lib/telegram-orders";
+import { crmKeyboard } from "@/lib/crm/links";
 
 const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 
@@ -61,8 +61,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Некорректный номер заказа" }, { status: 400 });
     }
 
-    // 1) Основной путь: дописываем апселл прямо в сообщение заказа. Дальше бот переносит заказ
-    //    по темам вместе с подписью, то есть апселл едет туда же, куда и сам заказ.
+    // 1) Основной путь: дописываем апселл прямо в сообщение заказа. Сообщение заказа остаётся на месте
+    //    (бот больше ничего не переносит и не удаляет).
     const payload = readUpsellToken((body as Record<string, unknown>).token, orderId);
     if (payload && payload.refs.length > 0) {
       const topics = getTopicConfig();
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
               chat_id: ref.chatId,
               message_id: ref.messageId,
               caption,
-              ...(withKeyboard ? { reply_markup: { inline_keyboard: keyboard("work", topics, true) } } : {}),
+              ...(withKeyboard && crmKeyboard(orderId).length > 0 ? { reply_markup: { inline_keyboard: crmKeyboard(orderId) } } : {}),
             });
             return "edited";
           } catch (error) {

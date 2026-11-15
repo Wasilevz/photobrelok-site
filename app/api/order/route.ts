@@ -4,6 +4,7 @@ import { jsPDF } from "jspdf";
 import { sendCapiEvents } from "@/lib/meta-capi";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 import { readOrderDate, shipBy } from "@/lib/delivery-dates";
+import { crmKeyboard } from "@/lib/crm/links";
 import { formatMdPhone, normalizeMdPhone } from "@/lib/phone";
 import {
   type DeliveryMethod,
@@ -14,7 +15,6 @@ import {
   createUpsellToken,
   withUpsell,
   isDeliveryMethod,
-  keyboard,
   type UpsellRef,
 } from "@/lib/telegram-orders";
 
@@ -315,7 +315,8 @@ export async function POST(request: Request) {
       tgFormData.append("chat_id", chatId);
       if (topics && chatId === topics.chatId) {
         tgFormData.append("message_thread_id", String(topics.threads.work));
-        tgFormData.append("reply_markup", JSON.stringify({ inline_keyboard: keyboard("work", topics, hasSecond) }));
+        const markup = crmKeyboard(orderId);
+        if (markup.length > 0) tgFormData.append("reply_markup", JSON.stringify({ inline_keyboard: markup }));
       }
       tgFormData.append("document", new Blob([pdfBuffer], { type: "application/pdf" }), `Brelok_${orderId}.pdf`);
       tgFormData.append("caption", captionText);

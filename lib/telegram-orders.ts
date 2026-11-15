@@ -219,37 +219,6 @@ export function withoutUpsell(caption: string): string {
   return lines.join("\n");
 }
 
-/* --------------------------------- Кнопки --------------------------------- */
-
-export function keyboard(stage: Stage, cfg: TopicConfig, upsell = false): InlineButton[][] {
-  const edit: InlineButton = { text: "✏️ Изменить", callback_data: "ed" };
-  const note: InlineButton = { text: "📝 Заметка", callback_data: "nt" };
-  // Если клиент добавил второй брелок случайно, менеджер может его убрать (с подтверждением)
-  const dropUpsell: InlineButton[][] = upsell ? [[{ text: "✂️ Убрать 2-й брелок", callback_data: "ups" }]] : [];
-
-  switch (stage) {
-    case "work":
-      return [[{ text: "✅ Готов", callback_data: "rdy" }], [edit, note], ...dropUpsell];
-    case "pickup":
-    case "ship":
-      return [
-        [{ text: stage === "pickup" ? "🤝 Выдан" : "🚚 Отправлен", callback_data: "fin" }],
-        [{ text: "↩️ Назад", callback_data: "back" }, edit],
-        [note],
-        ...dropUpsell,
-      ];
-    case "done":
-      return [[{ text: "↩️ Назад", callback_data: "back" }, note]];
-  }
-}
-
-export function upsellConfirmMenu(): InlineButton[][] {
-  return [
-    [{ text: "✅ Да, убрать 2-й брелок", callback_data: "upsx" }],
-    [{ text: "⬅️ Нет, оставить", callback_data: "esc" }],
-  ];
-}
-
 /* ------------------------------- Bot API ---------------------------------- */
 
 export async function tg<T = unknown>(method: string, payload: Record<string, unknown>): Promise<T> {
