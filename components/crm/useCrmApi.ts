@@ -112,8 +112,3 @@ export async function downloadPdf(code: string): Promise<void> {
     window.open(url, "_blank", "noopener");
   }
 }
-
-export async function sendPdfToMe(code: string): Promise<"sent" | "start_bot" | "no_pdf"> {
-  const { result } = await api<{ result: "sent" | "start_bot" | "no_pdf" }>(`/api/crm/orders/${code}/send-pdf`, { method: "POST" });
-  return result;
-}

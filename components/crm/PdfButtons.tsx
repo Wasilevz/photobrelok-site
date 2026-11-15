@@ -1,59 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { ApiError, downloadPdf, sendPdfToMe, webApp } from "./useCrmApi";
+import { ApiError, downloadPdf } from "./useCrmApi";
 
 /** Главное требование владельца: PDF — «нажал, открыл, сохранил». */
-export default function PdfButtons({ code, hasPdf, botUsername }: { code: string; hasPdf: boolean; botUsername?: string }) {
-  const [busy, setBusy] = useState<"down" | "send" | null>(null);
+export default function PdfButtons({ code, hasPdf }: { code: string; hasPdf: boolean }) {
+  const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  if (!hasPdf) return null;
 
-  const run = async (kind: "down" | "send") => {
-    setBusy(kind);
+  const run = async () => {
+    setBusy(true);
     setNote(null);
     try {
-      if (kind === "down") {
-        await downloadPdf(code);
-      } else {
-        const result = await sendPdfToMe(code);
-        if (result === "sent") {
-          setNote("PDF отправлен вам в личный чат с ботом");
-          webApp()?.HapticFeedback?.notificationOccurred?.("success");
-        } else if (result === "start_bot") {
-          setNote(`Бот не может написать вам первым: откройте ${botUsername ? `@${botUsername}` : "бота"}, нажмите «Start» и повторите`);
-        } else {
-          setNote("PDF этого заказа не найден");
-        }
-      }
+      await downloadPdf(code);
     } catch (e) {
       setNote(e instanceof ApiError ? e.message : "Не получилось, попробуйте ещё раз");
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-2 gap-2">
-        {hasPdf && (
-          <button
-            type="button"
-            onClick={() => run("down")}
-            disabled={busy !== null}
-            className="min-h-[52px] rounded-xl bg-[#FFC400] border-2 border-[#191715] font-bold text-base active:scale-[0.98] disabled:opacity-60"
-          >
-            {busy === "down" ? "Готовим…" : "⬇️ Скачать PDF"}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => run("send")}
-          disabled={busy !== null}
-          className={`min-h-[52px] rounded-xl bg-white border-2 border-[#191715] font-semibold text-sm active:scale-[0.98] disabled:opacity-60 ${hasPdf ? "" : "col-span-2"}`}
-        >
-          {busy === "send" ? "Отправляем…" : "📩 Прислать в Telegram"}
-        </button>
-      </div>
+    <div className="mb-4 flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={run}
+        disabled={busy}
+        className="min-h-[52px] rounded-xl bg-[#FFC400] border-2 border-[#191715] font-bold text-base active:scale-[0.98] disabled:opacity-60"
+      >
+        {busy ? "Готовим…" : "⬇️ Скачать PDF"}
+      </button>
       {note && <p className="text-sm text-[#5C564E]" role="status">{note}</p>}
     </div>
   );

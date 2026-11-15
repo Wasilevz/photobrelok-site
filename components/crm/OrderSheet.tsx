@@ -62,13 +62,11 @@ function SaveCancel({ onSave, onCancel, saving }: { onSave: () => void; onCancel
 
 export default function OrderSheet({
   code,
-  botUsername,
   onClose,
   onChanged,
   notify,
 }: {
   code: string;
-  botUsername?: string;
   onClose: () => void;
   onChanged: (order: CrmOrder) => void;
   notify: (text: string) => void;
@@ -173,9 +171,7 @@ export default function OrderSheet({
               <div className="mb-3 rounded-xl border-2 border-[#B42318] bg-white px-3 py-2 font-semibold text-[#B42318]">⚡ Срочно · +100 лей</div>
             )}
 
-            <div className="mb-4">
-              <PdfButtons code={o.code} hasPdf={!!o.pdfPath} botUsername={botUsername} />
-            </div>
+            <PdfButtons code={o.code} hasPdf={!!o.pdfPath} />
 
             <div className="rounded-2xl bg-white/60 px-3">
               <Row label="👤 Имя" value={o.name} editing={editing === "name"} onEdit={() => startEdit("name", { name: o.name })}>
@@ -254,7 +250,6 @@ export default function OrderSheet({
                 <SaveCancel saving={saving} onCancel={() => setEditing(null)} onSave={() => save({ price: draft.price ? Number(draft.price) : null })} />
               </Row>
 
-              {o.source && <Row label="📣 Источник" value={o.source} />}
               {o.lang === "ro" && <Row label="🌐 Язык" value="Клиент оформлял на румынском" />}
               {o.tgChatId !== null && o.tgMessageId !== null && String(o.tgChatId).startsWith("-100") && (
                 <Row

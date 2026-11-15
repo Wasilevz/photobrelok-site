@@ -5,6 +5,7 @@ import Script from "next/script";
 import { type Column, type CrmOrder, columnLabel, columnOf, stageOfColumn } from "@/lib/crm/model";
 import Board from "@/components/crm/Board";
 import OrderSheet from "@/components/crm/OrderSheet";
+import Reports from "@/components/crm/Reports";
 import { ApiError, downloadPdf, patchOrder, useOrders, webApp } from "@/components/crm/useCrmApi";
 
 export default function CrmPage() {
@@ -12,6 +13,7 @@ export default function CrmPage() {
   const [query, setQuery] = useState("");
   const [doneDays, setDoneDays] = useState(30);
   const [openCode, setOpenCode] = useState<string | null>(null);
+  const [reportsOpen, setReportsOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -30,7 +32,7 @@ export default function CrmPage() {
     setTgReady(true);
   };
 
-  const { orders, setOrders, bot: botUsername, error, reload } = useOrders(query, doneDays, tgReady);
+  const { orders, setOrders, error, reload } = useOrders(query, doneDays, tgReady);
 
   const notify = useCallback((text: string) => {
     setToast(text);
@@ -80,6 +82,16 @@ export default function CrmPage() {
             autoComplete="off"
             className="min-h-[40px] w-full min-w-0 rounded-full border border-[#D9D0BF] bg-white px-4 text-sm"
           />
+          {!denied && (
+            <button
+              type="button"
+              onClick={() => setReportsOpen(true)}
+              aria-label="Отчёты"
+              className="flex min-h-[40px] shrink-0 items-center gap-1 rounded-full border border-[#D9D0BF] bg-white px-3 text-sm font-medium"
+            >
+              📊<span className="hidden sm:inline">Отчёты</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -112,12 +124,13 @@ export default function CrmPage() {
       {openCode && (
         <OrderSheet
           code={openCode}
-          botUsername={botUsername}
           onClose={() => setOpenCode(null)}
           onChanged={upsert}
           notify={notify}
         />
       )}
+
+      {reportsOpen && <Reports onClose={() => setReportsOpen(false)} />}
 
       {toast && (
         <div role="status" className="fixed inset-x-4 bottom-24 z-[60] mx-auto max-w-md rounded-xl bg-[#191715] px-4 py-3 text-center text-sm text-white shadow-lg">

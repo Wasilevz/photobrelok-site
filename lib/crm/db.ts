@@ -3,6 +3,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type CrmOrder, orderToRow, rowToOrder } from "./model.ts";
 import type { CrmUser } from "./auth.ts";
+import type { ReportRow } from "./reports.ts";
 
 const BUCKET = "order-pdfs";
 
@@ -132,4 +133,26 @@ export async function downloadPdf(path: string): Promise<Buffer> {
   const { data, error } = await db().storage.from(BUCKET).download(path);
   if (error || !data) fail("pdf download", error);
   return Buffer.from(await data.arrayBuffer());
+}
+
+/** Строки для отчёта: заказы, пришедшие с from по to (с запасом в сутки на часовой пояс — точная граница в reports.ts). */
+export async function reportRows(fromDay: string, toDay: string): Promise<ReportRow[]> {
+  const since = new Date(`${fromDay}T00:00:00Z`).getTime() - 86400_000;
+  const until = new Date(`${toDay}T00:00:00Z`).getTime() + 2 * 86400_000;
+  const rows: ReportRow[] = [];
+  for (let page = 0; page < 50; page++) {
+    const { data, error } = await db()
+      .from("crm_orders")
+      .select("created_at, qty, urgent, price, stage, method")
+      .gte("created_at", new Date(since).toISOString())
+      .lt("created_at", new Date(until).toISOString())
+      .order("created_at", { ascending: true })
+      .range(page * 1000, page * 1000 + 999);
+    if (error) fail("report", error);
+    for (const r of data ?? []) {
+      rows.push({ createdAt: r.created_at, qty: r.qty, urgent: r.urgent, price: r.price, stage: r.stage, method: r.method });
+    }
+    if ((data ?? []).length < 1000) break;
+  }
+  return rows;
 }
