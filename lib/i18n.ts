@@ -1,5 +1,5 @@
 export type Locale = "ru" | "ro";
-export type DeliveryMethod = "posta" | "novapost" | "pickup" | "later";
+export type DeliveryMethod = "posta" | "novapost" | "pickup" | "taxi" | "later";
 
 export interface Dict {
   meta: {
@@ -79,6 +79,27 @@ export interface Dict {
       branchPlaceholder: string;
       fieldRequired: string;
       chooseMethod: string;
+    };
+    when: {
+      pickupTitle: string;
+      postTitle: string;
+      postHint: string;
+      tomorrow: string;
+      dayAfter: string;
+      otherDate: string;
+      otherDateLabel: string;
+      urgent: string;
+      urgentHint: string;
+      howTitle: string;
+      howSelf: string;
+      howTaxi: string;
+      addressLabel: string;
+      addressPlaceholder: string;
+      chooseDate: string;
+      phoneDigits: (n: number) => string;
+      phoneForeign: string;
+      postalCodeError: string;
+      districtChoose: string;
     };
     consent: {
       dataLabel: string;
@@ -175,11 +196,11 @@ export const translations: Record<Locale, Dict> = {
       nameLabel: "Ваше имя",
       namePlaceholder: "Анна",
       phoneLabel: "Номер телефона",
-      phonePlaceholder: "60 123 456",
+      phonePlaceholder: "69 123 456",
       phoneError: "Проверьте номер: нужно 8–15 цифр, например 60 123 456",
       nameError: "Введите имя, чтобы мы знали, как к вам обращаться",
       phoneRequired: "Введите телефон, мы свяжемся по поводу макета",
-      phoneHint: "Например: 60 123 456 или +373 60 123 456",
+      phoneHint: "8 цифр после +373, например 69 123 456",
       unsavedConfirm: "Закрыть форму? Введённые данные будут потеряны.",
       secondLabel: "Добавить второй такой же брелок — +150 лей (−40%)",
       secondHint: "С теми же фото. Доставка одна на весь заказ.",
@@ -189,9 +210,9 @@ export const translations: Record<Locale, Dict> = {
       delivery: {
         label: "Способ получения",
         posta: "Poșta Moldovei",
-        postaPrice: "30 лей · 2–4 дня",
+        postaPrice: "30 лей",
         novapost: "Nova Poshta",
-        novapostPrice: "60 лей · 2–3 дня",
+        novapostPrice: "60 лей",
         pickup: "Самовывоз",
         pickupPrice: "Бесплатно",
         pickupAddress: "ул. A. Bernardazzi 64, Кишинёв",
@@ -199,7 +220,7 @@ export const translations: Record<Locale, Dict> = {
         later: "Уточню позже",
         laterHint: "Способ получения согласуем после макета — без обязательств",
         postalCodeLabel: "Почтовый индекс",
-        postalCodePlaceholder: "MD-2001",
+        postalCodePlaceholder: "2001",
         surnameLabel: "Фамилия (нужна для почты)",
         surnamePlaceholder: "Гергич",
         streetLabel: "Улица (если есть)",
@@ -212,6 +233,27 @@ export const translations: Record<Locale, Dict> = {
         branchPlaceholder: "Например, 25",
         fieldRequired: "Заполните это поле",
         chooseMethod: "Выберите способ получения",
+      },
+      when: {
+        pickupTitle: "Когда заберёте?",
+        postTitle: "К какой дате хотите получить?",
+        postHint: "Изготовим и отправим за 1–2 рабочих дня, почта идёт до 3 дней",
+        tomorrow: "Завтра",
+        dayAfter: "Послезавтра",
+        otherDate: "Другая дата 📅",
+        otherDateLabel: "Выберите дату",
+        urgent: "⚡ Сегодня — срочно, +100 лей",
+        urgentHint: "Подтвердим в чате, успеваем ли",
+        howTitle: "Как получите?",
+        howSelf: "Заберу сам — Bernardazzi 64",
+        howTaxi: "Такси по Кишинёву — оплачиваете водителю",
+        addressLabel: "Адрес",
+        addressPlaceholder: "ул. Колумна 5, кв. 12",
+        chooseDate: "Выберите дату",
+        phoneDigits: (n) => `В номере ${n} ${n === 1 ? "цифра" : n >= 2 && n <= 4 ? "цифры" : "цифр"}, нужно 8`,
+        phoneForeign: "Номер должен быть молдавским (+373)",
+        postalCodeError: "Индекс — 4 цифры, например 2001",
+        districtChoose: "Выберите район",
       },
       consent: {
         dataLabel:
@@ -311,11 +353,11 @@ export const translations: Record<Locale, Dict> = {
       nameLabel: "Numele tău",
       namePlaceholder: "Ana",
       phoneLabel: "Număr de telefon",
-      phonePlaceholder: "069 123 456",
+      phonePlaceholder: "69 123 456",
       phoneError: "Verifică numărul: 8–15 cifre, de exemplu 069 123 456",
       nameError: "Introdu numele, ca să știm cum să ne adresăm",
       phoneRequired: "Introdu telefonul, te contactăm pentru machetă",
-      phoneHint: "De exemplu: 069 123 456 sau +373 69 123 456",
+      phoneHint: "8 cifre după +373, de exemplu 69 123 456",
       unsavedConfirm: "Închizi formularul? Datele introduse se vor pierde.",
       secondLabel: "Adaugă al doilea breloc identic — +150 lei (−40%)",
       secondHint: "Cu aceleași poze. Livrarea e una singură pentru toată comanda.",
@@ -325,9 +367,9 @@ export const translations: Record<Locale, Dict> = {
       delivery: {
         label: "Metoda de livrare",
         posta: "Poșta Moldovei",
-        postaPrice: "30 lei · 2–4 zile",
+        postaPrice: "30 lei",
         novapost: "Nova Poshta",
-        novapostPrice: "60 lei · 2–3 zile",
+        novapostPrice: "60 lei",
         pickup: "Ridicare personală",
         pickupPrice: "Gratuit",
         pickupAddress: "str. A. Bernardazzi 64, Chișinău",
@@ -335,7 +377,7 @@ export const translations: Record<Locale, Dict> = {
         later: "Spun mai târziu",
         laterHint: "Metoda o stabilim după machetă — fără obligații",
         postalCodeLabel: "Cod poștal",
-        postalCodePlaceholder: "MD-2001",
+        postalCodePlaceholder: "2001",
         surnameLabel: "Numele de familie (necesar pentru poștă)",
         surnamePlaceholder: "Popescu",
         streetLabel: "Stradă (dacă există)",
@@ -348,6 +390,27 @@ export const translations: Record<Locale, Dict> = {
         branchPlaceholder: "De exemplu, 25",
         fieldRequired: "Completează acest câmp",
         chooseMethod: "Alege metoda de livrare",
+      },
+      when: {
+        pickupTitle: "Când ridici?",
+        postTitle: "Până când vrei să primești?",
+        postHint: "Facem și expediem în 1–2 zile lucrătoare, poșta merge până la 3 zile",
+        tomorrow: "Mâine",
+        dayAfter: "Poimâine",
+        otherDate: "Altă dată 📅",
+        otherDateLabel: "Alege data",
+        urgent: "⚡ Azi — urgent, +100 lei",
+        urgentHint: "Confirmăm în chat dacă reușim",
+        howTitle: "Cum primești?",
+        howSelf: "Ridic eu — Bernardazzi 64",
+        howTaxi: "Taxi prin Chișinău — plătești șoferului",
+        addressLabel: "Adresa",
+        addressPlaceholder: "str. Columna 5, ap. 12",
+        chooseDate: "Alege data",
+        phoneDigits: (n) => `Numărul are ${n} ${n === 1 ? "cifră" : "cifre"}, trebuie 8`,
+        phoneForeign: "Numărul trebuie să fie din Moldova (+373)",
+        postalCodeError: "Codul poștal — 4 cifre, de exemplu 2001",
+        districtChoose: "Alege raionul",
       },
       consent: {
         dataLabel:

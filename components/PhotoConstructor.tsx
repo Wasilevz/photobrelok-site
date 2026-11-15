@@ -440,7 +440,7 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
     setSelectedSlot((prev) => (prev === index ? null : prev));
   };
 
-  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string }) => {
+  const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string; wantedDate: string; urgent: boolean }) => {
     setIsSubmitting(true);
     try {
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -532,6 +532,8 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
           marketingConsent: userData.marketingConsent,
           second: userData.second,
           website: userData.website,
+          wantedDate: userData.wantedDate,
+          urgent: userData.urgent,
         }),
       });
 

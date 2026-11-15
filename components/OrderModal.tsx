@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useLanguage } from "@/context/LanguageContext";
 import { DeliveryMethod } from "@/lib/i18n";
+import WantedDatePicker, { type WantedValue } from "@/components/WantedDatePicker";
+import { earliestDate } from "@/lib/delivery-dates";
+import { formatMdPhone, normalizeMdPhone } from "@/lib/phone";
+import { MD_DISTRICTS } from "@/lib/md-districts";
 
 export interface DeliveryData {
   method: DeliveryMethod;
@@ -11,6 +15,7 @@ export interface DeliveryData {
   city?: string;
   district?: string;
   novaPostBranch?: string;
+  address?: string;
 }
 
 export interface UploadProgress {
@@ -22,16 +27,16 @@ export interface UploadProgress {
 interface OrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string }) => void;
+  onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string; wantedDate: string; urgent: boolean }) => void;
   isSubmitting: boolean;
   uploadProgress?: UploadProgress | null;
 }
 
-type FieldKey = 'name' | 'phone' | 'surname' | 'postalCode' | 'city' | 'district' | 'novaPostBranch' | 'consent';
+type FieldKey = 'name' | 'phone' | 'surname' | 'postalCode' | 'city' | 'district' | 'novaPostBranch' | 'when' | 'taxiAddress' | 'consent';
 type Errors = Partial<Record<FieldKey, string>>;
 
 // Порядок совпадает с порядком полей на экране: фокус уходит на первое с ошибкой
-const FIELD_ORDER: FieldKey[] = ['name', 'phone', 'surname', 'postalCode', 'district', 'city', 'novaPostBranch', 'consent'];
+const FIELD_ORDER: FieldKey[] = ['name', 'phone', 'surname', 'postalCode', 'district', 'city', 'novaPostBranch', 'when', 'taxiAddress', 'consent'];
 const FIELD_ID: Record<FieldKey, string> = {
   name: 'customer-name',
   phone: 'customer-phone',
@@ -40,6 +45,8 @@ const FIELD_ID: Record<FieldKey, string> = {
   district: 'district',
   city: 'city',
   novaPostBranch: 'novapost-branch',
+  when: 'wanted-date',
+  taxiAddress: 'taxi-address',
   consent: 'consent-data',
 };
 
@@ -66,13 +73,18 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const [phone, setPhone] = useState('');
 
   // Самовывоз по умолчанию — форма не требует адреса, конверсия выше
-  const [method, setMethod] = useState<DeliveryMethod>('pickup');
+  const [method, setMethodState] = useState<'pickup' | 'posta' | 'novapost'>('pickup');
   const [surname, setSurname] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('');
   const [novaPostBranch, setNovaPostBranch] = useState('');
+
+  // Желаемая дата; при срочном заказе — как получит: сам или такси
+  const [when, setWhen] = useState<WantedValue | null>(null);
+  const [urgentHow, setUrgentHow] = useState<'self' | 'taxi'>('self');
+  const [taxiAddress, setTaxiAddress] = useState('');
 
   const [dataConsent, setDataConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
@@ -87,6 +99,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const isDirty =
     name.trim() !== '' || phone.trim() !== '' || surname !== '' || postalCode !== '' ||
     street !== '' || city !== '' || district !== '' || novaPostBranch !== '' ||
+    when !== null || taxiAddress !== '' ||
     dataConsent || marketingConsent || second;
 
   // Закрытие: не во время отправки; если что-то введено — спрашиваем, чтобы не потерять данные
@@ -133,12 +146,26 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const clearError = (key: FieldKey) =>
     setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
 
-  const phoneProblem = (value: string): string | undefined => {
-    if (!value.trim()) return dict.orderModal.phoneRequired;
-    const cleaned = value.replace(/[\s\-().]/g, '');
-    if (!/^\+?\d{8,15}$/.test(cleaned)) return dict.orderModal.phoneError;
-    return undefined;
+  const w = dict.orderModal.when;
+
+  // Смена способа: срочность — только у самовывоза, дата не может стать раньше ближайшей для нового способа
+  const setMethod = (next: 'pickup' | 'posta' | 'novapost') => {
+    setMethodState(next);
+    if (when && ((next !== 'pickup' && when.urgent) || (!when.urgent && when.date < earliestDate(next, new Date())))) {
+      setWhen(null);
+    }
+    if (next !== 'pickup') setUrgentHow('self');
   };
+
+  const phoneProblem = (value: string): string | undefined => {
+    const check = normalizeMdPhone(value);
+    if (check.ok) return undefined;
+    if (check.reason === 'empty') return dict.orderModal.phoneRequired;
+    if (check.reason === 'foreign') return w.phoneForeign;
+    return w.phoneDigits(check.count);
+  };
+
+  const isTaxi = method === 'pickup' && !!when?.urgent && urgentHow === 'taxi';
 
   const validate = (): Errors => {
     const next: Errors = {};
@@ -148,10 +175,13 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
     if (method === 'posta') {
       if (!surname.trim()) next.surname = d.fieldRequired;
       if (!postalCode.trim()) next.postalCode = d.fieldRequired;
+      else if (!/^\d{4}$/.test(postalCode.trim())) next.postalCode = w.postalCodeError;
       if (!district.trim()) next.district = d.fieldRequired;
       if (!city.trim()) next.city = d.fieldRequired;
     }
     if (method === 'novapost' && !novaPostBranch.trim()) next.novaPostBranch = d.fieldRequired;
+    if (!when) next.when = w.chooseDate;
+    if (isTaxi && !taxiAddress.trim()) next.taxiAddress = d.fieldRequired;
     if (!dataConsent) next.consent = dict.orderModal.consent.requiredHint;
     return next;
   };
@@ -176,13 +206,17 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
         ? { method, surname: surname.trim(), postalCode: postalCode.trim(), street: street.trim(), city: city.trim(), district: district.trim() }
         : method === 'novapost'
           ? { method, novaPostBranch: novaPostBranch.trim() }
-          : { method };
+          : isTaxi
+            ? { method: 'taxi', address: taxiAddress.trim() }
+            : { method };
 
     const fullName = method === 'posta' && surname.trim()
       ? `${name.trim()} ${surname.trim()}`
       : name.trim();
 
-    onSubmit({ name: fullName, phone: phone.trim(), delivery, marketingConsent, second, website });
+    const phoneCheck = normalizeMdPhone(phone);
+    const fullPhone = phoneCheck.ok ? formatMdPhone(phoneCheck.digits) : phone.trim();
+    onSubmit({ name: fullName, phone: fullPhone, delivery, marketingConsent, second, website, wantedDate: when!.date, urgent: when!.urgent });
   };
 
   const methodCardClass =
@@ -231,8 +265,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             <label htmlFor="customer-name" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.nameLabel}</label>
             <input
               id="customer-name"
-              name="name"
-              autoComplete={method === 'posta' ? 'given-name' : 'name'}
+              name="f_cn"
+              autoComplete="off"
               enterKeyHint="next"
               type="text"
               required
@@ -249,10 +283,12 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
 
           <div>
             <label htmlFor="customer-phone" className="block text-[#3D3832] text-sm mb-1">{dict.orderModal.phoneLabel}</label>
+            <div className="flex items-stretch">
+            <span aria-hidden="true" className="flex items-center px-3 rounded-l-lg border border-r-0 border-[#D9D0BF] bg-[#F5F1E8] text-base text-[#3D3832] font-medium">+373</span>
             <input
               id="customer-phone"
-              name="phone"
-              autoComplete="tel"
+              name="f_cp"
+              autoComplete="off"
               inputMode="tel"
               enterKeyHint="next"
               type="tel"
@@ -265,9 +301,11 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
               }}
               aria-invalid={!!errors.phone}
               aria-describedby={describedBy('phone', 'customer-phone-hint')}
-              className={inputClass(!!errors.phone)}
+              aria-label={`${dict.orderModal.phoneLabel} +373`}
+              className={`${inputClass(!!errors.phone)} rounded-l-none`}
               placeholder={dict.orderModal.phonePlaceholder}
             />
+            </div>
             <p id="customer-phone-hint" className="text-[#5C564E] text-xs mt-1">{dict.orderModal.phoneHint}</p>
             <FieldError id="customer-phone-err" message={errors.phone} />
           </div>
@@ -289,8 +327,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                   <label htmlFor="surname" className="block text-[#5C564E] text-sm mb-1">{d.surnameLabel}</label>
                   <input
                     id="surname"
-                    name="surname"
-                    autoComplete="family-name"
+                    name="f_sn"
+                    autoComplete="off"
                     enterKeyHint="next"
                     type="text"
                     required
@@ -303,41 +341,49 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                   />
                   <FieldError id="surname-err" message={errors.surname} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-3">
                   <div>
                     <label htmlFor="postal-code" className="block text-[#5C564E] text-sm mb-1">{d.postalCodeLabel}</label>
+                    <div className="flex items-stretch">
+                    <span aria-hidden="true" className="flex items-center px-2.5 rounded-l-lg border border-r-0 border-[#D9D0BF] bg-[#F5F1E8] text-base text-[#3D3832] font-medium">MD-</span>
                     <input
                       id="postal-code"
-                      name="postalCode"
-                      autoComplete="postal-code"
+                      name="f_pc"
+                      autoComplete="off"
+                      inputMode="numeric"
+                      maxLength={4}
                       enterKeyHint="next"
                       type="text"
                       required
                       value={postalCode}
-                      onChange={(e) => { setPostalCode(e.target.value); clearError('postalCode'); }}
+                      onChange={(e) => { setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 4)); clearError('postalCode'); }}
                       aria-invalid={!!errors.postalCode}
                       aria-describedby={describedBy('postalCode')}
                       placeholder={d.postalCodePlaceholder}
-                      className={smallInput('postalCode')}
+                      className={`${smallInput('postalCode')} rounded-l-none`}
                     />
+                    </div>
                     <FieldError id="postal-code-err" message={errors.postalCode} />
                   </div>
                   <div>
                     <label htmlFor="district" className="block text-[#5C564E] text-sm mb-1">{d.districtLabel}</label>
-                    <input
+                    <select
                       id="district"
-                      name="district"
-                      autoComplete="address-level1"
-                      enterKeyHint="next"
-                      type="text"
+                      name="f_ds"
+                      autoComplete="off"
                       required
                       value={district}
                       onChange={(e) => { setDistrict(e.target.value); clearError('district'); }}
                       aria-invalid={!!errors.district}
                       aria-describedby={describedBy('district')}
-                      placeholder={d.districtPlaceholder}
-                      className={smallInput('district')}
-                    />
+                      className={`${smallInput('district')} appearance-auto`}
+                    >
+                      <option value="" disabled>{w.districtChoose}</option>
+                      {MD_DISTRICTS.map((item) => {
+                        const label = lang === 'ru' ? item.ru : item.ro;
+                        return <option key={item.ro} value={label}>{label}</option>;
+                      })}
+                    </select>
                     <FieldError id="district-err" message={errors.district} />
                   </div>
                 </div>
@@ -346,8 +392,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                     <label htmlFor="city" className="block text-[#5C564E] text-sm mb-1">{d.cityLabel}</label>
                     <input
                       id="city"
-                      name="city"
-                      autoComplete="address-level2"
+                      name="f_ct"
+                      autoComplete="off"
                       enterKeyHint="next"
                       type="text"
                       required
@@ -364,8 +410,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                     <label htmlFor="street" className="block text-[#5C564E] text-sm mb-1">{d.streetLabel}</label>
                     <input
                       id="street"
-                      name="street"
-                      autoComplete="address-line1"
+                      name="f_st"
+                      autoComplete="off"
                       enterKeyHint="done"
                       type="text"
                       value={street}
@@ -389,7 +435,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                 <label htmlFor="novapost-branch" className="block text-[#5C564E] text-sm mb-1">{d.branchLabel}</label>
                 <input
                   id="novapost-branch"
-                  name="novaPostBranch"
+                  name="f_nb"
+                  autoComplete="off"
                   inputMode="numeric"
                   enterKeyHint="done"
                   type="text"
@@ -419,6 +466,51 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             )}
           </div>
         </fieldset>
+
+        <WantedDatePicker
+          key={method}
+          id={FIELD_ID.when}
+          method={method}
+          value={when}
+          onChange={(v) => { setWhen(v); clearError('when'); if (!v?.urgent) setUrgentHow('self'); }}
+          error={errors.when}
+        />
+
+        {method === 'pickup' && when?.urgent && (
+          <fieldset className="min-w-0 border-0 p-0 m-0 -mt-1">
+            <legend className="block text-[#3D3832] text-sm mb-2 p-0">{w.howTitle}</legend>
+            <div className="flex flex-col gap-2">
+              <label className={methodCardClass}>
+                <input type="radio" name="f_how" value="self" checked={urgentHow === 'self'} onChange={() => setUrgentHow('self')} className="sr-only" />
+                <span className="text-[#191715] font-medium text-sm">{w.howSelf}</span>
+              </label>
+              <label className={methodCardClass}>
+                <input type="radio" name="f_how" value="taxi" checked={urgentHow === 'taxi'} onChange={() => setUrgentHow('taxi')} className="sr-only" />
+                <span className="text-[#191715] font-medium text-sm">{w.howTaxi}</span>
+              </label>
+              {urgentHow === 'taxi' && (
+                <div className="pl-1 pr-1 pt-1">
+                  <label htmlFor="taxi-address" className="block text-[#5C564E] text-sm mb-1">{w.addressLabel}</label>
+                  <input
+                    id="taxi-address"
+                    name="f_ta"
+                    autoComplete="off"
+                    enterKeyHint="done"
+                    type="text"
+                    maxLength={150}
+                    value={taxiAddress}
+                    onChange={(e) => { setTaxiAddress(e.target.value); clearError('taxiAddress'); }}
+                    aria-invalid={!!errors.taxiAddress}
+                    aria-describedby={describedBy('taxiAddress')}
+                    placeholder={w.addressPlaceholder}
+                    className={smallInput('taxiAddress')}
+                  />
+                  <FieldError id="taxi-address-err" message={errors.taxiAddress} />
+                </div>
+              )}
+            </div>
+          </fieldset>
+        )}
 
         <label className="flex items-start gap-3 cursor-pointer min-h-[44px] rounded-xl border border-[#D9D0BF] bg-white px-3 py-3 has-[:checked]:border-[#191715] has-[:checked]:bg-[#FFC400]/25">
           <input
