@@ -223,10 +223,8 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         {/* Honeypot от ботов: скрыт от людей, скринридеров и автозаполнения */}
         <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-          <label>
-            Website
-            <input type="text" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
-          </label>
+          {/* Имя поля без смысла для автозаполнения: «website» браузеры заполняли у живых клиентов */}
+          <input type="text" name="hp_x7q" id="hp_x7q" tabIndex={-1} autoComplete="new-password" data-lpignore="true" data-1p-ignore value={website} onChange={(e) => setWebsite(e.target.value)} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
