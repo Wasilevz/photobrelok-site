@@ -21,7 +21,8 @@ export default function CrmPage() {
   // Страница запустилась — аварийная плашка из app/legacy-script.ts больше не нужна.
   useEffect(() => {
     (window as Window & { __crmMounted?: boolean }).__crmMounted = true;
-    document.getElementById("crm-fatal")?.remove();
+    const banner = document.getElementById("crm-fatal");
+    if (banner) banner.style.display = "none";
   }, []);
 
   // Вне Telegram (локальная разработка) скрипт Telegram может не загрузиться — не ждём его дольше 2 секунд.
