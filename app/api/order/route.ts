@@ -124,10 +124,9 @@ export async function POST(request: Request) {
     const { name, phone, photoUrls, lang, delivery, marketingConsent, website, source, second } = body as Record<string, unknown>;
     if (lang === "ro") isRo = true;
 
-    // Honeypot: человек это поле не видит и не заполняет. Боту отвечаем «успехом», ничего не отправляя.
-    if (typeof website === "string" && website.trim() !== "") {
-      return NextResponse.json({ success: true, orderId: generateOrderId() });
-    }
+    // Honeypot: скрытое поле. Раньше заказ с ним молча отбрасывался, но автозаполнение браузера
+    // заполняло его у живых клиентов, и заказы терялись. Теперь заказ доходит с пометкой для менеджера.
+    const honeypotHit = typeof website === "string" && website.trim() !== "";
 
     if (typeof name !== "string" || !name.trim() || name.length > 120) {
       return NextResponse.json({ error: t("Имя клиента обязательно", "Numele este obligatoriu") }, { status: 400 });
@@ -275,7 +274,9 @@ export async function POST(request: Request) {
       deliveryBlock: deliveryText,
     });
     // Второй брелок, выбранный в форме, сразу попадает в подпись так же, как при добавлении на странице «Спасибо»
-    const captionText = hasSecond ? withUpsell(baseCaption) : baseCaption;
+    const fullCaption = hasSecond ? withUpsell(baseCaption) : baseCaption;
+    const captionText = honeypotHit ? `${fullCaption}\n🤖 Заполнено скрытое поле — проверьте, не спам ли` : fullCaption;
+    if (honeypotHit) console.warn(`Order ${orderId}: honeypot field filled, delivering with a warning`);
 
     // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
     let deliveredToAtLeastOne = false;
