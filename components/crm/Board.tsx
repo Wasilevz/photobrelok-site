@@ -29,6 +29,7 @@ function OrderListItem({
         <div className="flex items-baseline gap-2">
           <span className="font-mono text-xs text-[#5C564E]">#{order.code}</span>
           {order.urgent && <span className="text-xs font-bold text-[#B42318]">⚡ СРОЧНО</span>}
+          {order.paid && <span className="rounded bg-[#ECFDF3] px-1.5 text-xs font-bold text-[#067647]">💳 ОПЛАЧЕН</span>}
         </div>
         <div className="truncate font-semibold">{order.name}</div>
         <div className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-[#3D3832]">

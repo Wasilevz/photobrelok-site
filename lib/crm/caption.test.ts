@@ -11,7 +11,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Виктория", phone: "+373 79 797 981", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 2, price: null, lang: "ro", source: "instagram", pdfPath: null, tgChatId: -1004393765609, tgMessageId: 126,
-    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, ...p,
+    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, ...p,
   };
 }
 
@@ -63,4 +63,16 @@ test("qty set by hand: 2 without upsell block gets a line, 1 removes the block",
   assert.ok(!single.includes("2 БРЕЛКА"));
   assert.ok(!single.includes("ВТОРОЙ БРЕЛОК"));
   assert.ok(single.includes("📝 заметка"));
+});
+
+test("оплачен: строка под стадией — для почты «наложенный платёж не оформлять», для выдачи «деньги не брать»; снятие убирает строку", () => {
+  const post = buildCrmCaption(order({ paid: true, method: "posta", postalCode: "MD-2001", city: "Chișinău", district: "Chișinău" }));
+  const lines = post.split("\n");
+  const stage = lines.findIndex((l) => l.startsWith("📌 Стадия:"));
+  assert.equal(lines[stage + 1], "💳 ОПЛАЧЕН на карту — наложенный платёж НЕ оформлять");
+  const pickup = buildCrmCaption(order({ paid: true }));
+  assert.ok(pickup.includes("💳 ОПЛАЧЕН на карту — деньги с клиента НЕ брать"));
+  const unpaid = buildCrmCaption(order({ paid: false, tgCaption: pickup }));
+  assert.ok(!unpaid.includes("ОПЛАЧЕН"));
+  assert.equal(buildCrmCaption(order({ paid: true, tgCaption: pickup })).match(/ОПЛАЧЕН/g)?.length, 1);
 });

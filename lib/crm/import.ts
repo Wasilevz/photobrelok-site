@@ -14,7 +14,7 @@ type ExportMessage = {
   text?: string | ExportText[];
 };
 
-export type ImportedOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost"> & {
+export type ImportedOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid"> & {
   comments: { author: string; text: string; at: string }[];
 };
 

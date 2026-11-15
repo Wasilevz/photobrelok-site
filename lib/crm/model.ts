@@ -52,6 +52,8 @@ export type CrmOrder = {
   boxes: number | null;
   /** Прочие расходы по заказу (лей), например другой тип брелка. */
   extraCost: number | null;
+  /** Оплачен заранее на карту: при выдаче/отправке деньги не брать, наложенный платёж не оформлять. */
+  paid: boolean;
 };
 
 export function columnOf(o: Pick<CrmOrder, "stage" | "method">): Column {
@@ -122,12 +124,12 @@ export function sortOrders(list: CrmOrder[]): CrmOrder[] {
 export type OrderPatch = Partial<
   Pick<
     CrmOrder,
-    "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage" | "boxes" | "extraCost"
+    "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage" | "boxes" | "extraCost" | "paid"
   >
 >;
 
 const PATCH_KEYS: (keyof OrderPatch)[] = [
-  "name", "phone", "wantedDate", "urgent", "method", "postalCode", "city", "district", "street", "branch", "address", "qty", "price", "stage", "boxes", "extraCost",
+  "name", "phone", "wantedDate", "urgent", "method", "postalCode", "city", "district", "street", "branch", "address", "qty", "price", "stage", "boxes", "extraCost", "paid",
 ];
 const TEXT_LIMIT: Partial<Record<keyof OrderPatch, number>> = {
   postalCode: 20, city: 80, district: 80, street: 100, branch: 40, address: 150,
@@ -169,6 +171,9 @@ export function applyPatch(current: CrmOrder, patch: OrderPatch, now: Date): Pat
         break;
       case "urgent":
         next.urgent = value === true;
+        break;
+      case "paid":
+        next.paid = value === true;
         break;
       case "method":
         if (!METHODS.includes(value as DeliveryMethod)) return fail("Неизвестный способ получения");
@@ -252,13 +257,14 @@ const COLUMN_MAP: [keyof CrmOrder, string][] = [
   ["postalCode", "postal_code"], ["city", "city"], ["district", "district"], ["street", "street"], ["branch", "branch"],
   ["address", "address"], ["qty", "qty"], ["price", "price"], ["lang", "lang"], ["source", "source"], ["pdfPath", "pdf_path"],
   ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["flags", "flags"],
-  ["boxes", "boxes"], ["extraCost", "extra_cost"],
+  ["boxes", "boxes"], ["extraCost", "extra_cost"], ["paid", "paid"],
 ];
 
 export function rowToOrder(row: Record<string, unknown>): CrmOrder {
   const o = {} as Record<string, unknown>;
   for (const [camel, snake] of COLUMN_MAP) o[camel] = row[snake] ?? null;
   o.urgent = o.urgent === true;
+  o.paid = o.paid === true;
   o.qty = typeof o.qty === "number" ? o.qty : 1;
   o.flags = Array.isArray(o.flags) ? o.flags : [];
   o.lang = o.lang === "ro" ? "ro" : "ru";

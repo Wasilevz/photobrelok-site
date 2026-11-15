@@ -17,6 +17,7 @@ import {
 import { ApiError, type OrderDetails, api, patchOrder, webApp } from "./useCrmApi";
 import { METHOD_LABEL, dateLabel, whenLabel } from "./format";
 import DeliveryEditor from "./DeliveryEditor";
+import { isPostMethod } from "@/lib/delivery-dates";
 import PdfButtons from "./PdfButtons";
 
 const input =
@@ -25,7 +26,7 @@ const input =
 const FIELD_NAME: Record<string, string> = {
   name: "имя", phone: "телефон", wantedDate: "дата", urgent: "срочно", method: "способ", postalCode: "индекс",
   city: "город", district: "район", street: "улица", branch: "отделение", address: "адрес", qty: "брелков", price: "цена",
-  boxes: "коробки", extraCost: "доп. расходы",
+  boxes: "коробки", extraCost: "доп. расходы", paid: "оплата",
 };
 
 function Row({ label, value, onEdit, children, editing }: {
@@ -173,6 +174,36 @@ export default function OrderSheet({
           <>
             {o.urgent && (
               <div className="mb-3 rounded-xl border-2 border-[#B42318] bg-white px-3 py-2 font-semibold text-[#B42318]">⚡ Срочно · +100 лей</div>
+            )}
+
+            {o.paid ? (
+              <div className="mb-3 rounded-xl border-2 border-[#067647] bg-[#ECFDF3] px-3 py-2 text-[#054F31]">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="text-lg font-bold">💳 ОПЛАЧЕН на карту</div>
+                    <div className="text-sm font-medium">
+                      {isPostMethod(o.method) ? "Наложенный платёж НЕ оформлять — только изготовить и отправить." : "Деньги с клиента НЕ брать — только изготовить и отдать."}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => window.confirm("Снять отметку «оплачен»? Клиент будет платить при получении.") && void save({ paid: false })}
+                    className="min-h-[40px] shrink-0 rounded-lg border border-[#067647]/40 bg-white px-2 text-xs text-[#3D3832]"
+                  >
+                    Снять
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => void save({ paid: true })}
+                className="mb-3 min-h-[44px] w-full rounded-xl border border-dashed border-[#5C564E] bg-white/60 text-sm text-[#3D3832]"
+              >
+                💳 Клиент оплатил на карту — отметить
+              </button>
             )}
 
             <PdfButtons code={o.code} hasPdf={!!o.pdfPath} />

@@ -10,6 +10,7 @@ import { type CrmOrder, stageLabel, toFields } from "./model.ts";
 const LIMIT = 1000; // у Telegram лимит подписи 1024
 const STAGE_PREFIX = "📌 Стадия:";
 const QTY_PREFIX = "🔑 Брелков:";
+const PAID_PREFIX = "💳 ОПЛАЧЕН";
 const NOT_SAVED = "⚠️ Не записан в CRM";
 
 export function buildCrmCaption(o: CrmOrder): string {
@@ -20,12 +21,15 @@ export function buildCrmCaption(o: CrmOrder): string {
   const shipBy = o.wantedDate && isPostMethod(o.method) ? addDays(o.wantedDate, -3) : undefined;
   const lines = setFieldLines(base, toFields(o), shipBy)
     .split("\n")
-    .filter((l) => !l.startsWith(STAGE_PREFIX) && !l.startsWith(QTY_PREFIX) && !l.startsWith(NOT_SAVED));
+    .filter((l) => !l.startsWith(STAGE_PREFIX) && !l.startsWith(QTY_PREFIX) && !l.startsWith(PAID_PREFIX) && !l.startsWith(NOT_SAVED));
 
   // Сразу под заголовком (или под блоком второго брелка) — стадия и количество.
   const rules = lines.map((l, i) => (l.startsWith("━") ? i : -1)).filter((i) => i !== -1);
   const headerEnd = rules.length >= 2 ? rules[1] + 1 : 1;
-  const top = [`${STAGE_PREFIX} ${stageLabel(o.stage, o.method)}`, ...(showQty ? [`${QTY_PREFIX} ${o.qty}`] : [])];
+  const paid = o.paid
+    ? [`${PAID_PREFIX} на карту — ${isPostMethod(o.method) ? "наложенный платёж НЕ оформлять" : "деньги с клиента НЕ брать"}`]
+    : [];
+  const top = [`${STAGE_PREFIX} ${stageLabel(o.stage, o.method)}`, ...paid, ...(showQty ? [`${QTY_PREFIX} ${o.qty}`] : [])];
   lines.splice(headerEnd, 0, ...top);
 
   // Не влезает — выкидываем самые старые строки истории, потом режем хвост.

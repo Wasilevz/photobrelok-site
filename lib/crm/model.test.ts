@@ -26,7 +26,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Мария", phone: "+373 60 024 571", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 1, price: null, lang: "ru", source: null, pdfPath: null, tgChatId: null, tgMessageId: null, tgCaption: null,
-    flags: [], commentsCount: 0, boxes: null, extraCost: null, ...p,
+    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, ...p,
   };
 }
 
@@ -148,4 +148,12 @@ test("rowToOrder/orderToRow: новые поля", () => {
   assert.equal(o.boxes, 2);
   assert.equal(o.extraCost, 10);
   assert.deepEqual(orderToRow({ boxes: 1, extraCost: null }), { boxes: 1, extra_cost: null });
+});
+
+test("applyPatch/rowToOrder: оплачен", () => {
+  const r = applyPatch(order(), { paid: true }, now);
+  assert.ok(r.ok && r.next.paid === true && r.changed.includes("paid"));
+  assert.equal(rowToOrder({ code: "X", paid: true }).paid, true);
+  assert.equal(rowToOrder({ code: "X" }).paid, false);
+  assert.deepEqual(orderToRow({ paid: true }), { paid: true });
 });
