@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const doneDays = Math.min(Math.max(Number(url.searchParams.get("doneDays")) || 30, 1), 3650);
   try {
     const orders = await listOrders({ doneDays, q: url.searchParams.get("q") ?? undefined });
-    return ok({ orders, me: user });
+    return ok({ orders, me: user, bot: (process.env.TELEGRAM_BOT_USERNAME ?? "").replace(/^@/, "") });
   } catch (error) {
     return crash("list", error);
   }

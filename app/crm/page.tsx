@@ -1,0 +1,129 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import Script from "next/script";
+import { type Column, type CrmOrder, columnLabel, columnOf, stageOfColumn } from "@/lib/crm/model";
+import Board from "@/components/crm/Board";
+import OrderSheet from "@/components/crm/OrderSheet";
+import { ApiError, downloadPdf, patchOrder, useOrders, webApp } from "@/components/crm/useCrmApi";
+
+export default function CrmPage() {
+  const [tgReady, setTgReady] = useState(false);
+  const [query, setQuery] = useState("");
+  const [doneDays, setDoneDays] = useState(30);
+  const [openCode, setOpenCode] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Вне Telegram (локальная разработка) скрипт Telegram может не загрузиться — не ждём его дольше 2 секунд.
+  useEffect(() => {
+    const t = setTimeout(() => setTgReady(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const onTelegramLoaded = () => {
+    const tg = webApp();
+    tg?.ready?.();
+    tg?.expand?.();
+    const start = tg?.initDataUnsafe?.start_param;
+    if (start && /^[A-Z0-9]{6}$/.test(start)) setOpenCode(start);
+    setTgReady(true);
+  };
+
+  const { orders, setOrders, bot: botUsername, error, reload } = useOrders(query, doneDays, tgReady);
+
+  const notify = useCallback((text: string) => {
+    setToast(text);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  const upsert = useCallback(
+    (order: CrmOrder) => setOrders((list) => (list ? list.map((o) => (o.code === order.code ? order : o)) : list)),
+    [setOrders],
+  );
+
+  const download = async (code: string) => {
+    try {
+      await downloadPdf(code);
+    } catch (e) {
+      notify(e instanceof ApiError ? e.message : "Не удалось скачать PDF");
+    }
+  };
+
+  const drop = async (code: string, column: Column) => {
+    try {
+      const { order } = await patchOrder(code, { stage: stageOfColumn(column) });
+      upsert(order);
+      if (columnOf(order) !== column) notify(`Способ доставки — ${order.method === "pickup" || order.method === "taxi" ? "выдача" : "почта"}, заказ в «${columnLabel(columnOf(order))}»`);
+    } catch (e) {
+      notify(e instanceof ApiError ? e.message : "Не получилось перенести заказ");
+      void reload();
+    }
+  };
+
+  const denied = error && (error.status === 401 || error.status === 403);
+
+  return (
+    <>
+      <Script src="https://telegram.org/js/telegram-web-app.js" strategy="afterInteractive" onLoad={onTelegramLoaded} />
+
+      <header className="sticky top-0 z-20 border-b border-[#E5DCCB] bg-[#F5F1E8]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-2.5">
+          <div className="shrink-0 font-bold">PHOTOBRELOK <span className="font-normal text-[#5C564E]">CRM</span></div>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск: имя, телефон, код"
+            aria-label="Поиск заказов"
+            autoComplete="off"
+            className="min-h-[40px] w-full min-w-0 rounded-full border border-[#D9D0BF] bg-white px-4 text-sm"
+          />
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1600px] px-4 pb-10">
+        {denied && (
+          <div className="mx-auto mt-10 max-w-md rounded-2xl bg-white p-5 text-center">
+            <p className="text-lg font-semibold">{error.message}</p>
+            {error.status === 403 && (
+              <p className="mt-2 text-sm text-[#5C564E]">Попросите владельца добавить ваш Telegram id. Узнать его: напишите боту команду /id.</p>
+            )}
+          </div>
+        )}
+        {error && !denied && (
+          <div className="mt-3 rounded-xl bg-white p-3 text-sm text-[#B42318]">
+            {error.message} <button type="button" className="underline" onClick={() => void reload()}>Повторить</button>
+          </div>
+        )}
+        {!orders && !error && <p className="py-10 text-center text-[#5C564E]">Загружаем заказы…</p>}
+        {orders && (
+          <Board
+            orders={orders}
+            onOpen={setOpenCode}
+            onDownload={download}
+            onDrop={drop}
+            onMoreDone={() => setDoneDays((d) => d + 60)}
+          />
+        )}
+      </main>
+
+      {openCode && (
+        <OrderSheet
+          code={openCode}
+          botUsername={botUsername}
+          onClose={() => setOpenCode(null)}
+          onChanged={upsert}
+          notify={notify}
+        />
+      )}
+
+      {toast && (
+        <div role="status" className="fixed inset-x-4 bottom-24 z-[60] mx-auto max-w-md rounded-xl bg-[#191715] px-4 py-3 text-center text-sm text-white shadow-lg">
+          {toast}
+        </div>
+      )}
+    </>
+  );
+}

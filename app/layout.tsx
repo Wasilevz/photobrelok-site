@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import MetaPixel from "@/components/MetaPixel";
 import CookieBanner from "@/components/CookieBanner";
+import SiteOnly from "@/components/SiteOnly";
 
 const rubik = Rubik({
   variable: "--font-rubik",
@@ -112,8 +113,10 @@ export default function RootLayout({
       <body className="antialiased">
         <LanguageProvider>
           {children}
-          <MetaPixel />
-          <CookieBanner />
+          <SiteOnly>
+            <MetaPixel />
+            <CookieBanner />
+          </SiteOnly>
         </LanguageProvider>
       </body>
     </html>
