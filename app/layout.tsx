@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import MetaPixel from "@/components/MetaPixel";
 import CookieBanner from "@/components/CookieBanner";
 import SiteOnly from "@/components/SiteOnly";
+import { LEGACY_SCRIPT } from "./legacy-script";
 
 const rubik = Rubik({
   variable: "--font-rubik",
@@ -104,6 +105,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${rubik.variable} ${caveat.variable}`}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: LEGACY_SCRIPT }} />
         <link rel="stylesheet" href="/landing.css" />
         <script
           type="application/ld+json"

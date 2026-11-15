@@ -18,6 +18,12 @@ export default function CrmPage() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Страница запустилась — аварийная плашка из app/legacy-script.ts больше не нужна.
+  useEffect(() => {
+    (window as Window & { __crmMounted?: boolean }).__crmMounted = true;
+    document.getElementById("crm-fatal")?.remove();
+  }, []);
+
   // Вне Telegram (локальная разработка) скрипт Telegram может не загрузиться — не ждём его дольше 2 секунд.
   useEffect(() => {
     const t = setTimeout(() => setTgReady(true), 2000);
