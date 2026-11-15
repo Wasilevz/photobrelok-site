@@ -93,6 +93,10 @@ Dev: `npm run dev --webpack`
 | `TELEGRAM_WEBHOOK_SECRET` | Секрет вебхука бота |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Загрузка фото |
 | `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Unsigned preset |
+| `SUPABASE_URL` | CRM: адрес проекта Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | CRM: секретный ключ Supabase (только сервер, sensitive) |
+| `TELEGRAM_BOT_USERNAME` | CRM: имя бота без @ (кнопка «Открыть в CRM») |
+| `CRM_ALLOWED_USER_IDS` | CRM: Telegram id, кому открыт доступ |
 
 Без них сайт работает, заказ идёт через Telegram-ссылку с инструкцией.
 
