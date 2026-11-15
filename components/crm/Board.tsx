@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { type Column, type CrmOrder, COLUMNS, columnLabel, columnOf, sortOrders } from "@/lib/crm/model";
 import { METHOD_LABEL, dateLabel } from "./format";
+import { PostFormsButton } from "./PostForms";
 
 function OrderListItem({
   order,
@@ -59,19 +60,33 @@ export default function Board({
   onDownload,
   onDrop,
   onMoreDone,
+  notify,
 }: {
   orders: CrmOrder[];
   onOpen: (code: string) => void;
   onDownload: (code: string) => void;
   onDrop: (code: string, column: Column) => void;
   onMoreDone: () => void;
+  notify: (text: string) => void;
 }) {
   const [tab, setTab] = useState<Column>("new");
   const [over, setOver] = useState<Column | null>(null);
   const byColumn = Object.fromEntries(COLUMNS.map((c) => [c, sortOrders(orders.filter((o) => columnOf(o) === c))])) as Record<Column, CrmOrder[]>;
 
+  const postCodes = byColumn.ship.filter((o) => o.method === "posta").map((o) => o.code);
+
   const list = (c: Column, draggable: boolean) => (
     <>
+      {c === "ship" && postCodes.length > 0 && (
+        <div className="mb-2">
+          <PostFormsButton
+            codes={postCodes}
+            notify={notify}
+            label={`🖨 Бланки Poșta для всех (${postCodes.length})`}
+            className="min-h-[44px] w-full rounded-xl border-2 border-[#191715] bg-[#FFC400] text-sm font-semibold disabled:opacity-60"
+          />
+        </div>
+      )}
       {byColumn[c].length === 0 && <p className="px-1 py-6 text-center text-sm text-[#5C564E]">Пусто</p>}
       <ul className="flex flex-col gap-2">
         {byColumn[c].map((o) => (

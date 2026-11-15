@@ -19,6 +19,7 @@ import { METHOD_LABEL, dateLabel, whenLabel } from "./format";
 import DeliveryEditor from "./DeliveryEditor";
 import { isPostMethod } from "@/lib/delivery-dates";
 import PdfButtons from "./PdfButtons";
+import { PostFormsButton } from "./PostForms";
 
 const input =
   "w-full min-h-[44px] rounded-lg border border-[#D9D0BF] bg-white px-3 text-base focus-visible:outline-2 focus-visible:outline-[#191715]";
@@ -207,6 +208,16 @@ export default function OrderSheet({
             )}
 
             <PdfButtons code={o.code} hasPdf={!!o.pdfPath} />
+            {o.method === "posta" && (
+              <div className="mb-4">
+                <PostFormsButton
+                  codes={[o.code]}
+                  notify={notify}
+                  label={o.paid ? "🖨 Бланк почты · оплачен" : "🖨 Бланки почты · наложка"}
+                  className="min-h-[48px] w-full rounded-xl border-2 border-[#191715] bg-white font-semibold active:scale-[0.98] disabled:opacity-60"
+                />
+              </div>
+            )}
 
             <div className="rounded-2xl bg-white/60 px-3">
               <Row label="👤 Имя" value={o.name} editing={editing === "name"} onEdit={() => startEdit("name", { name: o.name })}>

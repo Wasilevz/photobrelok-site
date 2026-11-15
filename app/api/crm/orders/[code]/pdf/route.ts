@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
   try {
     const order = await getOrder(code);
     if (!order) return bad("Заказ не найден", 404);
-    if (!order.pdfPath) return bad("PDF этого заказа есть только в чате — нажмите «Прислать в Telegram»", 404);
+    if (!order.pdfPath) return bad("PDF этого заказа есть только в чате Telegram", 404);
     return ok({ url: await signedPdfUrl(order.pdfPath, code), fileName: `Brelok_${code}.pdf` });
   } catch (error) {
     return crash("pdf", error);

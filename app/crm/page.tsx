@@ -117,6 +117,7 @@ export default function CrmPage() {
             onDownload={download}
             onDrop={drop}
             onMoreDone={() => setDoneDays((d) => d + 60)}
+            notify={notify}
           />
         )}
       </main>

@@ -30,6 +30,10 @@ const siteHeaders = [...baseHeaders, { key: "X-Frame-Options", value: "DENY" }, 
 const crmHeaders = [...baseHeaders, csp("https://web.telegram.org https://*.telegram.org")];
 
 const nextConfig: NextConfig = {
+  // Шаблоны почтовых бланков и шрифт читаются с диска во время запроса — их надо положить в функцию.
+  outputFileTracingIncludes: {
+    "/api/crm/post-forms/file": ["./lib/crm/post-forms/assets/**"],
+  },
   async headers() {
     return [
       { source: "/", headers: siteHeaders },

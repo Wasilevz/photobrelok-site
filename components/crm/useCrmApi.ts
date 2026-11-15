@@ -101,8 +101,7 @@ export function useOrders(query: string, doneDays: number, enabled: boolean) {
 }
 
 /** «Нажал — сохранил»: родной диалог сохранения Telegram, на старых клиентах — открыть ссылку. */
-export async function downloadPdf(code: string): Promise<void> {
-  const { url, fileName } = await api<{ url: string; fileName: string }>(`/api/crm/orders/${code}/pdf`);
+export function saveFile(url: string, fileName: string): void {
   const tg = webApp();
   if (tg?.downloadFile && tg.isVersionAtLeast?.("8.0")) {
     tg.downloadFile({ url, file_name: fileName });
@@ -111,4 +110,9 @@ export async function downloadPdf(code: string): Promise<void> {
   } else {
     window.open(url, "_blank", "noopener");
   }
+}
+
+export async function downloadPdf(code: string): Promise<void> {
+  const { url, fileName } = await api<{ url: string; fileName: string }>(`/api/crm/orders/${code}/pdf`);
+  saveFile(url, fileName);
 }
