@@ -1,7 +1,7 @@
 // Supabase для CRM: только на сервере (сервисный ключ). Запрет владельца: здесь нет ни одного удаления —
 // ни строк, ни файлов. Загрузка PDF без перезаписи (upsert: false).
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { type CrmOrder, orderToRow, rowToOrder } from "./model.ts";
+import { type Costs, type CrmOrder, ZERO_COSTS, orderToRow, rowToOrder } from "./model.ts";
 import type { CrmUser } from "./auth.ts";
 import type { ReportRow } from "./reports.ts";
 
@@ -32,7 +32,9 @@ function fail(what: string, error: { message: string } | null): never {
   throw new Error(`CRM ${what}: ${error?.message ?? "unknown error"}`);
 }
 
-export async function insertOrder(o: Omit<CrmOrder, "commentsCount">): Promise<void> {
+type NewOrder = Omit<CrmOrder, "commentsCount" | "boxesSingle" | "boxesDouble" | "extraCost">;
+
+export async function insertOrder(o: NewOrder): Promise<void> {
   const { error } = await db().from("crm_orders").insert(orderToRow(o));
   if (error) fail("insert", error);
 }
@@ -143,16 +145,45 @@ export async function reportRows(fromDay: string, toDay: string): Promise<Report
   for (let page = 0; page < 50; page++) {
     const { data, error } = await db()
       .from("crm_orders")
-      .select("created_at, qty, urgent, price, stage, method")
+      .select("created_at, qty, urgent, price, stage, method, boxes_single, boxes_double, extra_cost")
       .gte("created_at", new Date(since).toISOString())
       .lt("created_at", new Date(until).toISOString())
       .order("created_at", { ascending: true })
       .range(page * 1000, page * 1000 + 999);
     if (error) fail("report", error);
     for (const r of data ?? []) {
-      rows.push({ createdAt: r.created_at, qty: r.qty, urgent: r.urgent, price: r.price, stage: r.stage, method: r.method });
+      rows.push({
+        createdAt: r.created_at, qty: r.qty, urgent: r.urgent, price: r.price, stage: r.stage, method: r.method,
+        boxesSingle: r.boxes_single, boxesDouble: r.boxes_double, extraCost: r.extra_cost,
+      });
     }
     if ((data ?? []).length < 1000) break;
   }
   return rows;
+}
+
+/** Себестоимость единиц (лей). Пока не задана — нули. */
+export async function getCosts(): Promise<Costs> {
+  const { data, error } = await db().from("crm_settings").select("value").eq("key", "costs").maybeSingle();
+  if (error) fail("settings", error);
+  return parseCosts(data?.value) ?? ZERO_COSTS;
+}
+
+export async function saveCosts(costs: Costs, actor: CrmUser): Promise<void> {
+  const { error } = await db()
+    .from("crm_settings")
+    .upsert({ key: "costs", value: costs, updated_at: new Date().toISOString(), updated_by: actor.name });
+  if (error) fail("settings save", error);
+}
+
+export function parseCosts(value: unknown): Costs | null {
+  const v = value as Record<string, unknown> | null;
+  if (!v || typeof v !== "object") return null;
+  const out = {} as Costs;
+  for (const k of ["keychain", "boxSingle", "boxDouble"] as const) {
+    const n = v[k];
+    if (!Number.isFinite(n) || (n as number) < 0 || (n as number) > 100000) return null;
+    out[k] = Math.round((n as number) * 100) / 100;
+  }
+  return out;
 }

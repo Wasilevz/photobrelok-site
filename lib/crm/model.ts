@@ -48,6 +48,11 @@ export type CrmOrder = {
   tgCaption: string | null;
   flags: string[];
   commentsCount: number;
+  /** Коробки: null — по правилу (orderBoxes), число — вписано вручную. */
+  boxesSingle: number | null;
+  boxesDouble: number | null;
+  /** Прочие расходы по заказу (лей), например другой тип брелка. */
+  extraCost: number | null;
 };
 
 export function columnOf(o: Pick<CrmOrder, "stage" | "method">): Column {
@@ -85,6 +90,26 @@ export function orderPrice(o: Pick<CrmOrder, "qty" | "urgent" | "price">): numbe
   return BASE_PRICE + EXTRA_PRICE * (o.qty - 1) + (o.urgent ? URGENT_PRICE : 0);
 }
 
+/** Себестоимость единиц, задаётся в отчётах (crm_settings). */
+export type Costs = { keychain: number; boxSingle: number; boxDouble: number };
+export const ZERO_COSTS: Costs = { keychain: 0, boxSingle: 0, boxDouble: 0 };
+
+/**
+ * Правило упаковки: 1 брелок — своя коробка; 2 — вместе в одну подарочную; 3 и больше — каждому своя.
+ * Если хоть одно число коробок вписано вручную, берём ручные (пустое = 0).
+ */
+export function orderBoxes(o: Pick<CrmOrder, "qty" | "boxesSingle" | "boxesDouble">): { single: number; double: number; auto: boolean } {
+  if (o.boxesSingle !== null || o.boxesDouble !== null) {
+    return { single: o.boxesSingle ?? 0, double: o.boxesDouble ?? 0, auto: false };
+  }
+  return o.qty === 2 ? { single: 0, double: 1, auto: true } : { single: o.qty, double: 0, auto: true };
+}
+
+export function orderCost(o: Pick<CrmOrder, "qty" | "boxesSingle" | "boxesDouble" | "extraCost">, c: Costs): number {
+  const b = orderBoxes(o);
+  return o.qty * c.keychain + b.single * c.boxSingle + b.double * c.boxDouble + (o.extraCost ?? 0);
+}
+
 /** Срочные → ближайшая дата получения (без даты — ниже) → кто раньше пришёл. */
 export function sortOrders(list: CrmOrder[]): CrmOrder[] {
   return [...list].sort((a, b) => {
@@ -101,12 +126,12 @@ export function sortOrders(list: CrmOrder[]): CrmOrder[] {
 export type OrderPatch = Partial<
   Pick<
     CrmOrder,
-    "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage"
+    "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage" | "boxesSingle" | "boxesDouble" | "extraCost"
   >
 >;
 
 const PATCH_KEYS: (keyof OrderPatch)[] = [
-  "name", "phone", "wantedDate", "urgent", "method", "postalCode", "city", "district", "street", "branch", "address", "qty", "price", "stage",
+  "name", "phone", "wantedDate", "urgent", "method", "postalCode", "city", "district", "street", "branch", "address", "qty", "price", "stage", "boxesSingle", "boxesDouble", "extraCost",
 ];
 const TEXT_LIMIT: Partial<Record<keyof OrderPatch, number>> = {
   postalCode: 20, city: 80, district: 80, street: 100, branch: 40, address: 150,
@@ -162,6 +187,17 @@ export function applyPatch(current: CrmOrder, patch: OrderPatch, now: Date): Pat
         else if (!Number.isInteger(value)) return fail("Цена — целое число");
         else if ((value as number) < 0) return fail("Цена не может быть отрицательной");
         else next.price = value as number;
+        break;
+      case "boxesSingle":
+      case "boxesDouble":
+        if (value === null) next[key] = null;
+        else if (!Number.isInteger(value) || (value as number) < 0 || (value as number) > 40) return fail("Коробок — от 0 до 40");
+        else next[key] = value as number;
+        break;
+      case "extraCost":
+        if (value === null) next.extraCost = null;
+        else if (!Number.isInteger(value) || (value as number) < 0 || (value as number) > 100000) return fail("Расходы — целое число лей");
+        else next.extraCost = value as number;
         break;
       case "stage":
         if (!STAGES.includes(value as Stage)) return fail("Неизвестная стадия");
@@ -221,6 +257,7 @@ const COLUMN_MAP: [keyof CrmOrder, string][] = [
   ["postalCode", "postal_code"], ["city", "city"], ["district", "district"], ["street", "street"], ["branch", "branch"],
   ["address", "address"], ["qty", "qty"], ["price", "price"], ["lang", "lang"], ["source", "source"], ["pdfPath", "pdf_path"],
   ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["flags", "flags"],
+  ["boxesSingle", "boxes_single"], ["boxesDouble", "boxes_double"], ["extraCost", "extra_cost"],
 ];
 
 export function rowToOrder(row: Record<string, unknown>): CrmOrder {

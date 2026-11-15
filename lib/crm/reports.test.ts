@@ -9,6 +9,9 @@ const row = (createdAt: string, extra: Partial<ReportRow> = {}): ReportRow => ({
   price: null,
   stage: "new",
   method: "pickup",
+  boxesSingle: null,
+  boxesDouble: null,
+  extraCost: null,
   ...extra,
 });
 
@@ -38,7 +41,7 @@ test("buildReport считает заказы, брелки и сумму по �
       ["2026-11-03", 1, 3, 500],
     ],
   );
-  assert.deepEqual(r.methods.find((m) => m.method === "posta"), { method: "posta", orders: 1, keychains: 3, revenue: 500 });
+  assert.deepEqual(r.methods.find((m) => m.method === "posta"), { method: "posta", orders: 1, keychains: 3, revenue: 500, cost: 0, profit: 500 });
 });
 
 test("buildReport: пустой период — нули и дни без заказов", () => {
@@ -57,4 +60,25 @@ test("periodRange: пресеты и проверка своего период�
   assert.deepEqual(periodRange("custom", now, "2026-10-05", "2026-10-01"), { from: "2026-10-01", to: "2026-10-05" });
   assert.equal(periodRange("custom", now, "bad", "2026-10-01"), null);
   assert.equal(periodRange("custom", now, "2020-01-01", "2026-10-01"), null); // больше 400 дней
+});
+
+test("buildReport: себестоимость, коробки и чистая прибыль", () => {
+  const costs = { keychain: 60, boxSingle: 15, boxDouble: 30 };
+  const r = buildReport(
+    [
+      row("2026-11-01T10:00:00Z", { qty: 2 }), // 400 − (120 + 30) = 250
+      row("2026-11-01T11:00:00Z", { qty: 3, stage: "done", extraCost: 20 }), // 550 − (180 + 45 + 20) = 305
+    ],
+    "2026-11-01",
+    "2026-11-01",
+    costs,
+  );
+  assert.equal(r.revenue, 950);
+  assert.equal(r.cost, 150 + 245);
+  assert.equal(r.profit, 250 + 305);
+  assert.equal(r.boxesSingle, 3);
+  assert.equal(r.boxesDouble, 1);
+  assert.equal(r.done.profit, 305);
+  assert.equal(r.days[0].profit, 555);
+  assert.deepEqual(r.costs, costs);
 });

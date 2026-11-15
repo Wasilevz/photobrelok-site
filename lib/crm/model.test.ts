@@ -6,6 +6,8 @@ import {
   columnLabel,
   columnOf,
   nextStage,
+  orderBoxes,
+  orderCost,
   orderPrice,
   orderToRow,
   prevStage,
@@ -24,7 +26,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Мария", phone: "+373 60 024 571", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 1, price: null, lang: "ru", source: null, pdfPath: null, tgChatId: null, tgMessageId: null, tgCaption: null,
-    flags: [], commentsCount: 0, ...p,
+    flags: [], commentsCount: 0, boxesSingle: null, boxesDouble: null, extraCost: null, ...p,
   };
 }
 
@@ -110,4 +112,40 @@ test("row mapping round-trips", () => {
   assert.equal(row.wanted_date, "2026-11-21");
   assert.equal(row.tg_chat_id, -1004393765609);
   assert.deepEqual(rowToOrder(row), o);
+});
+
+test("orderBoxes: 1 → своя коробка, 2 → одна подарочная, 3+ → каждому своя; ручные значения важнее", () => {
+  assert.deepEqual(orderBoxes(order({ qty: 1 })), { single: 1, double: 0, auto: true });
+  assert.deepEqual(orderBoxes(order({ qty: 2 })), { single: 0, double: 1, auto: true });
+  assert.deepEqual(orderBoxes(order({ qty: 3 })), { single: 3, double: 0, auto: true });
+  assert.deepEqual(orderBoxes(order({ qty: 4, boxesSingle: 0, boxesDouble: 2 })), { single: 0, double: 2, auto: false });
+  assert.deepEqual(orderBoxes(order({ qty: 3, boxesDouble: 1 })), { single: 0, double: 1, auto: false });
+});
+
+test("orderCost: брелки + коробки + доп. расходы", () => {
+  const costs = { keychain: 60, boxSingle: 15, boxDouble: 30 };
+  assert.equal(orderCost(order({ qty: 1 }), costs), 60 + 15);
+  assert.equal(orderCost(order({ qty: 2 }), costs), 120 + 30);
+  assert.equal(orderCost(order({ qty: 3, extraCost: 40 }), costs), 180 + 45 + 40);
+});
+
+test("applyPatch: коробки и доп. расходы", () => {
+  const r = applyPatch(order({ qty: 4 }), { boxesSingle: 0, boxesDouble: 2, extraCost: 25 }, now);
+  assert.ok(r.ok);
+  if (r.ok) {
+    assert.equal(r.next.boxesDouble, 2);
+    assert.equal(r.next.extraCost, 25);
+    assert.deepEqual(r.changed.sort(), ["boxesDouble", "boxesSingle", "extraCost"]);
+  }
+  const back = applyPatch(order({ boxesSingle: 2 }), { boxesSingle: null, boxesDouble: null }, now);
+  assert.ok(back.ok && back.next.boxesSingle === null);
+  assert.equal(applyPatch(order(), { boxesSingle: -1 }, now).ok, false);
+  assert.equal(applyPatch(order(), { extraCost: 1.5 }, now).ok, false);
+});
+
+test("rowToOrder/orderToRow: новые поля", () => {
+  const o = rowToOrder({ code: "X", boxes_single: 2, boxes_double: null, extra_cost: 10 });
+  assert.equal(o.boxesSingle, 2);
+  assert.equal(o.extraCost, 10);
+  assert.deepEqual(orderToRow({ boxesDouble: 1, extraCost: null }), { boxes_double: 1, extra_cost: null });
 });

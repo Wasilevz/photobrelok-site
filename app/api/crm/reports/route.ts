@@ -1,4 +1,4 @@
-import { crmEnabled, reportRows } from "@/lib/crm/db";
+import { crmEnabled, getCosts, reportRows } from "@/lib/crm/db";
 import { bad, crash, ok, requireUser } from "@/lib/crm/api";
 import { type Period, buildReport, periodRange } from "@/lib/crm/reports";
 
@@ -16,7 +16,8 @@ export async function GET(req: Request) {
   const range = periodRange(period, new Date(), url.searchParams.get("from"), url.searchParams.get("to"));
   if (!range) return bad("Проверьте даты периода (не больше 400 дней)");
   try {
-    return ok({ report: buildReport(await reportRows(range.from, range.to), range.from, range.to) });
+    const [rows, costs] = await Promise.all([reportRows(range.from, range.to), getCosts()]);
+    return ok({ report: buildReport(rows, range.from, range.to, costs) });
   } catch (error) {
     return crash("report", error);
   }

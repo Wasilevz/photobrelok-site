@@ -8,6 +8,7 @@ import {
   columnLabel,
   columnOf,
   nextStage,
+  orderBoxes,
   orderPrice,
   prevStage,
 } from "@/lib/crm/model";
@@ -22,6 +23,7 @@ const input =
 const FIELD_NAME: Record<string, string> = {
   name: "имя", phone: "телефон", wantedDate: "дата", urgent: "срочно", method: "способ", postalCode: "индекс",
   city: "город", district: "район", street: "улица", branch: "отделение", address: "адрес", qty: "брелков", price: "цена",
+  boxesSingle: "коробки", boxesDouble: "подарочные коробки", extraCost: "доп. расходы",
 };
 
 function Row({ label, value, onEdit, children, editing }: {
@@ -58,6 +60,19 @@ function SaveCancel({ onSave, onCancel, saving }: { onSave: () => void; onCancel
       </button>
     </div>
   );
+}
+
+function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10, m100 = n % 100;
+  return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+}
+
+function boxesLabel(o: CrmOrder): string {
+  const b = orderBoxes(o);
+  const parts = [];
+  if (b.single) parts.push(`${b.single} ${plural(b.single, "обычная", "обычные", "обычных")}`);
+  if (b.double) parts.push(`${b.double} ${plural(b.double, "подарочная", "подарочные", "подарочных")} (на 2)`);
+  return parts.join(" + ") || "без коробки";
 }
 
 export default function OrderSheet({
@@ -248,6 +263,49 @@ export default function OrderSheet({
               >
                 <input className={input} inputMode="numeric" placeholder={`авто: ${orderPrice({ ...o, price: null })}`} value={String(draft.price ?? "")} onChange={(e) => setDraft({ price: e.target.value.replace(/\D/g, "") })} />
                 <SaveCancel saving={saving} onCancel={() => setEditing(null)} onSave={() => save({ price: draft.price ? Number(draft.price) : null })} />
+              </Row>
+
+              <Row
+                label="🎁 Коробки"
+                value={<>{boxesLabel(o)}{orderBoxes(o).auto ? <span className="text-xs text-[#5C564E]"> · авто</span> : null}</>}
+                editing={editing === "boxes"}
+                onEdit={() => {
+                  const b = orderBoxes(o);
+                  startEdit("boxes", { single: String(b.single), double: String(b.double) });
+                }}
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="text-xs text-[#5C564E]">
+                    Обычные (по 1 брелку)
+                    <input className={input} inputMode="numeric" value={String(draft.single ?? "")} onChange={(e) => setDraft((d) => ({ ...d, single: e.target.value.replace(/\D/g, "") }))} />
+                  </label>
+                  <label className="text-xs text-[#5C564E]">
+                    Подарочные (на 2)
+                    <input className={input} inputMode="numeric" value={String(draft.double ?? "")} onChange={(e) => setDraft((d) => ({ ...d, double: e.target.value.replace(/\D/g, "") }))} />
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-[#5C564E]">Авто: 1 брелок — обычная, 2 — одна подарочная, 3 и больше — каждому обычная.</p>
+                <SaveCancel
+                  saving={saving}
+                  onCancel={() => setEditing(null)}
+                  onSave={() => save({ boxesSingle: Number(draft.single || 0), boxesDouble: Number(draft.double || 0) })}
+                />
+                {!orderBoxes(o).auto && (
+                  <button type="button" disabled={saving} onClick={() => save({ boxesSingle: null, boxesDouble: null })} className="mt-2 min-h-[44px] w-full rounded-lg border border-[#D9D0BF] bg-white text-sm">
+                    Вернуть авто
+                  </button>
+                )}
+              </Row>
+
+              <Row
+                label="🧾 Доп. расходы"
+                value={o.extraCost ? `${o.extraCost} лей` : <span className="text-[#5C564E]">нет</span>}
+                editing={editing === "extraCost"}
+                onEdit={() => startEdit("extraCost", { extraCost: o.extraCost ? String(o.extraCost) : "" })}
+              >
+                <input className={input} inputMode="numeric" placeholder="0" value={String(draft.extraCost ?? "")} onChange={(e) => setDraft({ extraCost: e.target.value.replace(/\D/g, "") })} />
+                <p className="mt-1 text-xs text-[#5C564E]">Всё, что сверх брелков и коробок: другой брелок, доп. материалы и т. п. Учитывается в чистой прибыли.</p>
+                <SaveCancel saving={saving} onCancel={() => setEditing(null)} onSave={() => save({ extraCost: draft.extraCost ? Number(draft.extraCost) : null })} />
               </Row>
 
               {o.lang === "ro" && <Row label="🌐 Язык" value="Клиент оформлял на румынском" />}
