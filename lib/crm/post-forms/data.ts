@@ -132,3 +132,30 @@ export function formData(o: FormOrder, sender: Sender): FormData {
     },
   };
 }
+
+/** Печать на готовые бланки почты: размер листа-бланка и сдвиг текста (мм) — у каждого принтера свой. */
+export type BlankKind = "ramburs" | "tfp3";
+export type BlankPrint = { w: number; h: number; dx: number; dy: number };
+export type PrintSettings = Record<BlankKind, BlankPrint>;
+
+/** Размеры рамки бланков в официальных файлах почты (замерено по PDF). */
+export const DEFAULT_PRINT: PrintSettings = {
+  ramburs: { w: 200.4, h: 101.6, dx: 0, dy: 0 },
+  tfp3: { w: 200.2, h: 98.8, dx: 0, dy: 0 },
+};
+
+export function parsePrint(value: unknown): PrintSettings {
+  const v = (value ?? {}) as Record<string, Record<string, unknown> | undefined>;
+  const num = (x: unknown, min: number, max: number, def: number) => {
+    const n = typeof x === "string" ? Number(x.replace(",", ".")) : x;
+    return typeof n === "number" && Number.isFinite(n) && n >= min && n <= max ? Math.round(n * 10) / 10 : def;
+  };
+  const one = (k: BlankKind): BlankPrint => {
+    const d = DEFAULT_PRINT[k];
+    const s = v[k] ?? {};
+    const size = { w: num(s.w, 50, 300, NaN), h: num(s.h, 30, 300, NaN) };
+    const sizeOk = Number.isFinite(size.w) && Number.isFinite(size.h);
+    return { w: sizeOk ? size.w : d.w, h: sizeOk ? size.h : d.h, dx: num(s.dx, -30, 30, 0), dy: num(s.dy, -30, 30, 0) };
+  };
+  return { ramburs: one("ramburs"), tfp3: one("tfp3") };
+}

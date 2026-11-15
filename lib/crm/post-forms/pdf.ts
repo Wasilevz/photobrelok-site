@@ -1,26 +1,30 @@
-// Сборка PDF с почтовыми бланками: шаблон официального бланка + данные заказа поверх.
-// Неоплаченный заказ — лист A4: бланк отправления с RAMBURS + TFP-3. Оплаченные — по два бланка без сумм на лист.
+// PDF для печати на готовые бланки Poșta Moldovei: одна страница = один бланк, размер страницы = размер бланка,
+// печатается только текст (линии и надписи уже есть на бланке). Пробная печать — тот же текст плюс
+// контур бланка, чтобы на обычной бумаге приложить к настоящему бланку на просвет.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
-import { PDFDocument, type PDFEmbeddedPage, type PDFFont, type PDFPage, rgb } from "pdf-lib";
-import type { FormData, Sender } from "./data.ts";
+import { PDFDocument, type PDFFont, type PDFPage, rgb } from "pdf-lib";
+import type { BlankKind, BlankPrint, FormData, Sender } from "./data.ts";
 import { type Field, RAMBURS, TFP3 } from "./layout.ts";
 
 const ASSETS = path.join(process.cwd(), "lib/crm/post-forms/assets");
-const A4 = { w: 595.304, h: 841.89 };
+const TEMPLATE_H = 841.89; // высота листа A4 шаблона, pt
+const MM = 72 / 25.4;
 const INK = rgb(0, 0, 0);
 
-type Ctx = { page: PDFPage; font: PDFFont; dy: number };
+/** Перевод координат шаблона (pt от угла листа A4) в координаты страницы-бланка. */
+type Ctx = { page: PDFPage; font: PDFFont; fx: number; fy: number; dx: number; dy: number; pageH: number };
 
 function put(c: Ctx, f: Field, text: string): void {
   if (!text) return;
   let size = f.size;
   while (size > 5 && c.font.widthOfTextAtSize(text, size) > f.maxWidth) size -= 0.25;
   const width = c.font.widthOfTextAtSize(text, size);
-  const x = f.align === "center" ? f.x - width / 2 : f.x;
+  const x = (f.align === "center" ? f.x - width / 2 : f.x) - c.fx + c.dx;
   // y поля — верх строки (как у pdftotext); базовая линия ниже на высоту надстрочной части.
-  c.page.drawText(text, { x, y: A4.h - (f.y + c.dy) - size * 0.905, size, font: c.font, color: INK });
+  const y = c.pageH - (f.y - c.fy + c.dy) - size * 0.905;
+  c.page.drawText(text, { x, y, size, font: c.font, color: INK });
 }
 
 function letters(c: Ctx, cells: readonly { x: number; y: number }[], text: string): void {
@@ -29,33 +33,14 @@ function letters(c: Ctx, cells: readonly { x: number; y: number }[], text: strin
 
 function cross(c: Ctx, at: { x: number; y: number }): void {
   const r = 3.2;
-  const y = A4.h - (at.y + c.dy);
-  c.page.drawLine({ start: { x: at.x - r, y: y - r }, end: { x: at.x + r, y: y + r }, thickness: 1.2, color: INK });
-  c.page.drawLine({ start: { x: at.x - r, y: y + r }, end: { x: at.x + r, y: y - r }, thickness: 1.2, color: INK });
-}
-
-function cutLine(page: PDFPage, y: number): void {
-  page.drawLine({
-    start: { x: 18, y: A4.h - y },
-    end: { x: A4.w - 18, y: A4.h - y },
-    thickness: 0.6,
-    dashArray: [4, 3],
-    color: rgb(0.5, 0.5, 0.5),
-  });
-}
-
-/** Шаблон вырезается по crop и ставится так, что его верх оказывается на высоте top. */
-function place(page: PDFPage, tpl: PDFEmbeddedPage, crop: { top: number; bottom: number }, top: number): number {
-  const dy = top - crop.top;
-  page.drawPage(tpl, { x: 0, y: A4.h - (crop.bottom + dy) });
-  return dy;
+  const x = at.x - c.fx + c.dx;
+  const y = c.pageH - (at.y - c.fy + c.dy);
+  c.page.drawLine({ start: { x: x - r, y: y - r }, end: { x: x + r, y: y + r }, thickness: 1.2, color: INK });
+  c.page.drawLine({ start: { x: x - r, y: y + r }, end: { x: x + r, y: y - r }, thickness: 1.2, color: INK });
 }
 
 function drawRamburs(c: Ctx, s: Sender, d: FormData): void {
   const L = RAMBURS;
-  if (!d.cod) {
-    c.page.drawRectangle({ x: L.codMark.x, y: A4.h - (L.codMark.y + c.dy) - L.codMark.h, width: L.codMark.w, height: L.codMark.h, color: rgb(1, 1, 1) });
-  }
   put(c, L.sender.name, s.name);
   put(c, L.sender.street, s.street);
   put(c, L.sender.locality, s.locality);
@@ -69,7 +54,7 @@ function drawRamburs(c: Ctx, s: Sender, d: FormData): void {
   put(c, L.declaredWords, d.declaredWords);
   put(c, L.codDigits, d.amountDigits);
   put(c, L.codWords, d.cod ? d.amountWords.replace(/ lei, zero bani$/, "").toLowerCase() : "");
-  put(c, { ...L.code, size: 7 }, `#${d.code}`);
+  put(c, L.code, `#${d.code}`);
 }
 
 function drawTfp3(c: Ctx, s: Sender, d: FormData): void {
@@ -91,40 +76,46 @@ function drawTfp3(c: Ctx, s: Sender, d: FormData): void {
   put(c, L.words, d.amountWords);
 }
 
-export async function buildPostFormsPdf(forms: FormData[], sender: Sender): Promise<Uint8Array> {
-  const [rambursBytes, tfpBytes, fontBytes] = await Promise.all([
-    readFile(path.join(ASSETS, "ramburs.pdf")),
-    readFile(path.join(ASSETS, "tfp3.pdf")),
+/**
+ * kind = "ramburs": бланк отправления на каждый заказ (у оплаченных — без сумм).
+ * kind = "tfp3": TFP-3 только для неоплаченных (наложенный платёж).
+ */
+export async function buildBlankPdf(
+  forms: FormData[],
+  sender: Sender,
+  kind: BlankKind,
+  print: BlankPrint,
+  opts: { test?: boolean } = {},
+): Promise<Uint8Array> {
+  const list = kind === "tfp3" ? forms.filter((f) => f.cod) : forms;
+  const L = kind === "ramburs" ? RAMBURS : TFP3;
+  const [fontBytes, tplBytes] = await Promise.all([
     readFile(path.join(ASSETS, "LiberationSans-Bold.ttf")),
+    opts.test ? readFile(path.join(ASSETS, kind === "ramburs" ? "ramburs.pdf" : "tfp3.pdf")) : Promise.resolve(null),
   ]);
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   const font = await doc.embedFont(fontBytes, { subset: true });
-  const [rambursSrc, tfpSrc] = await Promise.all([PDFDocument.load(rambursBytes), PDFDocument.load(tfpBytes)]);
-  const crop = (c: { top: number; bottom: number }) => ({ left: 0, right: A4.w, top: A4.h - c.top, bottom: A4.h - c.bottom });
-  const cutR = await doc.embedPage(rambursSrc.getPage(0), crop(RAMBURS.crop));
-  const cutT = await doc.embedPage(tfpSrc.getPage(0), crop(TFP3.crop));
+  const W = print.w * MM;
+  const H = print.h * MM;
 
-  const cod = forms.filter((f) => f.cod);
-  const plain = forms.filter((f) => !f.cod);
-
-  for (const d of cod) {
-    const page = doc.addPage([A4.w, A4.h]);
-    const dyR = place(page, cutR, RAMBURS.crop, 18);
-    drawRamburs({ page, font, dy: dyR }, sender, d);
-    cutLine(page, 323);
-    const dyT = place(page, cutT, TFP3.crop, 335);
-    drawTfp3({ page, font, dy: dyT }, sender, d);
+  let tpl = null;
+  if (tplBytes) {
+    const src = await PDFDocument.load(tplBytes);
+    tpl = await doc.embedPage(src.getPage(0), {
+      left: L.frame.x,
+      right: L.frame.x + W,
+      top: TEMPLATE_H - L.frame.y,
+      bottom: TEMPLATE_H - L.frame.y - H,
+    });
   }
-  for (let i = 0; i < plain.length; i += 2) {
-    const page = doc.addPage([A4.w, A4.h]);
-    const dy1 = place(page, cutR, RAMBURS.crop, 18);
-    drawRamburs({ page, font, dy: dy1 }, sender, plain[i]);
-    if (plain[i + 1]) {
-      cutLine(page, A4.h / 2);
-      const dy2 = place(page, cutR, RAMBURS.crop, A4.h / 2 + 18);
-      drawRamburs({ page, font, dy: dy2 }, sender, plain[i + 1]);
-    }
+
+  for (const d of list) {
+    const page = doc.addPage([W, H]);
+    if (tpl) page.drawPage(tpl, { x: 0, y: 0, opacity: 0.35 });
+    const c: Ctx = { page, font, fx: L.frame.x, fy: L.frame.y, dx: print.dx * MM, dy: print.dy * MM, pageH: H };
+    if (kind === "ramburs") drawRamburs(c, sender, d);
+    else drawTfp3(c, sender, d);
   }
   return doc.save();
 }

@@ -1,5 +1,5 @@
-import { crmEnabled, getCosts, getSender, parseCosts, saveCosts, saveSender } from "@/lib/crm/db";
-import { parseSender } from "@/lib/crm/post-forms/data";
+import { crmEnabled, getCosts, getPrint, getSender, parseCosts, savePrint, saveCosts, saveSender } from "@/lib/crm/db";
+import { parsePrint, parseSender } from "@/lib/crm/post-forms/data";
 import { bad, crash, ok, readJson, requireUser } from "@/lib/crm/api";
 
 export const dynamic = "force-dynamic";
@@ -9,20 +9,25 @@ export async function GET(req: Request) {
   if (user instanceof Response) return user;
   if (!crmEnabled()) return bad("CRM не настроена: нет ключей Supabase", 503);
   try {
-    const [costs, sender] = await Promise.all([getCosts(), getSender()]);
-    return ok({ costs, sender });
+    const [costs, sender, print] = await Promise.all([getCosts(), getSender(), getPrint()]);
+    return ok({ costs, sender, print });
   } catch (error) {
     return crash("settings", error);
   }
 }
 
-/** Тело: { costs } — себестоимость, или { sender } — отправитель для почтовых бланков. */
+/** Тело: { costs } — себестоимость, { sender } — отправитель на бланках, { print } — размеры бланков и сдвиг печати. */
 export async function PUT(req: Request) {
   const user = requireUser(req);
   if (user instanceof Response) return user;
   if (!crmEnabled()) return bad("CRM не настроена: нет ключей Supabase", 503);
   const body = await readJson(req);
   try {
+    if (body && "print" in body) {
+      const print = parsePrint(body.print);
+      await savePrint(print, user);
+      return ok({ print });
+    }
     if (body && "sender" in body) {
       const parsed = parseSender(body.sender);
       if (!parsed.ok) return bad(parsed.error);

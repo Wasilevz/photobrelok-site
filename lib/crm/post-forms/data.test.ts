@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { amountWordsRo, formData, localPhone, numberWordsRo, parseSender, type Sender } from "./data.ts";
+import { DEFAULT_PRINT, amountWordsRo, formData, localPhone, numberWordsRo, parsePrint, parseSender, type Sender } from "./data.ts";
 
 test("numberWordsRo", () => {
   const cases: [number, string][] = [
@@ -54,4 +54,11 @@ test("formData: наложенный платёж и обычное отправ
   assert.equal(paid.cod, false);
   assert.equal(paid.declaredDigits, "");
   assert.equal(paid.recipient.locality, "MD-4300, TĂNĂTARI, r-nul Căușeni");
+});
+
+test("parsePrint: размеры бланков и сдвиги в мм, по умолчанию — как в файлах почты", () => {
+  assert.deepEqual(parsePrint(null), DEFAULT_PRINT);
+  const p = parsePrint({ ramburs: { w: "210", h: 99, dx: -1.5, dy: 2 }, tfp3: { w: 500 } });
+  assert.deepEqual(p.ramburs, { w: 210, h: 99, dx: -1.5, dy: 2 });
+  assert.deepEqual(p.tfp3, DEFAULT_PRINT.tfp3); // 500 мм — мусор, берём по умолчанию
 });

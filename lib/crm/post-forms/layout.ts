@@ -4,7 +4,8 @@ export type Field = { x: number; y: number; size: number; align?: "left" | "cent
 
 /** «Formular Trimitere ramburs»: пустой бланк — верх листа. */
 export const RAMBURS = {
-  crop: { top: 0, bottom: 292 }, // с рамкой бланка
+  /** Верхний левый угол рамки бланка (= край готового бланка почты): 4,6 мм слева, 0 сверху. */
+  frame: { x: 13.04, y: 0 },
   sender: {
     name: { x: 73.6, y: 17.9, size: 10.5, maxWidth: 140 },
     street: { x: 18, y: 51, size: 10.5, maxWidth: 196 },
@@ -30,7 +31,8 @@ export const RAMBURS = {
 
 /** «TFP-3» (перевод наложенного платежа отправителю): пустой бланк — верх первой страницы. */
 export const TFP3 = {
-  crop: { top: 52, bottom: 345 },
+  /** Верхний левый угол рамки бланка: 4,75 мм слева, 20,65 мм сверху. */
+  frame: { x: 13.46, y: 58.54 },
   coupon: {
     sender: { x: 101, y: 94, size: 8, align: "center", maxWidth: 125 },
     recipient: { x: 101, y: 152.3, size: 8, align: "center", maxWidth: 125 },

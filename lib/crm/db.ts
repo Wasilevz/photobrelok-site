@@ -5,7 +5,7 @@ import { type Costs, type CrmOrder, ZERO_COSTS, orderToRow, rowToOrder } from ".
 import type { CrmUser } from "./auth.ts";
 import type { ReportRow } from "./reports.ts";
 import type { Expense, ExpenseInput } from "./expenses.ts";
-import { type Sender, parseSender } from "./post-forms/data.ts";
+import { type PrintSettings, type Sender, parsePrint, parseSender } from "./post-forms/data.ts";
 
 const BUCKET = "order-pdfs";
 
@@ -237,4 +237,18 @@ export async function saveSender(sender: Sender, actor: CrmUser): Promise<void> 
     .from("crm_settings")
     .upsert({ key: "sender", value: sender, updated_at: new Date().toISOString(), updated_by: actor.name });
   if (error) fail("sender save", error);
+}
+
+/** Размеры бланков и сдвиг печати (мм). */
+export async function getPrint(): Promise<PrintSettings> {
+  const { data, error } = await db().from("crm_settings").select("value").eq("key", "print").maybeSingle();
+  if (error) fail("print", error);
+  return parsePrint(data?.value);
+}
+
+export async function savePrint(print: PrintSettings, actor: CrmUser): Promise<void> {
+  const { error } = await db()
+    .from("crm_settings")
+    .upsert({ key: "print", value: print, updated_at: new Date().toISOString(), updated_by: actor.name });
+  if (error) fail("print save", error);
 }
