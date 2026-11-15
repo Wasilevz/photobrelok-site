@@ -222,7 +222,7 @@ export function withoutUpsell(caption: string): string {
 /* --------------------------------- Кнопки --------------------------------- */
 
 export function keyboard(stage: Stage, cfg: TopicConfig, upsell = false): InlineButton[][] {
-  const edit: InlineButton = { text: "✏️ Доставка", callback_data: "edm" };
+  const edit: InlineButton = { text: "✏️ Изменить", callback_data: "ed" };
   const note: InlineButton = { text: "📝 Заметка", callback_data: "nt" };
   // Если клиент добавил второй брелок случайно, менеджер может его убрать (с подтверждением)
   const dropUpsell: InlineButton[][] = upsell ? [[{ text: "✂️ Убрать 2-й брелок", callback_data: "ups" }]] : [];
@@ -247,17 +247,6 @@ export function upsellConfirmMenu(): InlineButton[][] {
   return [
     [{ text: "✅ Да, убрать 2-й брелок", callback_data: "upsx" }],
     [{ text: "⬅️ Нет, оставить", callback_data: "esc" }],
-  ];
-}
-
-export function deliveryMenu(): InlineButton[][] {
-  return [
-    [{ text: "🏪 Самовывоз", callback_data: `set:${METHOD_CODE.pickup}` }],
-    [{ text: "📮 Poșta Moldovei", callback_data: `set:${METHOD_CODE.posta}` }],
-    [{ text: "📦 Nova Poshta", callback_data: `set:${METHOD_CODE.novapost}` }],
-    [{ text: "🚕 Такси по Кишинёву", callback_data: `set:${METHOD_CODE.taxi}` }],
-    [{ text: "⏳ Клиент уточнит", callback_data: `set:${METHOD_CODE.later}` }],
-    [{ text: "⬅️ Отмена", callback_data: "esc" }],
   ];
 }
 

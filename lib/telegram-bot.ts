@@ -1,28 +1,23 @@
 // Обработка апдейтов Telegram: кнопки под заказами и ответы-правки.
 import { after } from "next/server";
 import {
-  type DeliveryDetails,
-  type DeliveryMethod,
   type Stage,
   type TopicConfig,
   appendLine,
-  buildDeliveryText,
   cleanNote,
-  cleanText,
-  deliveryMenu,
   hasUpsell,
   getTopicConfig,
   historyLine,
   keyboard,
   methodFromCaption,
-  methodFromCode,
   readyStage,
-  replaceDelivery,
   stageOfThread,
   tg,
   upsellConfirmMenu,
   withoutUpsell,
 } from "@/lib/telegram-orders";
+import { addDays, isPostMethod, parseManagerDate } from "@/lib/delivery-dates";
+import { applyTemplate, fieldsFromCaption, fieldsTemplate, setFieldLines } from "@/lib/order-fields";
 
 type TgUser = { id: number; is_bot?: boolean };
 type TgChat = { id: number };
@@ -173,30 +168,37 @@ async function transition(cfg: TopicConfig, msg: TgMessage, stage: Stage, action
 /* ------------------------------ Запрос деталей ------------------------------ */
 
 const PROMPTS: Record<string, string> = {
-  s: "Ответьте на это сообщение: индекс, город/село, район[, улица]\nНапример: MD-2001, Кишинёв, Кишинёв, Колумна 5",
-  n: "Ответьте на это сообщение номером отделения Nova Poshta.\nНапример: 12",
-  t: "Ответьте на это сообщение адресом доставки по Кишинёву.\nНапример: ул. Колумна 5, кв. 12",
+  e: "Скопируйте блок (нажмите на него), исправьте нужное и отправьте ответом. Строки без изменений можно удалить.",
   note: "Ответьте на это сообщение текстом заметки к заказу.",
 };
 
 // Состояние хранится прямо в сообщении-запросе: подпись заказа + ссылка на него. База не нужна.
-function buildPrompt(kind: string, caption: string, orderMessageId: number): string {
-  return `${PROMPTS[kind]}\n\n${caption}\n\n#ref:${orderMessageId}:${kind}`;
+// Для правки под пояснением идёт шаблон с текущими данными заказа (без пустых строк — их ждёт PROMPT_RE).
+function promptHeader(kind: string, caption: string): { header: string; template?: string } {
+  if (kind !== "e") return { header: PROMPTS[kind] };
+  const template = fieldsTemplate(fieldsFromCaption(caption, new Date()));
+  return { header: `${PROMPTS.e}\n${template}`, template };
 }
 
 const PROMPT_RE = /^[^\n]+(?:\n[^\n]+)*\n\n([\s\S]*)\n\n#ref:(\d+):(\w+)$/;
 
 async function askDetails(msg: TgMessage, kind: string, userId: number) {
+  const caption = msg.caption ?? "";
+  const { header, template } = promptHeader(kind, caption);
+  const text = `👉 ${header}\n\n${caption}\n\n#ref:${msg.message_id}:${kind}`;
   // force_reply + упоминание нажавшего: поле ответа открывается само, и только у него.
+  // Шаблон — блоком кода: в Telegram он копируется одним нажатием.
+  const entities: Record<string, unknown>[] = [{ type: "text_mention", offset: 0, length: 2, user: { id: userId } }];
+  if (template) entities.push({ type: "pre", offset: text.indexOf(template), length: template.length });
   const sent = await tg<{ message_id: number }>("sendMessage", {
     chat_id: msg.chat.id,
     ...(msg.message_thread_id ? { message_thread_id: msg.message_thread_id } : {}),
-    text: `👉 ${buildPrompt(kind, msg.caption ?? "", msg.message_id)}`,
-    entities: [{ type: "text_mention", offset: 0, length: 2, user: { id: userId } }],
+    text,
+    entities,
     reply_markup: {
       force_reply: true,
       selective: true,
-      input_field_placeholder: kind === "note" ? "Текст заметки" : "Введите данные",
+      input_field_placeholder: kind === "note" ? "Текст заметки" : "Вставьте исправленный блок",
     },
   });
   // Если на запрос так и не ответили — убираем его сами.
@@ -213,7 +215,7 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
   const stage = stageOfThread(cfg, msg.message_thread_id);
   if (!stage) throw new UserError("Эта тема не настроена в боте");
 
-  const [action, arg] = cb.data.split(":");
+  const [action] = cb.data.split(":");
   const caption = msg.caption ?? "";
 
   switch (action) {
@@ -222,12 +224,9 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
     case "back":
       await transition(cfg, msg, stage, action);
       return;
-    case "edm":
-      await tg("editMessageReplyMarkup", {
-        chat_id: msg.chat.id,
-        message_id: msg.message_id,
-        reply_markup: { inline_keyboard: deliveryMenu() },
-      });
+    case "ed":
+    case "edm": // кнопка «✏️ Доставка» в заказах, пришедших до появления «✏️ Изменить»
+      await askDetails(msg, "e", cb.from.id);
       return;
     case "esc":
       await safe(
@@ -258,28 +257,6 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
       await editInPlace(cfg, msg.chat.id, msg.message_id, next, stage);
       return "Второй брелок убран из заказа";
     }
-    case "set": {
-      const method = methodFromCode(arg || "");
-      if (!method) throw new UserError("Неизвестный способ");
-      // Закрываем меню в любом случае.
-      await safe(
-        tg("editMessageReplyMarkup", {
-          chat_id: msg.chat.id,
-          message_id: msg.message_id,
-          reply_markup: { inline_keyboard: keyboard(stage, cfg, hasUpsell(caption)) },
-        }),
-      );
-      if (method === "posta" || method === "novapost" || method === "taxi") {
-        await askDetails(msg, arg as string, cb.from.id);
-        return;
-      }
-      const next = appendLine(
-        replaceDelivery(caption, buildDeliveryText(method)),
-        historyLine("✏️ Доставка изменена"),
-      );
-      await applyCaption(cfg, msg.chat.id, msg.message_id, msg.message_thread_id, next, true);
-      return;
-    }
     default:
       throw new UserError("Неизвестное действие");
   }
@@ -287,22 +264,14 @@ async function handleCallback(cfg: TopicConfig, cb: NonNullable<TgUpdate["callba
 
 /* ----------------------------- Ответ на запрос деталей ---------------------------- */
 
-function parseDetails(method: DeliveryMethod, raw: string): DeliveryDetails {
-  if (method === "posta") {
-    const parts = raw.split(/[,;\n]/).map((p) => cleanText(p, 80)).filter(Boolean);
-    if (parts.length < 3) {
-      throw new UserError("Нужно минимум три значения через запятую: индекс, город/село, район");
-    }
-    return { postalCode: parts[0].slice(0, 20), city: parts[1], district: parts[2], street: parts.slice(3).join(", ").slice(0, 100) };
+/** «Отправить до» для почты: прежнее, если дата не менялась, иначе за 3 дня до желаемой. */
+function nextShipBy(caption: string, wantedDate: string | undefined, dateChanged: boolean): string | undefined {
+  if (!wantedDate) return undefined;
+  if (!dateChanged) {
+    const old = caption.split("\n").find((l) => l.startsWith("📅"))?.match(/отправить до:\s*\S+\s+(\d{1,2}\.\d{1,2})/);
+    if (old) return parseManagerDate(old[1], new Date()) ?? undefined;
   }
-  if (method === "novapost") {
-    const branch = cleanText(raw, 40);
-    if (!branch) throw new UserError("Укажите номер отделения");
-    return { branch };
-  }
-  const address = cleanText(raw, 150);
-  if (!address) throw new UserError("Укажите адрес");
-  return { address };
+  return addDays(wantedDate, -3);
 }
 
 async function handleReply(cfg: TopicConfig, msg: TgMessage) {
@@ -323,14 +292,19 @@ async function handleReply(cfg: TopicConfig, msg: TgMessage) {
       const note = cleanNote(msg.text);
       if (!note) throw new UserError("Заметка пустая");
       next = appendLine(caption, `📝 ${note}`);
+    } else if (kind === "e") {
+      const now = new Date();
+      const result = applyTemplate(msg.text, fieldsFromCaption(caption, now), now);
+      if (!result.ok) throw new UserError(result.error);
+      if (result.changed.length === 0) throw new UserError("Ничего не изменилось");
+      const { fields, changed } = result;
+      const ship = isPostMethod(fields.method)
+        ? nextShipBy(caption, fields.wantedDate, changed.includes("дата") || changed.includes("способ"))
+        : undefined;
+      next = appendLine(setFieldLines(caption, fields, ship), historyLine(`✏️ Изменено: ${changed.join(", ")}`));
+      deliveryChanged = changed.includes("способ");
     } else {
-      const method = methodFromCode(kind);
-      if (!method) return;
-      next = appendLine(
-        replaceDelivery(caption, buildDeliveryText(method, parseDetails(method, msg.text))),
-        historyLine("✏️ Доставка изменена"),
-      );
-      deliveryChanged = true;
+      return;
     }
     await applyCaption(cfg, msg.chat.id, orderMessageId, threadId, next, deliveryChanged);
     await safe(tg("deleteMessage", { chat_id: msg.chat.id, message_id: prompt.message_id }));
