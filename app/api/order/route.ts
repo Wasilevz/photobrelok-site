@@ -5,6 +5,8 @@ import { sendCapiEvents } from "@/lib/meta-capi";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 import { readOrderDate, shipBy } from "@/lib/delivery-dates";
 import { crmKeyboard } from "@/lib/crm/links";
+import { addHistory, crmEnabled, insertOrder, saveOrder, uploadPdf } from "@/lib/crm/db";
+import { intakeCaption } from "@/lib/crm/order-intake";
 import { formatMdPhone, normalizeMdPhone } from "@/lib/phone";
 import {
   type DeliveryMethod,
@@ -307,7 +309,52 @@ export async function POST(request: Request) {
     const captionText = honeypotHit ? `${fullCaption}\n🤖 Заполнено скрытое поле — проверьте, не спам ли` : fullCaption;
     if (honeypotHit) console.warn(`Order ${orderId}: honeypot field filled, delivering with a warning`);
 
-    // Режим тем: заказ падает в тему «В работе» с кнопками стадий (см. lib/telegram-orders.ts).
+    // CRM: заказ и копия PDF — в Supabase. Любой сбой здесь не мешает заказу дойти до чата:
+    // сообщение просто получит пометку «⚠️ Не записан в CRM».
+    const crmOn = crmEnabled();
+    let savedToCrm = false;
+    if (crmOn) {
+      try {
+        const pdfPath = await uploadPdf(orderId, pdfBuffer).catch((error) => {
+          console.error(`Order ${orderId}: PDF not stored in CRM`, error);
+          return null;
+        });
+        const at = new Date().toISOString();
+        await insertOrder({
+          code: orderId,
+          createdAt: at,
+          stage: "new",
+          stageChangedAt: at,
+          name: safeName,
+          phone: safePhone,
+          wantedDate: orderDate.wantedDate ?? null,
+          urgent: orderDate.urgent,
+          method: deliveryMethod,
+          postalCode: cleanText(deliveryData.postalCode, 20) || null,
+          city: cleanText(deliveryData.city, 80) || null,
+          district: cleanText(deliveryData.district, 80) || null,
+          street: cleanText(deliveryData.street, 100) || null,
+          branch: cleanText(deliveryData.novaPostBranch, 40) || null,
+          address: cleanText(deliveryData.address, 150) || null,
+          qty: hasSecond ? 2 : 1,
+          price: null,
+          lang: lang === "ro" ? "ro" : "ru",
+          source: safeSource || null,
+          pdfPath,
+          tgChatId: null,
+          tgMessageId: null,
+          tgCaption: null,
+          flags: honeypotHit ? ["honeypot"] : [],
+        });
+        await addHistory(orderId, null, "created", { source: safeSource || null });
+        savedToCrm = true;
+      } catch (error) {
+        console.error(`Order ${orderId}: not saved to CRM`, error);
+      }
+    }
+    const chatCaption = crmOn ? intakeCaption(captionText, savedToCrm) : captionText;
+
+    // Режим тем: заказ падает в тему «В работе» с кнопкой «Открыть в CRM».
     let deliveredToAtLeastOne = false;
     const upsellRefs: UpsellRef[] = [];
     for (const chatId of chatIds) {
@@ -319,7 +366,7 @@ export async function POST(request: Request) {
         if (markup.length > 0) tgFormData.append("reply_markup", JSON.stringify({ inline_keyboard: markup }));
       }
       tgFormData.append("document", new Blob([pdfBuffer], { type: "application/pdf" }), `Brelok_${orderId}.pdf`);
-      tgFormData.append("caption", captionText);
+      tgFormData.append("caption", chatCaption);
 
       try {
         const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
@@ -345,6 +392,14 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error(`Telegram request failed for order ${orderId}`, error);
       }
+    }
+
+    // Запоминаем сообщение заказа в группе с темами: CRM будет править его подпись (без удаления).
+    const groupRef = topics ? upsellRefs.find((ref) => ref.chatId === topics.chatId) : undefined;
+    if (savedToCrm && groupRef) {
+      await saveOrder(orderId, { tg_chat_id: Number(groupRef.chatId), tg_message_id: groupRef.messageId, tg_caption: chatCaption }).catch(
+        (error) => console.error(`Order ${orderId}: chat message not linked in CRM`, error),
+      );
     }
 
     if (!deliveredToAtLeastOne) {
@@ -379,7 +434,7 @@ export async function POST(request: Request) {
     }
 
     // Токен для «добавить второй брелок» на странице «Спасибо» нужен, только если второй ещё не выбран
-    const upsellToken = hasSecond ? null : createUpsellToken({ orderId, caption: captionText, refs: upsellRefs });
+    const upsellToken = hasSecond ? null : createUpsellToken({ orderId, caption: chatCaption, refs: upsellRefs });
     return NextResponse.json({ success: true, orderId, upsellToken });
   } catch (error) {
     console.error("Order generation failed:", error);

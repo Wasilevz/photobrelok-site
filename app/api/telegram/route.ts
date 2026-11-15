@@ -8,6 +8,7 @@ import {
   tg,
 } from "@/lib/telegram-orders";
 import { crmKeyboard } from "@/lib/crm/links";
+import { addHistory, crmEnabled, getOrder, saveOrder } from "@/lib/crm/db";
 
 const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 
@@ -64,6 +65,19 @@ export async function POST(req: Request) {
     // 1) Основной путь: дописываем апселл прямо в сообщение заказа. Сообщение заказа остаётся на месте
     //    (бот больше ничего не переносит и не удаляет).
     const payload = readUpsellToken((body as Record<string, unknown>).token, orderId);
+
+    // CRM: второй брелок → количество 2 (если заказ есть в базе). Сбой CRM не мешает уведомить менеджера.
+    if (crmEnabled()) {
+      try {
+        const order = await getOrder(orderId);
+        if (order && order.qty < 2) {
+          await saveOrder(orderId, { qty: 2, ...(payload ? { tg_caption: withUpsell(payload.caption) } : {}) });
+          await addHistory(orderId, null, "field", { qty: 2, via: "thanks_page" });
+        }
+      } catch (error) {
+        console.error(`Upsell ${orderId}: CRM not updated`, error);
+      }
+    }
     if (payload && payload.refs.length > 0) {
       const topics = getTopicConfig();
       const caption = withUpsell(payload.caption);
