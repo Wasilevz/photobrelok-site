@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
 import { sendCapiEvents } from "@/lib/meta-capi";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
-import { shipBy, validateWanted } from "@/lib/delivery-dates";
+import { readOrderDate, shipBy } from "@/lib/delivery-dates";
 import { formatMdPhone, normalizeMdPhone } from "@/lib/phone";
 import {
   type DeliveryMethod,
@@ -177,20 +177,10 @@ export async function POST(request: Request) {
 
     // Желаемая дата и срочность: те же правила, что в форме (lib/delivery-dates.ts), плюс 30 минут запаса
     // для срочных — на тех, кто открыл форму до 18:00.
-    const isUrgent = urgent === true;
-    if (method === "taxi" && !isUrgent) {
-      return NextResponse.json({ error: t("Такси — только для срочных заказов", "Taxiul — doar pentru comenzi urgente") }, { status: 400 });
-    }
     const now = new Date();
-    const dateProblem = validateWanted({
-      method,
-      wantedDate: typeof wantedDate === "string" ? wantedDate : "",
-      urgent: isUrgent,
-      now,
-      graceMinutes: 30,
-    });
-    if (dateProblem) {
-      const messages: Record<typeof dateProblem, [string, string]> = {
+    const orderDate = readOrderDate({ method, wantedDate, urgent, now, graceMinutes: 30 });
+    if (!orderDate.ok) {
+      const messages: Record<typeof orderDate.problem, [string, string]> = {
         format: ["Выберите дату получения", "Alege data primirii"],
         too_far: ["Выберите дату получения", "Alege data primirii"],
         too_early: ["Эта дата уже недоступна — выберите другую", "Această dată nu mai este disponibilă — alege alta"],
@@ -200,8 +190,9 @@ export async function POST(request: Request) {
           "Срочные заказы на сегодня принимаем до 18:00. Выберите завтра",
           "Comenzile urgente pentru azi le primim până la 18:00. Alege mâine",
         ],
+        taxi_not_urgent: ["Такси — только для срочных заказов", "Taxiul — doar pentru comenzi urgente"],
       };
-      return NextResponse.json({ error: t(...messages[dateProblem]) }, { status: 400 });
+      return NextResponse.json({ error: t(...messages[orderDate.problem]) }, { status: 400 });
     }
     const phoneCheck = normalizeMdPhone(phone);
     if (!phoneCheck.ok) {
@@ -307,9 +298,9 @@ export async function POST(request: Request) {
       langNote,
       sourceLine: safeSource ? `📣 Источник: ${safeSource}` : undefined,
       deliveryBlock: deliveryText,
-      urgent: isUrgent,
-      wantedDate: wantedDate as string,
-      shipBy: method === "posta" || method === "novapost" ? shipBy(now) : undefined,
+      urgent: orderDate.urgent,
+      wantedDate: orderDate.wantedDate,
+      shipBy: orderDate.wantedDate && (method === "posta" || method === "novapost") ? shipBy(now) : undefined,
     });
     // Второй брелок, выбранный в форме, сразу попадает в подпись так же, как при добавлении на странице «Спасибо»
     const fullCaption = hasSecond ? withUpsell(baseCaption) : baseCaption;

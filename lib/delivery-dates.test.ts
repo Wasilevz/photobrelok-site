@@ -9,6 +9,7 @@ import {
   shipBy,
   urgentOpen,
   validateWanted,
+  readOrderDate,
 } from "./delivery-dates.ts";
 
 const at = (iso: string) => new Date(iso); // UTC
@@ -57,4 +58,13 @@ test("parseManagerDate picks nearest future year", () => {
 test("formatDay", () => {
   assert.equal(formatDay("2026-11-21", "ru"), "сб 21.11");
   assert.equal(formatDay("2026-11-21", "ro"), "sâm 21.11");
+});
+
+test("readOrderDate: old cached form without date is still accepted", () => {
+  const now = at("2026-11-15T10:00:00Z");
+  assert.deepEqual(readOrderDate({ method: "pickup", wantedDate: undefined, urgent: undefined, now }), { ok: true, urgent: false });
+  assert.deepEqual(readOrderDate({ method: "posta", wantedDate: "2026-11-21", urgent: false, now }), { ok: true, urgent: false, wantedDate: "2026-11-21" });
+  assert.deepEqual(readOrderDate({ method: "pickup", wantedDate: "", urgent: false, now }), { ok: false, problem: "format" });
+  assert.deepEqual(readOrderDate({ method: "pickup", wantedDate: undefined, urgent: true, now }), { ok: false, problem: "format" });
+  assert.deepEqual(readOrderDate({ method: "taxi", wantedDate: "2026-11-15", urgent: false, now }), { ok: false, problem: "taxi_not_urgent" });
 });

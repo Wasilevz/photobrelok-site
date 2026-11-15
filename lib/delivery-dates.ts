@@ -149,3 +149,18 @@ export function parseManagerDate(input: string, now: Date): string | null {
   const nextYear = build(year + 1);
   return isDay(nextYear) ? nextYear : null;
 }
+
+export type OrderDate = { ok: true; urgent: boolean; wantedDate?: string } | { ok: false; problem: WantedProblem | "taxi_not_urgent" };
+
+/**
+ * Дата из тела заказа. Без даты и без срочности заказ принимается: так отправляет форма,
+ * открытая до обновления сайта, — иначе клиент получил бы ошибку о поле, которого не видит.
+ */
+export function readOrderDate(o: { method: DateMethod; wantedDate: unknown; urgent: unknown; now: Date; graceMinutes?: number }): OrderDate {
+  const urgent = o.urgent === true;
+  if (o.method === "taxi" && !urgent) return { ok: false, problem: "taxi_not_urgent" };
+  if (o.wantedDate === undefined && !urgent) return { ok: true, urgent };
+  const wantedDate = typeof o.wantedDate === "string" ? o.wantedDate : "";
+  const problem = validateWanted({ method: o.method, wantedDate, urgent, now: o.now, graceMinutes: o.graceMinutes });
+  return problem ? { ok: false, problem } : { ok: true, urgent, wantedDate };
+}
