@@ -47,11 +47,11 @@ export async function listOrders(opts: { doneDays: number; q?: string }): Promis
   let query = db()
     .from("crm_orders")
     .select(ORDER_SELECT)
-    .or(`stage.neq.done,stage_changed_at.gte.${since}`)
+    .or(`stage.neq.done,stage_changed_at.gte."${since}"`)
     .order("created_at", { ascending: false })
     .limit(500);
   const q = (opts.q ?? "").replace(/[^\p{L}\p{N}\s+]/gu, "").trim().slice(0, 40);
-  if (q) query = query.or(`name.ilike.*${q}*,phone.ilike.*${q}*,code.ilike.*${q}*`);
+  if (q) query = query.or(`name.ilike."*${q}*",phone.ilike."*${q}*",code.ilike."*${q}*"`); // значения в кавычках: в них бывают точки и пробелы
   const { data, error } = await query;
   if (error) fail("list", error);
   return (data ?? []).map((row) => rowToOrder(withCount(row)));
