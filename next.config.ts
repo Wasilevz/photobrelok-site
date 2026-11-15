@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
-const securityHeaders = [
+const baseHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-  { key: "X-Frame-Options", value: "DENY" },
-  // Report-Only: сначала проверить Pixel, YouTube и Cloudinary, потом включить боевой CSP
-  {
+];
+
+// Report-Only: сначала проверить Pixel, YouTube и Cloudinary, потом включить боевой CSP
+function csp(frameAncestors: string) {
+  return {
     key: "Content-Security-Policy-Report-Only",
     value: [
       "default-src 'self'",
@@ -17,14 +19,24 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "frame-ancestors 'none'",
+      `frame-ancestors ${frameAncestors}`,
     ].join("; "),
-  },
-];
+  };
+}
+
+// Сайт нельзя встраивать в чужие фреймы. Исключение — /crm: Telegram Web (web.telegram.org)
+// открывает Mini App во фрейме, с X-Frame-Options: DENY CRM там не откроется.
+const siteHeaders = [...baseHeaders, { key: "X-Frame-Options", value: "DENY" }, csp("'none'")];
+const crmHeaders = [...baseHeaders, csp("https://web.telegram.org https://*.telegram.org")];
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/", headers: siteHeaders },
+      { source: "/:path((?!crm$|crm/).*)", headers: siteHeaders },
+      { source: "/crm", headers: crmHeaders },
+      { source: "/crm/:path*", headers: crmHeaders },
+    ];
   },
 };
 
