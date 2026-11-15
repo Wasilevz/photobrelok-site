@@ -16,7 +16,7 @@
 - Supabase-проект `uvuavmzrxtyvsytzjywk` (Wasilevz's Project). Таблица `public.orders` не трогается. Новые таблицы — `crm_orders`, `crm_comments`, `crm_history`; бакет `order-pdfs` (приватный).
 - Сервисный ключ только на сервере (`SUPABASE_SERVICE_ROLE_KEY`, без префикса `NEXT_PUBLIC_`). RLS на `crm_*` включён без политик.
 - Доступ: `CRM_ALLOWED_USER_IDS` (через запятую); пустая → закрыто всем. `initData` не старше 24 ч. `CRM_DEV_USER_ID` — только при `NODE_ENV !== "production"`.
-- Стадии и подписи: `new` «🆕 Новые», `production` «🛠 В производстве», `ready` «📦 Готов к выдаче» (pickup/taxi/later) / «📦 Готов к отправке» (posta/novapost), `done` «✅ Завершён».
+- Стадии в базе: `new`, `production`, `ready`, `done`. Колонки доски — 5: «🆕 Новые», «🛠 В производстве», «🏪 Готов к выдаче» (`ready` + pickup/taxi/later), «📦 Готов к отправке» (`ready` + posta/novapost), «✅ Завершён». Колонка = функция стадии и способа доставки.
 - Цена по умолчанию: `250 + 150·(qty−1) + (urgent ? 100 : 0)`; поле `price` перекрывает.
 - Ссылка Mini App: `https://t.me/${TELEGRAM_BOT_USERNAME}/crm?startapp=${code}`.
 - Новая зависимость — только `@supabase/supabase-js`. Перетаскивание — нативный HTML5 DnD на ширине ≥ 1024 px.
@@ -111,7 +111,10 @@ test("dev user only outside production", () => {
 - Produces:
   - `type Stage = "new" | "production" | "ready" | "done"`; `STAGES: Stage[]`
   - `type CrmOrder = { code: string; createdAt: string; stage: Stage; stageChangedAt: string; name: string; phone: string; wantedDate: string | null; urgent: boolean; method: DeliveryMethod; postalCode: string | null; city: string | null; district: string | null; street: string | null; branch: string | null; address: string | null; qty: number; price: number | null; lang: "ru" | "ro"; source: string | null; pdfPath: string | null; tgChatId: number | null; tgMessageId: number | null; tgCaption: string | null; flags: string[]; commentsCount: number }`
-  - `stageLabel(stage: Stage, method: DeliveryMethod): string`; `nextStage(s): Stage | null`; `prevStage(s): Stage | null`
+  - `type Column = "new" | "production" | "pickup" | "ship" | "done"`; `COLUMNS: Column[]` (в этом порядке)
+  - `columnOf(o: Pick<CrmOrder, "stage" | "method">): Column`; `stageOfColumn(c: Column): Stage`
+  - `columnLabel(c: Column): string` — «🆕 Новые», «🛠 В производстве», «🏪 Готов к выдаче», «📦 Готов к отправке», «✅ Завершён»
+  - `stageLabel(stage: Stage, method: DeliveryMethod): string` = `columnLabel(columnOf({ stage, method }))`; `nextStage(s): Stage | null`; `prevStage(s): Stage | null`
   - `orderPrice(o: Pick<CrmOrder, "qty" | "urgent" | "price">): number`
   - `sortOrders(list: CrmOrder[]): CrmOrder[]`
   - `type OrderPatch = Partial<Pick<CrmOrder, "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage">>`
@@ -121,7 +124,16 @@ test("dev user only outside production", () => {
 
 - [ ] **Step 1: Failing tests** (точные значения):
 ```ts
-test("labels", () => { assert.equal(stageLabel("ready", "posta"), "📦 Готов к отправке"); assert.equal(stageLabel("ready", "pickup"), "📦 Готов к выдаче"); });
+test("labels and columns", () => {
+  assert.equal(stageLabel("ready", "posta"), "📦 Готов к отправке");
+  assert.equal(stageLabel("ready", "novapost"), "📦 Готов к отправке");
+  assert.equal(stageLabel("ready", "pickup"), "🏪 Готов к выдаче");
+  assert.equal(columnOf({ stage: "ready", method: "taxi" }), "pickup");
+  assert.equal(columnOf({ stage: "ready", method: "later" }), "pickup");
+  assert.equal(columnOf({ stage: "production", method: "posta" }), "production");
+  assert.equal(stageOfColumn("ship"), "ready");
+});
+test("method change moves a ready order between columns", () => { /* applyPatch(ready+pickup, {method:"posta", postalCode, city, district}) → columnOf(next) === "ship", next.stage === "ready" */ });
 test("price", () => { assert.equal(orderPrice({ qty: 1, urgent: false, price: null }), 250); assert.equal(orderPrice({ qty: 3, urgent: true, price: null }), 650); assert.equal(orderPrice({ qty: 3, urgent: false, price: 600 }), 600); });
 test("sort: urgent, then nearest date, no date last, then oldest first", …);
 test("patch touches only given fields and lists changes", () => { /* patch {phone:"069708505"} → next.phone "+373 69 708 505", name unchanged, changed ["phone"] */ });
@@ -199,10 +211,10 @@ test("row mapping round-trips", …);
 - `startapp`: `Telegram.WebApp.initDataUnsafe.start_param` → открыть карточку этого кода.
 - PDF: `PdfButtons` — «⬇️ Скачать PDF» (`Telegram.WebApp.downloadFile({ url, file_name })` если `isVersionAtLeast("8.0")`, иначе `openLink(url)`), «📩 Прислать в Telegram» (POST send-pdf; `start_bot` → подсказка «Откройте @<бот> и нажмите Start, затем повторите»). Иконка ⬇️ также на карточке в списке.
 - Без Telegram и без dev-режима — экран «Откройте CRM через Telegram» (401/403 → «Нет доступа. Попросите добавить ваш id: …»).
-- Вид — по разделу «Доска» и «Карточка» спеки и эскизам из обсуждения: телефон — вкладки со счётчиками; ≥ 1024 px — 4 колонки и drag&drop (`draggable`, `onDrop` → PATCH stage). Кнопки «→ <следующая>» / «← назад» в карточке. `Telegram.WebApp.ready()`, `expand()`; `BackButton` закрывает карточку.
+- Вид — по разделу «Доска» и «Карточка» спеки и эскизам из обсуждения: телефон — 5 вкладок со счётчиками; ≥ 1024 px — 5 колонок и drag&drop (`draggable`, `onDrop` → PATCH `stage: stageOfColumn(col)`; если итоговая колонка не та, куда бросили, — подсказка из спеки). Кнопка «→ дальше» подписана колонкой назначения (`columnLabel(columnOf({ stage: next, method }))`). Кнопки «→ <следующая>» / «← назад» в карточке. `Telegram.WebApp.ready()`, `expand()`; `BackButton` закрывает карточку.
 
 - [ ] **Step 1: Implement**.
-- [ ] **Step 2: Verify** `npm run build`, `npm run lint`. Playwright (scratchpad, 390×844 и 1280×800) против `npm run dev` с `CRM_DEV_USER_ID`: доска загрузилась, `TEST01` во вкладке «🛠 В производстве»; открыть карточку, поменять телефон → сохранено; способ «почта» → появились индекс/город/район; добавить комментарий → виден; на 1280 перетащить в «📦 Готов» → стадия сменилась; скриншоты посмотреть глазами. Кнопки PDF проверить вручную в Telegram (Task 10).
+- [ ] **Step 2: Verify** `npm run build`, `npm run lint`. Playwright (scratchpad, 390×844 и 1280×800) против `npm run dev` с `CRM_DEV_USER_ID`: доска загрузилась, `TEST01` во вкладке «🛠 В производстве»; открыть карточку, поменять телефон → сохранено; способ «почта» → появились индекс/город/район; добавить комментарий → виден; на 1280 перетащить в «🏪 Готов к выдаче» → заказ с самовывозом там, с почтой — в «📦 Готов к отправке»; скриншоты посмотреть глазами. Кнопки PDF проверить вручную в Telegram (Task 10).
 - [ ] **Step 3: Commit** `CRM: доска, карточка заказа, скачивание PDF`
 
 ### Task 9: Перенос прошлых заказов
