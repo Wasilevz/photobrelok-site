@@ -24,3 +24,9 @@ const WHEN = new Intl.DateTimeFormat("ru-RU", {
 export function whenLabel(iso: string): string {
   return WHEN.format(new Date(iso)).replace(",", "");
 }
+
+/** Ссылка на сообщение заказа в группе (t.me/c/…): там лежит PDF у заказов, перенесённых из чата. */
+export function chatMessageUrl(o: { tgChatId: number | null; tgMessageId: number | null }): string | null {
+  if (o.tgChatId === null || o.tgMessageId === null || !String(o.tgChatId).startsWith("-100")) return null;
+  return `https://t.me/c/${String(o.tgChatId).slice(4)}/${o.tgMessageId}`;
+}

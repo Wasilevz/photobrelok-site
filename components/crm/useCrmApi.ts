@@ -134,3 +134,11 @@ export async function downloadPdf(code: string): Promise<void> {
   const { url, fileName } = await api<{ url: string; fileName: string }>(`/api/crm/orders/${code}/pdf`);
   saveFile(url, fileName);
 }
+
+/** Открыть сообщение в Telegram (внутри приложения; на старых клиентах — обычной ссылкой). */
+export function openTelegram(url: string): void {
+  const tg = webApp();
+  if (tg?.openTelegramLink) tg.openTelegramLink(url);
+  else if (tg?.openLink) tg.openLink(url);
+  else window.open(url, "_blank", "noopener");
+}

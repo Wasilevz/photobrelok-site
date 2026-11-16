@@ -6,7 +6,8 @@ import { type Column, type CrmOrder, columnLabel, columnOf, stageOfColumn } from
 import Board from "@/components/crm/Board";
 import OrderSheet from "@/components/crm/OrderSheet";
 import Reports from "@/components/crm/Reports";
-import { ApiError, downloadPdf, patchOrder, useOrders, webApp } from "@/components/crm/useCrmApi";
+import { ApiError, downloadPdf, openTelegram, patchOrder, useOrders, webApp } from "@/components/crm/useCrmApi";
+import { chatMessageUrl } from "@/components/crm/format";
 
 export default function CrmPage() {
   const [tgReady, setTgReady] = useState(false);
@@ -60,6 +61,9 @@ export default function CrmPage() {
   );
 
   const download = async (code: string) => {
+    const order = orders?.find((o) => o.code === code);
+    const chatUrl = order && !order.pdfPath ? chatMessageUrl(order) : null;
+    if (chatUrl) return openTelegram(chatUrl); // перенесён из чата — PDF в сообщении
     try {
       await downloadPdf(code);
     } catch (e) {

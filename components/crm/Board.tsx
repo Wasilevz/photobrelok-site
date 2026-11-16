@@ -3,7 +3,7 @@
 // Доска: телефон — вкладки колонок со счётчиками; компьютер (≥1024px) — 5 колонок и перетаскивание.
 import { useState } from "react";
 import { type Column, type CrmOrder, COLUMNS, columnLabel, columnOf, sortOrders } from "@/lib/crm/model";
-import { METHOD_LABEL, dateLabel } from "./format";
+import { METHOD_LABEL, chatMessageUrl, dateLabel } from "./format";
 import { PostFormsButtons } from "./PostForms";
 
 function OrderListItem({
@@ -40,7 +40,7 @@ function OrderListItem({
           {order.commentsCount > 0 && <span>💬 {order.commentsCount}</span>}
         </div>
       </button>
-      {order.pdfPath && (
+      {(order.pdfPath || chatMessageUrl(order)) && (
         <button
           type="button"
           onClick={onDownload}

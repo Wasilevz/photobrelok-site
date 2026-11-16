@@ -16,8 +16,8 @@ import {
   orderPrice,
   prevStage,
 } from "@/lib/crm/model";
-import { ApiError, type OrderDetails, api, patchOrder, webApp } from "./useCrmApi";
-import { METHOD_LABEL, dateLabel, whenLabel } from "./format";
+import { ApiError, type OrderDetails, api, openTelegram, patchOrder, webApp } from "./useCrmApi";
+import { METHOD_LABEL, chatMessageUrl, dateLabel, whenLabel } from "./format";
 import DeliveryEditor from "./DeliveryEditor";
 import { isPostMethod } from "@/lib/delivery-dates";
 import PdfButtons from "./PdfButtons";
@@ -209,7 +209,7 @@ export default function OrderSheet({
               </button>
             )}
 
-            <PdfButtons code={o.code} hasPdf={!!o.pdfPath} />
+            <PdfButtons code={o.code} hasPdf={!!o.pdfPath} chatUrl={chatMessageUrl(o)} />
             {o.method === "posta" && (
               <div className="mb-4">
                 <PostFormsButtons codes={[o.code]} codCodes={o.paid ? [] : [o.code]} notify={notify} />
@@ -349,7 +349,7 @@ export default function OrderSheet({
                     <button
                       type="button"
                       className="underline underline-offset-2"
-                      onClick={() => webApp()?.openTelegramLink?.(`https://t.me/c/${String(o.tgChatId).slice(4)}/${o.tgMessageId}`)}
+                      onClick={() => openTelegram(chatMessageUrl(o) as string)}
                     >
                       Открыть сообщение заказа
                     </button>
