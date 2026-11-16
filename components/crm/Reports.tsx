@@ -168,8 +168,12 @@ function RefreshChatButtons() {
   const run = async () => {
     setState("busy");
     try {
-      const { updated } = await api<{ updated: number }>("/api/crm/chat/refresh", { method: "POST" });
-      setState(`Готово: обновлено заказов — ${updated}`);
+      const r = await api<{ updated: number; staleDeleted: number; staleLeft: number }>("/api/crm/chat/refresh", { method: "POST" });
+      setState(
+        `Готово: обновлено заказов — ${r.updated}` +
+          (r.staleDeleted ? `, удалено старых копий — ${r.staleDeleted}` : "") +
+          (r.staleLeft ? `. Не удалось удалить старых копий — ${r.staleLeft}: дайте боту право «Удаление сообщений»` : ""),
+      );
     } catch (e) {
       setState(e instanceof ApiError ? e.message : "Не получилось, попробуйте ещё раз");
     }
@@ -177,7 +181,7 @@ function RefreshChatButtons() {
   return (
     <section className="mt-6 rounded-2xl bg-white p-3 text-sm">
       <h2 className="font-semibold">🔄 Кнопки в чате</h2>
-      <p className="mb-2 text-xs text-[#5C564E]">Поставить кнопки стадий («В производство», «Готов», «Завершить») под всеми незавершёнными заказами в чате. Нужно один раз; займёт до минуты.</p>
+      <p className="mb-2 text-xs text-[#5C564E]">Поставить кнопки стадий («В производство», «Готов», «Завершить») под всеми незавершёнными заказами в чате. Заодно удалит старые копии заказов, которые остались после переноса. Займёт до минуты.</p>
       <button type="button" disabled={state === "busy"} onClick={() => void run()} className={`${btn} w-full font-semibold disabled:opacity-60`}>
         {state === "busy" ? "Обновляем…" : "Обновить кнопки в чате"}
       </button>

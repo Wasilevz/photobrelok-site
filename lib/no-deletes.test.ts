@@ -26,6 +26,7 @@ const ALLOWED_DELETE_MESSAGE = new Set([
   "app/api/telegram/route.ts#notifyUpsell",
   "lib/crm/telegram.ts#deleteOrderMessage",
   "lib/crm/telegram.ts#relocateOrderMessage",
+  "lib/crm/telegram.ts#deleteStaleCopies", // те же старые копии после переноса — повторная попытка
 ]);
 // Стирание файлов хранилища и строк базы — только при полном удалении одного заказа.
 const ALLOWED_PURGE = new Set(["lib/crm/db.ts#purgeOrder"]);

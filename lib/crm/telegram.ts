@@ -5,6 +5,7 @@ import { buildCrmCaption } from "./caption.ts";
 import { chatKeyboard, threadFor } from "./chat.ts";
 import { type CrmOrder, stageLabel } from "./model.ts";
 import { chatTopics } from "./topics.ts";
+import { getSetting, saveSetting } from "./db.ts";
 import { downloadPdf, saveOrder } from "./db.ts";
 
 const bot = () => process.env.TELEGRAM_BOT_USERNAME;
@@ -51,8 +52,10 @@ async function relocateOrderMessage(o: CrmOrder, chatId: number, threadId: numbe
   await saveOrder(o.code, { tg_chat_id: chatId, tg_message_id: copied.message_id, tg_thread_id: threadId, tg_caption: caption });
   try {
     await tg("deleteMessage", { chat_id: o.tgChatId, message_id: o.tgMessageId });
+    await deleteStaleCopies().catch(() => {}); // удаление работает — дочищаем старые копии из очереди
   } catch (error) {
     console.error(`CRM ${o.code}: old message not deleted:`, error instanceof Error ? error.message : error);
+    await rememberStaleCopy({ code: o.code, chatId: o.tgChatId as number, messageId: o.tgMessageId as number });
     await tg("editMessageCaption", {
       chat_id: o.tgChatId,
       message_id: o.tgMessageId,
@@ -60,6 +63,39 @@ async function relocateOrderMessage(o: CrmOrder, chatId: number, threadId: numbe
       reply_markup: { inline_keyboard: [] },
     }).catch(() => {});
   }
+}
+
+type StaleCopy = { code: string; chatId: number; messageId: number };
+const STALE_KEY = "stale_copies";
+
+/** Старая копия, которую Telegram не дал удалить (нет права «Удаление сообщений»): удалим позже. */
+async function rememberStaleCopy(copy: StaleCopy): Promise<void> {
+  try {
+    const list = (await getSetting<StaleCopy[]>(STALE_KEY)) ?? [];
+    if (!list.some((c) => c.chatId === copy.chatId && c.messageId === copy.messageId)) await saveSetting(STALE_KEY, [...list, copy].slice(-200));
+  } catch (error) {
+    console.error("CRM: stale copy not remembered:", error instanceof Error ? error.message : error);
+  }
+}
+
+/**
+ * Удаляет старые копии заказов, оставшиеся после переноса между темами (когда у бота не было права удалять).
+ * Только сообщения из этого списка — их новые копии с PDF уже лежат в нужных темах. Возвращает, сколько удалено.
+ */
+export async function deleteStaleCopies(): Promise<{ deleted: number; left: number }> {
+  const list = (await getSetting<StaleCopy[]>(STALE_KEY)) ?? [];
+  if (list.length === 0) return { deleted: 0, left: 0 };
+  const left: StaleCopy[] = [];
+  for (const c of list) {
+    try {
+      await tg("deleteMessage", { chat_id: c.chatId, message_id: c.messageId });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/message to delete not found/i.test(message)) left.push(c);
+    }
+  }
+  await saveSetting(STALE_KEY, left);
+  return { deleted: list.length - left.length, left: left.length };
 }
 
 /**
@@ -123,6 +159,7 @@ export async function deleteOrderMessage(o: CrmOrder): Promise<"deleted" | "none
     const message = error instanceof Error ? error.message : String(error);
     if (/message to delete not found/i.test(message)) return "deleted";
     console.error(`CRM ${o.code}: chat message not deleted: ${message}`);
+    await rememberStaleCopy({ code: o.code, chatId: o.tgChatId, messageId: o.tgMessageId });
     return "failed";
   }
 }

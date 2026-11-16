@@ -1,5 +1,5 @@
 import { crmEnabled, listOrders } from "@/lib/crm/db";
-import { syncChat } from "@/lib/crm/telegram";
+import { deleteStaleCopies, syncChat } from "@/lib/crm/telegram";
 import { bad, crash, ok, requireUser } from "@/lib/crm/api";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,8 @@ export async function POST(req: Request) {
       if (i > 0) await new Promise((r) => setTimeout(r, 1500));
       await syncChat(o, o);
     }
-    return ok({ updated: orders.length });
+    const stale = await deleteStaleCopies();
+    return ok({ updated: orders.length, staleDeleted: stale.deleted, staleLeft: stale.left });
   } catch (error) {
     return crash("chat refresh", error);
   }
