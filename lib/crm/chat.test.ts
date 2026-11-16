@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canRelocate, chatKeyboard, needsRefresh, parseMoneyCallback, parseStageCallback, threadFor, topicRenames } from "./chat.ts";
+import { chatKeyboard, parseMoneyCallback, parseStageCallback, threadFor, topicRenames } from "./chat.ts";
 
 const btns = (o: Parameters<typeof chatKeyboard>[0]) => chatKeyboard(o, "photobrelok_bot").flat().map((b) => b.text);
 
@@ -54,17 +54,4 @@ test("почта отправлена — кнопки денег; деньги 
   assert.deepEqual(btns({ ...sent, returnedAt: "2026-11-16T10:00:00Z" }), ["💰 Деньги всё же получены", "↩️ Вернуть в работу", "📋 Открыть в CRM"]);
   assert.deepEqual(parseMoneyCallback("mn:AAAAAA:returned"), { code: "AAAAAA", money: "returned" });
   assert.equal(parseMoneyCallback("mn:AAAAAA:pending"), null);
-});
-
-test("возраст сообщения: переносим только свежие (бот не может удалить старше 48 ч); обновляем раз в сутки заранее", () => {
-  const now = new Date("2026-11-16T12:00:00Z");
-  const h = (n: number) => new Date(now.getTime() - n * 3600_000).toISOString();
-  assert.equal(canRelocate(h(1), now), true);
-  assert.equal(canRelocate(h(45), now), true);
-  assert.equal(canRelocate(h(47), now), false); // запас час до 48 ч
-  assert.equal(canRelocate(null, now), false); // возраст неизвестен (старые заказы) — правим на месте
-  assert.equal(needsRefresh(h(10), now), false);
-  assert.equal(needsRefresh(h(20), now), true);
-  assert.equal(needsRefresh(h(47), now), false); // уже поздно: удалить не выйдет — не трогаем, чтобы не плодить дубль
-  assert.equal(needsRefresh(null, now), false);
 });

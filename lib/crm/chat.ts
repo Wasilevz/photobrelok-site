@@ -65,17 +65,3 @@ export function topicRenames(threads: StageThreads, saved: Record<string, string
     return thread && saved[thread] !== name ? [{ thread, name }] : [];
   });
 }
-
-// Telegram не даёт боту удалять сообщения старше 48 часов (даже администратору).
-const HOUR = 3600_000;
-const age = (postedAt: string, now: Date) => now.getTime() - new Date(postedAt).getTime();
-
-/** Перенос (копия + удаление старого) — только пока старое сообщение можно удалить; иначе правим на месте. */
-export function canRelocate(postedAt: string | null, now: Date): boolean {
-  return postedAt !== null && age(postedAt, now) < 46 * HOUR;
-}
-
-/** Ежедневное обновление: переотправить сообщение, пока его ещё можно удалить, чтобы оно всегда было «свежим». */
-export function needsRefresh(postedAt: string | null, now: Date): boolean {
-  return postedAt !== null && age(postedAt, now) >= 18 * HOUR && age(postedAt, now) < 46 * HOUR;
-}
