@@ -1,13 +1,13 @@
 // Чат производства: заказ лежит в теме своей стадии, под ним — кнопка следующего шага (одно нажатие),
 // «Назад» на случай ошибки и ссылка в CRM. Чистые функции — без Telegram и базы.
-import { COLUMNS, type Column, type CrmOrder, type Stage, STAGES, columnLabel, columnOf, nextStage, prevStage } from "./model.ts";
+import { COLUMNS, type Column, type CrmOrder, type Stage, STAGES, columnLabel, columnOf, moneyState, nextStage, prevStage } from "./model.ts";
 import { isPostMethod } from "../delivery-dates.ts";
 import { crmAppUrl } from "./links.ts";
 
 export type ChatButton = { text: string; callback_data: string } | { text: string; url: string };
 export type StageThreads = Record<Column, number | undefined>;
 
-type O = Pick<CrmOrder, "code" | "stage" | "method">;
+type O = Pick<CrmOrder, "code" | "stage" | "method"> & Partial<Pick<CrmOrder, "moneyAt" | "returnedAt">>;
 
 function nextLabel(o: O, to: Stage): string {
   if (to === "production") return o.stage === "done" ? "↩️ Вернуть в работу" : "▶️ В производство";
@@ -21,7 +21,14 @@ export function chatKeyboard(o: O, botUsername: string | undefined): ChatButton[
   const step = (to: Stage, text: string): ChatButton => ({ text, callback_data: `st:${o.code}:${to}` });
   const next = nextStage(o.stage);
   const prev = prevStage(o.stage);
-  if (o.stage === "done") rows.push([step("production", nextLabel(o, "production"))]);
+  if (o.stage === "done") {
+    // Почта отправлена: деньги придут, только если клиент заберёт посылку.
+    const money = (m: "received" | "returned", text: string): ChatButton => ({ text, callback_data: `mn:${o.code}:${m}` });
+    const state = moneyState({ stage: o.stage, moneyAt: o.moneyAt ?? null, returnedAt: o.returnedAt ?? null });
+    if (isPostMethod(o.method) && state === "pending") rows.push([money("received", "💰 Деньги получены"), money("returned", "↩️ Не забрали (возврат)")]);
+    if (state === "returned") rows.push([money("received", "💰 Деньги всё же получены")]);
+    rows.push([step("production", nextLabel(o, "production"))]);
+  }
   else {
     const row: ChatButton[] = [];
     if (next) row.push(step(next, nextLabel(o, next)));
@@ -37,6 +44,11 @@ export function parseStageCallback(data: string | undefined): { code: string; st
   const m = /^st:([A-Z0-9]{6}):(\w+)$/.exec(data ?? "");
   if (!m || !STAGES.includes(m[2] as Stage)) return null;
   return { code: m[1], stage: m[2] as Stage };
+}
+
+export function parseMoneyCallback(data: string | undefined): { code: string; money: "received" | "returned" } | null {
+  const m = /^mn:([A-Z0-9]{6}):(received|returned)$/.exec(data ?? "");
+  return m ? { code: m[1], money: m[2] as "received" | "returned" } : null;
 }
 
 /** Тема для заказа. Пока нет отдельной темы «Новые» — новые лежат в «В работе». */

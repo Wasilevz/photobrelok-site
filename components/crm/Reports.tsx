@@ -272,11 +272,13 @@ export default function Reports({ onClose }: { onClose: () => void }) {
             {/* Чистая прибыль */}
             <section className="rounded-2xl bg-white p-3">
               <h2 className="font-semibold">💰 Чистая прибыль</h2>
-              <p className="mb-2 text-xs text-[#5C564E]">Только завершённые заказы — по дню, когда заказ завершили.</p>
+              <p className="mb-2 text-xs text-[#5C564E]">
+                Только заказы, деньги за которые у вас: предоплата на карту, выдача, деньги с почты — по дню получения денег.
+              </p>
               <div className="rounded-xl border-2 border-[#191715] bg-[#FFC400] p-3">
                 <div className="text-3xl font-bold tabular-nums">{lei(done.profit)}</div>
                 <div className="text-sm">
-                  завершено {done.orders} зак. · {done.keychains} брелков · коробок {done.boxes}
+                  оплачено {done.orders} зак. · {done.keychains} брелков · коробок {done.boxes}
                 </div>
               </div>
               <div className="mt-2 text-sm">
@@ -285,10 +287,19 @@ export default function Reports({ onClose }: { onClose: () => void }) {
                 <Line label={`Коробки (${done.boxes} шт.)`} value={done.boxCost} minus />
                 {done.extraCost > 0 && <Line label="Доп. расходы заказов" value={done.extraCost} minus />}
                 <Line label="Расходы (реклама и др.)" value={done.expenses} minus />
+                {report.returned.orders > 0 && (
+                  <Line label={`↩️ Возвраты — не забрали (${report.returned.orders} зак., ${report.returned.keychains} бр.)`} value={report.returned.loss} minus />
+                )}
                 <div className="mt-1 border-t border-[#E5DCCB] pt-1">
                   <Line label="Чистая прибыль" value={done.profit} strong />
                 </div>
               </div>
+              {report.pending.orders > 0 && (
+                <div className="mt-2 rounded-xl border-2 border-dashed border-[#B54708] bg-[#FFFAEB] p-3 text-sm">
+                  <b>⏳ Ждём деньги с почты:</b> {report.pending.orders} зак. на {lei(report.pending.amount)}
+                  <div className="text-xs text-[#5C564E]">Отправлены, но деньги ещё не получены — в прибыль не входят. Отметьте «💰 Деньги получены» или «↩️ Не забрали» в заказе.</div>
+                </div>
+              )}
               <div className="mt-2">
                 <CostsEditor costs={report.costs} onSaved={refresh} />
               </div>

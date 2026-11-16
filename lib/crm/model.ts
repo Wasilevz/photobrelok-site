@@ -48,6 +48,10 @@ export type CrmOrder = {
   tgCaption: string | null;
   /** Тема группы, где сейчас лежит сообщение; null — тема его стадии (старые заказы). */
   tgThreadId: number | null;
+  /** Когда деньги реально у нас (предоплата, выдача, деньги с почты). Только такие заказы — в выручке. */
+  moneyAt: string | null;
+  /** Посылку не забрали — вернулась (убыток). */
+  returnedAt: string | null;
   flags: string[];
   commentsCount: number;
   /** Подарочных коробок: null — по правилу (orderBoxes), число — вписано вручную. */
@@ -103,6 +107,13 @@ export function amountDue(o: Pick<CrmOrder, "qty" | "urgent" | "price" | "method
   return orderPrice(o) + (o.method === "posta" ? POST_DELIVERY_FEE : 0);
 }
 
+/** Деньги по заказу: none — ещё не время (не выдан/не отправлен), pending — отправлен почтой, ждём деньги. */
+export function moneyState(o: Pick<CrmOrder, "stage" | "moneyAt" | "returnedAt">): "none" | "pending" | "received" | "returned" {
+  if (o.returnedAt) return "returned";
+  if (o.moneyAt) return "received";
+  return o.stage === "done" ? "pending" : "none";
+}
+
 /** Себестоимость единиц, задаётся в отчётах (crm_settings). */
 export type Costs = { keychain: number; box: number };
 export const ZERO_COSTS: Costs = { keychain: 0, box: 0 };
@@ -138,17 +149,21 @@ export type OrderPatch = Partial<
     CrmOrder,
     "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage" | "boxes" | "extraCost" | "paid"
   >
->;
+> & {
+  /** Деньги по заказу: получены / посылку вернули (не забрали) / снова ждём. */
+  money?: "received" | "returned" | "pending";
+};
 
-const PATCH_KEYS: (keyof OrderPatch)[] = [
+const PATCH_KEYS: FieldKey[] = [
   "name", "phone", "wantedDate", "urgent", "method", "postalCode", "city", "district", "street", "branch", "address", "qty", "price", "stage", "boxes", "extraCost", "paid",
 ];
-const TEXT_LIMIT: Partial<Record<keyof OrderPatch, number>> = {
+const TEXT_LIMIT: Partial<Record<FieldKey, number>> = {
   postalCode: 20, city: 80, district: 80, street: 100, branch: 40, address: 150,
 };
-const DELIVERY_KEYS: (keyof OrderPatch)[] = ["method", "postalCode", "city", "district", "street", "branch", "address", "urgent"];
+const DELIVERY_KEYS: FieldKey[] = ["method", "postalCode", "city", "district", "street", "branch", "address", "urgent"];
 
-type PatchResult = { ok: true; next: CrmOrder; changed: (keyof OrderPatch)[]; warnings: string[] } | { ok: false; error: string };
+type FieldKey = Exclude<keyof OrderPatch, "money">;
+type PatchResult = { ok: true; next: CrmOrder; changed: (keyof CrmOrder)[]; warnings: string[] } | { ok: false; error: string };
 
 function cleanLine(value: unknown, max: number): string | null {
   if (typeof value !== "string") return null;
@@ -247,8 +262,34 @@ export function applyPatch(current: CrmOrder, patch: OrderPatch, now: Date): Pat
     }
   }
 
-  const changed = PATCH_KEYS.filter((k) => next[k] !== current[k]);
-  if (next.stage !== current.stage) next.stageChangedAt = now.toISOString();
+  // Деньги: предоплата и выдача (самовывоз/такси) — сразу «получены»; почта — «ждём», пока не отметят.
+  const at = now.toISOString();
+  if (patch.money === "returned" && !isPostMethod(next.method)) return fail("Возврат — только для почтовых отправлений");
+  if (patch.money === "received") {
+    next.moneyAt = at;
+    next.returnedAt = null;
+  } else if (patch.money === "returned") {
+    next.returnedAt = at;
+    next.moneyAt = null;
+  } else if (patch.money === "pending") {
+    next.moneyAt = next.paid ? next.moneyAt : null;
+    next.returnedAt = null;
+  }
+  if ("paid" in patch && next.paid !== current.paid) {
+    if (next.paid) next.moneyAt ??= at;
+    else if (!(next.stage === "done" && !isPostMethod(next.method))) next.moneyAt = null;
+  }
+  if (next.stage !== current.stage) {
+    if (next.stage === "done" && !isPostMethod(next.method)) next.moneyAt ??= at;
+    if (current.stage === "done" && !next.paid) {
+      next.moneyAt = null;
+      next.returnedAt = null;
+    }
+  }
+
+  const tracked: (keyof CrmOrder)[] = [...PATCH_KEYS, "moneyAt", "returnedAt"];
+  const changed = tracked.filter((k) => next[k] !== current[k]);
+  if (next.stage !== current.stage) next.stageChangedAt = at;
   return { ok: true, next, changed, warnings };
 }
 
@@ -269,7 +310,7 @@ const COLUMN_MAP: [keyof CrmOrder, string][] = [
   ["postalCode", "postal_code"], ["city", "city"], ["district", "district"], ["street", "street"], ["branch", "branch"],
   ["address", "address"], ["qty", "qty"], ["price", "price"], ["lang", "lang"], ["source", "source"], ["pdfPath", "pdf_path"],
   ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["tgThreadId", "tg_thread_id"], ["flags", "flags"],
-  ["boxes", "boxes"], ["extraCost", "extra_cost"], ["paid", "paid"], ["deletedAt", "deleted_at"],
+  ["boxes", "boxes"], ["extraCost", "extra_cost"], ["moneyAt", "money_at"], ["returnedAt", "returned_at"], ["paid", "paid"], ["deletedAt", "deleted_at"],
 ];
 
 export function rowToOrder(row: Record<string, unknown>): CrmOrder {

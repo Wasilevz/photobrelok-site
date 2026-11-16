@@ -11,7 +11,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Виктория", phone: "+373 79 797 981", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 2, price: null, lang: "ro", source: "instagram", pdfPath: null, tgChatId: -1004393765609, tgMessageId: 126,
-    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, ...p,
+    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, moneyAt: null, returnedAt: null, ...p,
   };
 }
 
@@ -87,4 +87,15 @@ test("строка «📣 Источник» убирается из подпи�
   const c = buildCrmCaption(order());
   assert.ok(!c.includes("Источник"));
   assert.ok(c.includes("Виктория"));
+});
+
+test("деньги в подписи: ждём с почты / получены / возврат — одна строка под стадией", () => {
+  const post = { stage: "done" as const, method: "posta" as const, postalCode: "MD-2001", city: "C", district: "C" };
+  const wait = buildCrmCaption(order({ ...post }));
+  assert.ok(wait.includes("⏳ Ждём деньги с почты"));
+  const got = buildCrmCaption(order({ ...post, moneyAt: "2026-11-16T10:00:00Z", tgCaption: wait }));
+  assert.ok(got.includes("💰 Деньги получены") && !got.includes("⏳"));
+  const back = buildCrmCaption(order({ ...post, returnedAt: "2026-11-16T10:00:00Z", tgCaption: got }));
+  assert.ok(back.includes("↩️ Посылку не забрали — возврат") && !back.includes("💰 Деньги получены"));
+  assert.ok(!buildCrmCaption(order({ stage: "production" })).includes("Деньги"));
 });

@@ -2,7 +2,7 @@
 
 // Доска: телефон — вкладки колонок со счётчиками; компьютер (≥1024px) — 5 колонок и перетаскивание.
 import { useState } from "react";
-import { type Column, type CrmOrder, COLUMNS, columnLabel, columnOf, sortOrders } from "@/lib/crm/model";
+import { type Column, type CrmOrder, COLUMNS, columnLabel, columnOf, moneyState, sortOrders } from "@/lib/crm/model";
 import { METHOD_LABEL, chatMessageUrl, dateLabel } from "./format";
 import { PostFormsButtons } from "./PostForms";
 
@@ -31,6 +31,8 @@ function OrderListItem({
           <span className="font-mono text-xs text-[#5C564E]">#{order.code}</span>
           {order.urgent && <span className="text-xs font-bold text-[#B42318]">⚡ СРОЧНО</span>}
           {order.paid && <span className="rounded bg-[#ECFDF3] px-1.5 text-xs font-bold text-[#067647]">💳 ОПЛАЧЕН</span>}
+          {moneyState(order) === "pending" && <span className="rounded bg-[#FFFAEB] px-1.5 text-xs font-bold text-[#B54708]">⏳ ждём деньги</span>}
+          {moneyState(order) === "returned" && <span className="rounded bg-[#FEF3F2] px-1.5 text-xs font-bold text-[#B42318]">↩️ возврат</span>}
         </div>
         <div className="truncate font-semibold">{order.name}</div>
         <div className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-[#3D3832]">

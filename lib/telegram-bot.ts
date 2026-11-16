@@ -3,10 +3,10 @@
 import { after } from "next/server";
 import { tg } from "@/lib/telegram-orders";
 import { parseAllowed } from "@/lib/crm/auth";
-import { chatKeyboard, parseStageCallback } from "@/lib/crm/chat";
+import { chatKeyboard, parseMoneyCallback, parseStageCallback } from "@/lib/crm/chat";
 import { getOrder } from "@/lib/crm/db";
 import { stageLabel } from "@/lib/crm/model";
-import { changeStageFromChat } from "@/lib/crm/stage";
+import { changeMoneyFromChat, changeStageFromChat } from "@/lib/crm/stage";
 
 type TgUser = { id: number; is_bot?: boolean; first_name?: string; last_name?: string; username?: string };
 type TgChat = { id: number; type?: string };
@@ -74,6 +74,24 @@ async function handleStageButton(cb: NonNullable<TgUpdate["callback_query"]>, co
   }
 }
 
+function actorOf(cb: NonNullable<TgUpdate["callback_query"]>) {
+  const name = [cb.from.first_name, cb.from.last_name].filter(Boolean).join(" ") || cb.from.username || String(cb.from.id);
+  return { id: cb.from.id, name };
+}
+
+/** «💰 Деньги получены» / «↩️ Не забрали» под отправленным почтой заказом. */
+async function handleMoneyButton(cb: NonNullable<TgUpdate["callback_query"]>, code: string, money: "received" | "returned") {
+  if (!mayPress(cb.from.id)) return answer(cb, "Нет доступа к заказам", true);
+  try {
+    const result = await changeMoneyFromChat(code, money, actorOf(cb));
+    if (!result.ok) return answer(cb, result.error, true);
+    return answer(cb, money === "received" ? `#${code}: 💰 деньги получены` : `#${code}: ↩️ возврат отмечен`);
+  } catch (error) {
+    console.error(`Chat money ${code}:`, error instanceof Error ? error.message : error);
+    return answer(cb, "Не получилось, попробуйте ещё раз", true);
+  }
+}
+
 /** Старые кнопки (до чата по стадиям): ставим под сообщение новые кнопки и просим нажать ещё раз. */
 async function handleLegacyButton(cb: NonNullable<TgUpdate["callback_query"]>) {
   const msg = cb.message;
@@ -96,7 +114,9 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
   if (update.callback_query) {
     const cb = update.callback_query;
     const stage = parseStageCallback(cb.data);
+    const money = parseMoneyCallback(cb.data);
     if (stage) await handleStageButton(cb, stage.code, stage.stage);
+    else if (money) await handleMoneyButton(cb, money.code, money.money);
     else await handleLegacyButton(cb);
     return;
   }

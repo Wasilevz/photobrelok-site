@@ -34,7 +34,7 @@ function fail(what: string, error: { message: string } | null): never {
   throw new Error(`CRM ${what}: ${error?.message ?? "unknown error"}`);
 }
 
-type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt" | "tgThreadId">;
+type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt" | "tgThreadId" | "moneyAt" | "returnedAt">;
 
 export async function insertOrder(o: NewOrder): Promise<void> {
   const { error } = await db().from("crm_orders").insert(orderToRow(o));
@@ -143,7 +143,7 @@ export async function downloadPdf(path: string): Promise<Buffer> {
 }
 
 /**
- * Строки для отчёта: пришедшие за период ИЛИ завершённые за период (с запасом в сутки на часовой пояс —
+ * Строки для отчёта: пришедшие, оплаченные или вернувшиеся за период, плюс все, где ждём деньги (с запасом в сутки на часовой пояс —
  * точные границы по Кишинёву считает reports.ts).
  */
 export async function reportRows(fromDay: string, toDay: string): Promise<ReportRow[]> {
@@ -153,10 +153,15 @@ export async function reportRows(fromDay: string, toDay: string): Promise<Report
   for (let page = 0; page < 50; page++) {
     const { data, error } = await db()
       .from("crm_orders")
-      .select("code, created_at, stage_changed_at, qty, urgent, price, stage, method, boxes, extra_cost")
+      .select("code, created_at, stage_changed_at, qty, urgent, price, stage, method, boxes, extra_cost, money_at, returned_at")
       .is("deleted_at", null)
       .or(
-        `and(created_at.gte."${since}",created_at.lt."${until}"),and(stage.eq.done,stage_changed_at.gte."${since}",stage_changed_at.lt."${until}")`,
+        [
+          `and(created_at.gte."${since}",created_at.lt."${until}")`,
+          `and(money_at.gte."${since}",money_at.lt."${until}")`,
+          `and(returned_at.gte."${since}",returned_at.lt."${until}")`,
+          "and(stage.eq.done,money_at.is.null,returned_at.is.null)", // ждём деньги — за любой срок
+        ].join(","),
       )
       .order("created_at", { ascending: true })
       .range(page * 1000, page * 1000 + 999);
@@ -165,6 +170,7 @@ export async function reportRows(fromDay: string, toDay: string): Promise<Report
       rows.push({
         code: r.code, createdAt: r.created_at, stageChangedAt: r.stage_changed_at, qty: r.qty, urgent: r.urgent,
         price: r.price, stage: r.stage, method: r.method, boxes: r.boxes, extraCost: r.extra_cost,
+        moneyAt: r.money_at, returnedAt: r.returned_at,
       });
     }
     if ((data ?? []).length < 1000) break;

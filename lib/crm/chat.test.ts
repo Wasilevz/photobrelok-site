@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chatKeyboard, parseStageCallback, threadFor, topicRenames } from "./chat.ts";
+import { chatKeyboard, parseMoneyCallback, parseStageCallback, threadFor, topicRenames } from "./chat.ts";
 
 const btns = (o: Parameters<typeof chatKeyboard>[0]) => chatKeyboard(o, "photobrelok_bot").flat().map((b) => b.text);
 
@@ -44,4 +44,14 @@ test("topicRenames: темы называются как стадии CRM; уж�
     { thread: 18, name: "📦 Готов к отправке" },
     { thread: 19, name: "✅ Завершён" },
   ]);
+});
+
+test("почта отправлена — кнопки денег; деньги пришли — только «Вернуть в работу»", () => {
+  const sent = { code: "AAAAAA", stage: "done" as const, method: "posta" as const, moneyAt: null, returnedAt: null };
+  assert.deepEqual(btns(sent), ["💰 Деньги получены", "↩️ Не забрали (возврат)", "↩️ Вернуть в работу", "📋 Открыть в CRM"]);
+  assert.deepEqual(chatKeyboard(sent, undefined)[0][0], { text: "💰 Деньги получены", callback_data: "mn:AAAAAA:received" });
+  assert.deepEqual(btns({ ...sent, moneyAt: "2026-11-16T10:00:00Z" }), ["↩️ Вернуть в работу", "📋 Открыть в CRM"]);
+  assert.deepEqual(btns({ ...sent, returnedAt: "2026-11-16T10:00:00Z" }), ["💰 Деньги всё же получены", "↩️ Вернуть в работу", "📋 Открыть в CRM"]);
+  assert.deepEqual(parseMoneyCallback("mn:AAAAAA:returned"), { code: "AAAAAA", money: "returned" });
+  assert.equal(parseMoneyCallback("mn:AAAAAA:pending"), null);
 });

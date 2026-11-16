@@ -12,6 +12,7 @@ import {
   POST_DELIVERY_FEE,
   URGENT_PRICE,
   amountDue,
+  moneyState,
   orderBoxes,
   orderPrice,
   prevStage,
@@ -29,7 +30,7 @@ const input =
 const FIELD_NAME: Record<string, string> = {
   name: "имя", phone: "телефон", wantedDate: "дата", urgent: "срочно", method: "способ получения", postalCode: "индекс",
   city: "город", district: "район", street: "улица", branch: "отделение", address: "адрес", qty: "брелков", price: "цена",
-  boxes: "коробки", extraCost: "доп. расходы", paid: "оплата",
+  boxes: "коробки", extraCost: "доп. расходы", paid: "оплата", moneyAt: "деньги получены", returnedAt: "возврат",
 };
 
 function Row({ label, value, onEdit, children, editing }: {
@@ -232,6 +233,55 @@ export default function OrderSheet({
               >
                 💳 Клиент оплатил на карту — отметить
               </button>
+            )}
+
+            {moneyState(o) !== "none" && !o.paid && (
+              <div
+                className={`mb-3 rounded-xl border-2 px-3 py-2 ${
+                  moneyState(o) === "pending"
+                    ? "border-dashed border-[#B54708] bg-[#FFFAEB]"
+                    : moneyState(o) === "returned"
+                      ? "border-[#B42318] bg-white"
+                      : "border-[#067647] bg-[#ECFDF3]"
+                }`}
+              >
+                {moneyState(o) === "pending" && (
+                  <>
+                    <div className="font-semibold">⏳ Ждём деньги с почты</div>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button type="button" disabled={saving} onClick={() => void save({ money: "received" })} className="min-h-[44px] rounded-lg border-2 border-[#067647] bg-white text-sm font-semibold">
+                        💰 Деньги получены
+                      </button>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={async () => (await confirmDialog("Отметить возврат: клиент не забрал посылку? Заказ уйдёт в отчёт как убыток.")) && void save({ money: "returned" })}
+                        className="min-h-[44px] rounded-lg border border-[#B42318]/50 bg-white text-sm text-[#B42318]"
+                      >
+                        ↩️ Не забрали
+                      </button>
+                    </div>
+                  </>
+                )}
+                {moneyState(o) === "received" && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-[#054F31]">💰 Деньги получены {o.moneyAt ? whenLabel(o.moneyAt) : ""}</span>
+                    {isPostMethod(o.method) && (
+                      <button type="button" disabled={saving} onClick={() => void save({ money: "pending" })} className="min-h-[40px] rounded-lg border border-[#D9D0BF] bg-white px-2 text-xs">
+                        Отменить
+                      </button>
+                    )}
+                  </div>
+                )}
+                {moneyState(o) === "returned" && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-[#B42318]">↩️ Не забрали — возврат</span>
+                    <button type="button" disabled={saving} onClick={() => void save({ money: "received" })} className="min-h-[40px] rounded-lg border border-[#D9D0BF] bg-white px-2 text-xs">
+                      💰 Всё же получены
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
             <PdfButtons code={o.code} hasPdf={!!o.pdfPath} chatUrl={chatMessageUrl(o)} />

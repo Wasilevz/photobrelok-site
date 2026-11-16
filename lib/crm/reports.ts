@@ -1,13 +1,14 @@
 // Отчёты CRM. Чистые функции — без базы.
-// «Пришло» — заказы по дню оформления. «Прибыль» — только завершённые, по дню завершения
-// (оплата при получении), минус расходы бизнеса за период (реклама и т. п.).
+// «Пришло» — заказы по дню оформления. «Прибыль» — только заказы, деньги за которые реально получены
+// (предоплата, выдача, деньги с почты), по дню получения; минус возвраты (посылку не забрали — потеряли
+// брелки и коробки) и расходы бизнеса за период (реклама и т. п.). «Ждём деньги» — отправленные почтой без оплаты.
 import { addDays, chisinauToday, isDay } from "../delivery-dates.ts";
 import type { DeliveryMethod } from "../order-fields.ts";
-import { type Costs, type CrmOrder, METHODS, ZERO_COSTS, orderBoxes, orderPrice } from "./model.ts";
+import { type Costs, type CrmOrder, METHODS, ZERO_COSTS, moneyState, orderBoxes, orderCost, orderPrice } from "./model.ts";
 
 export type ReportRow = Pick<
   CrmOrder,
-  "code" | "createdAt" | "stageChangedAt" | "qty" | "urgent" | "price" | "stage" | "method" | "boxes" | "extraCost"
+  "code" | "createdAt" | "stageChangedAt" | "qty" | "urgent" | "price" | "stage" | "method" | "boxes" | "extraCost" | "moneyAt" | "returnedAt"
 >;
 export type ExpenseRow = { day: string; amount: number };
 
@@ -29,6 +30,8 @@ export type Report = Totals & {
   days: ReportDay[];
   methods: (Totals & { method: DeliveryMethod })[];
   done: Profit;
+  returned: { orders: number; keychains: number; loss: number };
+  pending: { orders: number; amount: number };
   costs: Costs;
 };
 
@@ -56,6 +59,8 @@ export function buildReport(
   const byMethod = new Map(METHODS.map((m) => [m, { method: m, ...zero() }]));
   let urgent = 0;
   const done: Profit = { ...zero(), boxes: 0, keychainCost: 0, boxCost: 0, extraCost: 0, expenses: 0, profit: 0 };
+  const returned = { orders: 0, keychains: 0, loss: 0 };
+  const pending = { orders: 0, amount: 0 };
 
   for (const r of rows) {
     const day = byDay.get(dayOf(r.createdAt));
@@ -66,7 +71,17 @@ export function buildReport(
       if (m) add(m, r);
       if (r.urgent) urgent += 1;
     }
-    if (r.stage === "done" && inPeriod(dayOf(r.stageChangedAt))) {
+    const state = moneyState(r);
+    if (state === "pending") {
+      pending.orders += 1;
+      pending.amount += orderPrice(r);
+    }
+    if (state === "returned" && inPeriod(dayOf(r.returnedAt as string))) {
+      returned.orders += 1;
+      returned.keychains += r.qty;
+      returned.loss += orderCost(r, costs);
+    }
+    if (state === "received" && inPeriod(dayOf(r.moneyAt as string))) {
       add(done, r);
       const boxes = orderBoxes(r).count;
       done.boxes += boxes;
@@ -76,7 +91,7 @@ export function buildReport(
     }
   }
   done.expenses = expenses.filter((e) => inPeriod(e.day)).reduce((s, e) => s + e.amount, 0);
-  done.profit = done.revenue - done.keychainCost - done.boxCost - done.extraCost - done.expenses;
+  done.profit = done.revenue - done.keychainCost - done.boxCost - done.extraCost - done.expenses - returned.loss;
 
   return {
     from,
@@ -87,6 +102,8 @@ export function buildReport(
     days: [...byDay.values()],
     methods: [...byMethod.values()].filter((m) => m.orders > 0).sort((a, b) => b.orders - a.orders),
     done,
+    returned,
+    pending,
     costs,
   };
 }

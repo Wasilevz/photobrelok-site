@@ -9,6 +9,7 @@ import {
   orderBoxes,
   orderCost,
   amountDue,
+  moneyState,
   orderPrice,
   orderToRow,
   prevStage,
@@ -27,7 +28,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Мария", phone: "+373 60 024 571", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 1, price: null, lang: "ru", source: null, pdfPath: null, tgChatId: null, tgMessageId: null, tgCaption: null,
-    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, ...p,
+    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, moneyAt: null, returnedAt: null, ...p,
   };
 }
 
@@ -171,4 +172,34 @@ test("rowToOrder/orderToRow: удалён из CRM", () => {
   assert.equal(rowToOrder({ code: "X" }).deletedAt, null);
   assert.equal(rowToOrder({ code: "X", deleted_at: "2026-11-16T10:00:00Z" }).deletedAt, "2026-11-16T10:00:00Z");
   assert.deepEqual(orderToRow({ deletedAt: "2026-11-16T10:00:00Z" }), { deleted_at: "2026-11-16T10:00:00Z" });
+});
+
+const later = new Date("2026-11-17T10:00:00Z");
+
+test("деньги: самовывоз/такси — получены при выдаче (завершён)", () => {
+  const r = applyPatch(order({ stage: "ready", method: "pickup" }), { stage: "done" }, later);
+  assert.ok(r.ok && r.next.moneyAt === later.toISOString() && moneyState(r.next) === "received");
+  assert.ok(r.ok && r.changed.includes("moneyAt"));
+});
+
+test("деньги: почта — после «Отправлен» ждём деньги; потом «получены» или «возврат»", () => {
+  const post = { method: "posta" as const, postalCode: "MD-2001", city: "C", district: "C" };
+  const sent = applyPatch(order({ stage: "ready", ...post }), { stage: "done" }, later);
+  assert.ok(sent.ok && sent.next.moneyAt === null && moneyState(sent.next) === "pending");
+  if (!sent.ok) return;
+  const got = applyPatch(sent.next, { money: "received" }, later);
+  assert.ok(got.ok && got.next.moneyAt === later.toISOString() && moneyState(got.next) === "received");
+  const back = applyPatch(sent.next, { money: "returned" }, later);
+  assert.ok(back.ok && back.next.returnedAt === later.toISOString() && back.next.moneyAt === null && moneyState(back.next) === "returned");
+  assert.equal(applyPatch(order({ stage: "done", method: "pickup" }), { money: "returned" }, later).ok, false); // возврат — только почта
+});
+
+test("деньги: предоплата на карту — получены сразу; вернули заказ из «Завершён» — снова не оплачен", () => {
+  const paid = applyPatch(order(), { paid: true }, later);
+  assert.ok(paid.ok && paid.next.moneyAt === later.toISOString());
+  const reopened = applyPatch(order({ stage: "done", moneyAt: "2026-11-16T10:00:00Z" }), { stage: "production" }, later);
+  assert.ok(reopened.ok && reopened.next.moneyAt === null);
+  const reopenedPaid = applyPatch(order({ stage: "done", paid: true, moneyAt: "2026-11-16T10:00:00Z" }), { stage: "production" }, later);
+  assert.ok(reopenedPaid.ok && reopenedPaid.next.moneyAt === "2026-11-16T10:00:00Z"); // предоплата остаётся
+  assert.equal(moneyState(order({ stage: "production" })), "none");
 });
