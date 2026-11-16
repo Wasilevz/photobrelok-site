@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ApiError, downloadPdf, openTelegram, viewPdf } from "./useCrmApi";
+import { ApiError, downloadPdf, openTelegram } from "./useCrmApi";
+import PdfViewer from "./PdfViewer";
 
 /** Главное требование владельца: PDF — «нажал, открыл, сохранил». */
 /** PDF в хранилище CRM — скачать сразу; заказ, перенесённый из чата, — открыть его сообщение, PDF там. */
 export default function PdfButtons({ code, hasPdf, chatUrl }: { code: string; hasPdf: boolean; chatUrl?: string | null }) {
   const [busy, setBusy] = useState<"down" | "view" | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [viewing, setViewing] = useState(false);
   if (!hasPdf) {
     if (!chatUrl) return null;
     return (
@@ -25,11 +27,11 @@ export default function PdfButtons({ code, hasPdf, chatUrl }: { code: string; ha
   }
 
   const run = async (kind: "down" | "view") => {
+    if (kind === "view") return setViewing(true); // просмотр — прямо здесь, без браузера
     setBusy(kind);
     setNote(null);
     try {
-      if (kind === "down") await downloadPdf(code);
-      else await viewPdf(code);
+      await downloadPdf(code);
     } catch (e) {
       setNote(e instanceof ApiError ? e.message : "Не получилось, попробуйте ещё раз");
     } finally {
@@ -58,6 +60,7 @@ export default function PdfButtons({ code, hasPdf, chatUrl }: { code: string; ha
         </button>
       </div>
       {note && <p className="text-sm text-[#5C564E]" role="status">{note}</p>}
+      {viewing && <PdfViewer code={code} onClose={() => setViewing(false)} onDownload={() => void run("down")} />}
     </div>
   );
 }
