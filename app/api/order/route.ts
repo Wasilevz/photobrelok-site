@@ -299,7 +299,8 @@ export async function POST(request: Request) {
       name: safeName,
       phone: safePhone,
       langNote,
-      sourceLine: safeSource ? `📣 Источник: ${safeSource}` : undefined,
+      // Источник перехода в чате не показываем (лишняя информация); он сохраняется только в CRM.
+      sourceLine: undefined,
       deliveryBlock: deliveryText,
       urgent: orderDate.urgent,
       wantedDate: orderDate.wantedDate,

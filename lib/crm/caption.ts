@@ -12,6 +12,7 @@ const STAGE_PREFIX = "📌 Стадия:";
 const QTY_PREFIX = "🔑 Брелков:";
 const PAID_PREFIX = "💳 ОПЛАЧЕН";
 const NOT_SAVED = "⚠️ Не записан в CRM";
+const SOURCE_PREFIX = "📣 Источник:"; // источник перехода в чате не показываем (владелец: лишняя информация)
 
 export function buildCrmCaption(o: CrmOrder): string {
   const raw = o.tgCaption ?? `🔥 Новый заказ #${o.code}`;
@@ -21,7 +22,7 @@ export function buildCrmCaption(o: CrmOrder): string {
   const shipBy = o.wantedDate && isPostMethod(o.method) ? addDays(o.wantedDate, -3) : undefined;
   const lines = setFieldLines(base, toFields(o), shipBy)
     .split("\n")
-    .filter((l) => !l.startsWith(STAGE_PREFIX) && !l.startsWith(QTY_PREFIX) && !l.startsWith(PAID_PREFIX) && !l.startsWith(NOT_SAVED));
+    .filter((l) => !l.startsWith(STAGE_PREFIX) && !l.startsWith(QTY_PREFIX) && !l.startsWith(PAID_PREFIX) && !l.startsWith(NOT_SAVED) && !l.startsWith(SOURCE_PREFIX));
 
   // Сразу под заголовком (или под блоком второго брелка) — стадия и количество.
   const rules = lines.map((l, i) => (l.startsWith("━") ? i : -1)).filter((i) => i !== -1);

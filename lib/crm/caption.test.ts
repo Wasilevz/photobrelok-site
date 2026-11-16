@@ -22,10 +22,10 @@ test("stage line is single and updated", () => {
   assert.ok(again.includes("📌 Стадия: 🏪 Готов к выдаче"));
   assert.ok(buildCrmCaption(order({ stage: "ready", method: "novapost", branch: "12" })).includes("📌 Стадия: 📦 Готов к отправке"));
 });
-test("keeps upsell block, language, source, notes; updates fields", () => {
+test("keeps upsell block, language, notes; updates fields", () => {
   const out = buildCrmCaption(order({ phone: "+373 60 000 000" }));
   assert.ok(out.startsWith("🔥 Новый заказ #X46XXY — ⚠️ 2 БРЕЛКА\n━━━━━━━━━━━━━━━\n⚠️ ВТОРОЙ БРЕЛОК"));
-  for (const keep of ["🌐 Клиент оформлял", "📣 Источник", "📝 заметка"]) assert.ok(out.includes(keep), keep);
+  for (const keep of ["🌐 Клиент оформлял", "📝 заметка"]) assert.ok(out.includes(keep), keep);
   assert.ok(out.includes("📞 Тел: +373 60 000 000"));
   assert.ok(!out.includes("079797981"));
 });
@@ -80,5 +80,11 @@ test("оплачен: строка под стадией — для почты �
 test("удалённый из CRM: стадия «Удалён из CRM», остальная подпись на месте", () => {
   const c = buildCrmCaption(order({ deletedAt: "2026-11-16T10:00:00Z" }));
   assert.ok(c.includes("📌 Стадия: 🗑 Удалён из CRM"));
+  assert.ok(c.includes("Виктория"));
+});
+
+test("строка «📣 Источник» убирается из подписи", () => {
+  const c = buildCrmCaption(order());
+  assert.ok(!c.includes("Источник"));
   assert.ok(c.includes("Виктория"));
 });
