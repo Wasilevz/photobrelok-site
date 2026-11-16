@@ -1,12 +1,12 @@
-import { addHistory, getOrder, hideOrder } from "@/lib/crm/db";
-import { syncOrderMessage } from "@/lib/crm/telegram";
+import { getOrder, purgeOrder } from "@/lib/crm/db";
+import { deleteOrderMessage } from "@/lib/crm/telegram";
 import { CODE_RE, bad, crash, ok, readJson, requireUser } from "@/lib/crm/api";
 
 export const dynamic = "force-dynamic";
 
 /**
- * «Удалить заказ» (тестовый/ошибочный): убрать из CRM и отчётов. Тело { confirm: "<код>" } — защита от случайного
- * нажатия. Строка в базе, PDF и сообщение в чате остаются (запрет владельца); в подписи — «🗑 Удалён из CRM».
+ * «Удалить заказ» — полностью и безвозвратно (решение владельца): сообщение в чате, PDF, комментарии, история, строка.
+ * Тело { confirm: "<код>" } — защита от случайного нажатия.
  */
 export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
   const user = requireUser(req);
@@ -17,13 +17,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
   if (body?.confirm !== code) return bad("Подтвердите удаление");
   try {
     const order = await getOrder(code);
-    if (!order) return bad("Заказ не найден", 404);
-    if (order.deletedAt) return ok({ ok: true });
-    const at = await hideOrder(code, user);
-    await addHistory(code, user, "deleted", {});
-    await syncOrderMessage({ ...order, deletedAt: at });
-    return ok({ ok: true });
+    if (!order) return ok({ chat: "none" });
+    const chat = await deleteOrderMessage(order);
+    await purgeOrder(code);
+    console.log(`CRM ${code}: удалён полностью (${user.name}), чат: ${chat}`);
+    return ok({ chat });
   } catch (error) {
-    return crash("hide", error);
+    return crash("purge", error);
   }
 }

@@ -76,7 +76,7 @@ async function orderId(code: string): Promise<string> {
   return data.id as string;
 }
 
-export type HistoryAction = "created" | "imported" | "stage" | "field" | "comment" | "deleted";
+export type HistoryAction = "created" | "imported" | "stage" | "field" | "comment";
 
 export async function addHistory(code: string, actor: CrmUser | null, action: HistoryAction, details: object): Promise<void> {
   const { error } = await db()
@@ -257,10 +257,25 @@ export async function savePrint(print: PrintSettings, actor: CrmUser): Promise<v
   if (error) fail("print save", error);
 }
 
-/** «Удалить» = убрать из CRM: только отметка. Строка, PDF и сообщение в чате остаются. */
-export async function hideOrder(code: string, actor: CrmUser): Promise<string> {
-  const at = new Date().toISOString();
-  const { error } = await db().from("crm_orders").update({ deleted_at: at, deleted_by: actor.name }).eq("code", code).is("deleted_at", null);
-  if (error) fail("hide", error);
-  return at;
+/**
+ * Полное удаление одного заказа (кнопка «Удалить заказ» с подтверждением; решение владельца):
+ * PDF из хранилища, комментарии, история и сама строка. Больше нигде в коде удалений нет (см. lib/no-deletes.test.ts).
+ */
+export async function purgeOrder(code: string): Promise<{ pdfRemoved: boolean }> {
+  const { data: row, error } = await db().from("crm_orders").select("id, pdf_path").eq("code", code).maybeSingle();
+  if (error) fail("purge lookup", error);
+  if (!row) return { pdfRemoved: false };
+  let pdfRemoved = false;
+  if (row.pdf_path) {
+    const { error: e } = await db().storage.from(BUCKET).remove([row.pdf_path as string]);
+    if (e) fail("purge pdf", e);
+    pdfRemoved = true;
+  }
+  for (const table of ["crm_comments", "crm_history"]) {
+    const { error: e } = await db().from(table).delete().eq("order_id", row.id);
+    if (e) fail(`purge ${table}`, e);
+  }
+  const { error: e } = await db().from("crm_orders").delete().eq("id", row.id);
+  if (e) fail("purge order", e);
+  return { pdfRemoved };
 }

@@ -59,3 +59,20 @@ export async function sendPdfTo(userId: number, o: CrmOrder): Promise<SendPdfRes
     throw error;
   }
 }
+
+/**
+ * Удаляет сообщение заказа из чата — только при полном удалении заказа кнопкой «Удалить заказ».
+ * Telegram позволяет боту удалять сообщения не старше 48 часов (или если бот — админ с правом удаления).
+ */
+export async function deleteOrderMessage(o: CrmOrder): Promise<"deleted" | "none" | "failed"> {
+  if (o.tgChatId === null || o.tgMessageId === null) return "none";
+  try {
+    await tg("deleteMessage", { chat_id: o.tgChatId, message_id: o.tgMessageId });
+    return "deleted";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/message to delete not found/i.test(message)) return "deleted";
+    console.error(`CRM ${o.code}: chat message not deleted: ${message}`);
+    return "failed";
+  }
+}

@@ -154,7 +154,7 @@ export default function CrmPage() {
           onDeleted={(code) => {
             setOpenCode(null);
             setOrders((list) => (list ? list.filter((o) => o.code !== code) : list));
-            notify(`Заказ #${code} удалён из CRM`);
+            notify(`Заказ #${code} удалён`);
           }}
           notify={notify}
         />

@@ -137,14 +137,18 @@ export default function OrderSheet({
     const o = details?.order;
     if (!o) return;
     const ok = await confirmDialog(
-      `Удалить заказ #${o.code} (${o.name}) из CRM?\n\nОн пропадёт с доски и из отчётов. PDF и сообщение в чате останутся, в чате появится пометка «Удалён из CRM».`,
+      `Удалить заказ #${o.code} (${o.name}) полностью?\n\nБудут стёрты сообщение в чате, PDF, комментарии и история. Вернуть будет нельзя.`,
     );
     if (!ok) return;
     setSaving(true);
     try {
-      await api(`/api/crm/orders/${o.code}/trash`, { method: "POST", body: JSON.stringify({ confirm: o.code }) });
+      const { chat } = await api<{ chat: "deleted" | "none" | "failed" }>(`/api/crm/orders/${o.code}/trash`, {
+        method: "POST",
+        body: JSON.stringify({ confirm: o.code }),
+      });
       webApp()?.HapticFeedback?.notificationOccurred?.("success");
       onDeleted(o.code);
+      if (chat === "failed") notify("Заказ удалён, но сообщение в чате Telegram не дал удалить (старше 48 часов) — удалите его вручную");
     } catch (e) {
       notify(e instanceof ApiError ? e.message : "Не удалось удалить, попробуйте ещё раз");
     } finally {
@@ -422,9 +426,7 @@ export default function OrderSheet({
                             ? "заказ с сайта"
                             : h.action === "imported"
                               ? "перенесён из чата"
-                              : h.action === "deleted"
-                                ? "удалил из CRM"
-                                : h.action}
+                              : h.action}
                     </li>
                   ))}
                 </ul>
@@ -437,9 +439,9 @@ export default function OrderSheet({
               onClick={() => void askHideOrder()}
               className="mt-8 min-h-[44px] w-full rounded-xl border border-[#B42318]/50 bg-white text-sm font-medium text-[#B42318] disabled:opacity-60"
             >
-              🗑 Удалить заказ из CRM
+              🗑 Удалить заказ
             </button>
-            <p className="mt-1 text-center text-xs text-[#5C564E]">Для тестовых и ошибочных заказов. PDF и сообщение в чате останутся.</p>
+            <p className="mt-1 text-center text-xs text-[#5C564E]">Полностью: сообщение в чате, PDF, комментарии. С подтверждением.</p>
           </>
         )}
       </div>
