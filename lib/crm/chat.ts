@@ -1,6 +1,6 @@
 // Чат производства: заказ лежит в теме своей стадии, под ним — кнопка следующего шага (одно нажатие),
 // «Назад» на случай ошибки и ссылка в CRM. Чистые функции — без Telegram и базы.
-import { type Column, type CrmOrder, type Stage, STAGES, columnOf, nextStage, prevStage } from "./model.ts";
+import { COLUMNS, type Column, type CrmOrder, type Stage, STAGES, columnLabel, columnOf, nextStage, prevStage } from "./model.ts";
 import { isPostMethod } from "../delivery-dates.ts";
 import { crmAppUrl } from "./links.ts";
 
@@ -43,4 +43,13 @@ export function parseStageCallback(data: string | undefined): { code: string; st
 export function threadFor(o: Pick<CrmOrder, "stage" | "method">, threads: StageThreads): number | undefined {
   const column = columnOf(o);
   return threads[column] ?? (column === "new" ? threads.production : undefined);
+}
+
+/** Какие темы переименовать, чтобы их названия совпадали со стадиями CRM (saved — уже выставленные имена). */
+export function topicRenames(threads: StageThreads, saved: Record<string, string>): { thread: number; name: string }[] {
+  return COLUMNS.flatMap((c) => {
+    const thread = threads[c];
+    const name = columnLabel(c);
+    return thread && saved[thread] !== name ? [{ thread, name }] : [];
+  });
 }

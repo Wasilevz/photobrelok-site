@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chatKeyboard, parseStageCallback, threadFor } from "./chat.ts";
+import { chatKeyboard, parseStageCallback, threadFor, topicRenames } from "./chat.ts";
 
 const btns = (o: Parameters<typeof chatKeyboard>[0]) => chatKeyboard(o, "photobrelok_bot").flat().map((b) => b.text);
 
@@ -28,4 +28,20 @@ test("threadFor: тема по колонке; нет темы «Новые» �
   assert.equal(threadFor({ stage: "ready", method: "novapost" }, t), 18);
   assert.equal(threadFor({ stage: "ready", method: "taxi" }, t), 17);
   assert.equal(threadFor({ stage: "new", method: "pickup" }, { ...t, new: undefined }), 16);
+});
+
+test("topicRenames: темы называются как стадии CRM; уже переименованные не трогаем", () => {
+  const t = { new: 20, production: 16, pickup: 17, ship: 18, done: 19 };
+  assert.deepEqual(topicRenames(t, {}), [
+    { thread: 20, name: "🆕 Новые" },
+    { thread: 16, name: "🛠 В производстве" },
+    { thread: 17, name: "🏪 Готов к выдаче" },
+    { thread: 18, name: "📦 Готов к отправке" },
+    { thread: 19, name: "✅ Завершён" },
+  ]);
+  assert.deepEqual(topicRenames({ ...t, new: undefined }, { 16: "🛠 В производстве", 17: "Самовывоз" }), [
+    { thread: 17, name: "🏪 Готов к выдаче" },
+    { thread: 18, name: "📦 Готов к отправке" },
+    { thread: 19, name: "✅ Завершён" },
+  ]);
 });
