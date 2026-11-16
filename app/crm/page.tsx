@@ -75,7 +75,7 @@ export default function CrmPage() {
     try {
       const { order } = await patchOrder(code, { stage: stageOfColumn(column) });
       upsert(order);
-      if (columnOf(order) !== column) notify(`Способ доставки — ${order.method === "pickup" || order.method === "taxi" ? "выдача" : "почта"}, заказ в «${columnLabel(columnOf(order))}»`);
+      if (columnOf(order) !== column) notify(`Способ получения — ${order.method === "pickup" || order.method === "taxi" ? "выдача" : "почта"}, заказ в «${columnLabel(columnOf(order))}»`);
     } catch (e) {
       notify(e instanceof ApiError ? e.message : "Не получилось перенести заказ");
       void reload();

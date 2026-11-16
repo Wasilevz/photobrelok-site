@@ -315,7 +315,7 @@ export default function Reports({ onClose }: { onClose: () => void }) {
 
             {report.methods.length > 0 && (
               <>
-                <h2 className="mb-2 mt-5 font-semibold">По способу доставки</h2>
+                <h2 className="mb-2 mt-5 font-semibold">По способу получения</h2>
                 <ul className="rounded-2xl bg-white px-3">
                   {report.methods.map((m) => (
                     <li key={m.method} className="border-b border-[#E5DCCB] py-2.5 text-sm last:border-0">

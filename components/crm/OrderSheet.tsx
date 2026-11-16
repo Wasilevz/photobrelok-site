@@ -27,7 +27,7 @@ const input =
   "w-full min-h-[44px] rounded-lg border border-[#D9D0BF] bg-white px-3 text-base focus-visible:outline-2 focus-visible:outline-[#191715]";
 
 const FIELD_NAME: Record<string, string> = {
-  name: "имя", phone: "телефон", wantedDate: "дата", urgent: "срочно", method: "способ", postalCode: "индекс",
+  name: "имя", phone: "телефон", wantedDate: "дата", urgent: "срочно", method: "способ получения", postalCode: "индекс",
   city: "город", district: "район", street: "улица", branch: "отделение", address: "адрес", qty: "брелков", price: "цена",
   boxes: "коробки", extraCost: "доп. расходы", paid: "оплата",
 };
@@ -278,7 +278,7 @@ export default function OrderSheet({
               </Row>
 
               <Row
-                label="🚚 Доставка"
+                label="🚚 Способ получения"
                 value={
                   <>
                     {METHOD_LABEL[o.method]}
