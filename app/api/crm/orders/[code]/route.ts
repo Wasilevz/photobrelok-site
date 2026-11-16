@@ -32,6 +32,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   try {
     const current = await getOrder(code);
     if (!current) return bad("Заказ не найден", 404);
+    if (current.deletedAt) return bad("Заказ удалён из CRM", 409);
     const result = applyPatch(current, body as OrderPatch, new Date());
     if (!result.ok) return bad(result.error);
     const { next, changed, warnings } = result;

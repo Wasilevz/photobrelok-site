@@ -151,6 +151,11 @@ export default function CrmPage() {
           code={openCode}
           onClose={() => setOpenCode(null)}
           onChanged={upsert}
+          onDeleted={(code) => {
+            setOpenCode(null);
+            setOrders((list) => (list ? list.filter((o) => o.code !== code) : list));
+            notify(`Заказ #${code} удалён из CRM`);
+          }}
           notify={notify}
         />
       )}

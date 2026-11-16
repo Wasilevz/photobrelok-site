@@ -54,6 +54,8 @@ export type CrmOrder = {
   extraCost: number | null;
   /** Оплачен заранее на карту: при выдаче/отправке деньги не брать, наложенный платёж не оформлять. */
   paid: boolean;
+  /** Убран из CRM (тестовый/ошибочный): строка, PDF и сообщение в чате остаются. null — активный. */
+  deletedAt: string | null;
 };
 
 export function columnOf(o: Pick<CrmOrder, "stage" | "method">): Column {
@@ -265,7 +267,7 @@ const COLUMN_MAP: [keyof CrmOrder, string][] = [
   ["postalCode", "postal_code"], ["city", "city"], ["district", "district"], ["street", "street"], ["branch", "branch"],
   ["address", "address"], ["qty", "qty"], ["price", "price"], ["lang", "lang"], ["source", "source"], ["pdfPath", "pdf_path"],
   ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["flags", "flags"],
-  ["boxes", "boxes"], ["extraCost", "extra_cost"], ["paid", "paid"],
+  ["boxes", "boxes"], ["extraCost", "extra_cost"], ["paid", "paid"], ["deletedAt", "deleted_at"],
 ];
 
 export function rowToOrder(row: Record<string, unknown>): CrmOrder {

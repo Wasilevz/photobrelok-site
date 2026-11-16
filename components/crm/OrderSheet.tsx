@@ -16,7 +16,7 @@ import {
   orderPrice,
   prevStage,
 } from "@/lib/crm/model";
-import { ApiError, type OrderDetails, api, openTelegram, patchOrder, webApp } from "./useCrmApi";
+import { ApiError, type OrderDetails, api, confirmDialog, openTelegram, patchOrder, webApp } from "./useCrmApi";
 import { METHOD_LABEL, chatMessageUrl, dateLabel, whenLabel } from "./format";
 import DeliveryEditor from "./DeliveryEditor";
 import { isPostMethod } from "@/lib/delivery-dates";
@@ -72,11 +72,13 @@ export default function OrderSheet({
   code,
   onClose,
   onChanged,
+  onDeleted,
   notify,
 }: {
   code: string;
   onClose: () => void;
   onChanged: (order: CrmOrder) => void;
+  onDeleted: (code: string) => void;
   notify: (text: string) => void;
 }) {
   const [details, setDetails] = useState<OrderDetails | null>(null);
@@ -126,6 +128,25 @@ export default function OrderSheet({
       notify(e instanceof ApiError ? e.message : "Не сохранилось, попробуйте ещё раз");
       webApp()?.HapticFeedback?.notificationOccurred?.("error");
       return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const askHideOrder = async () => {
+    const o = details?.order;
+    if (!o) return;
+    const ok = await confirmDialog(
+      `Удалить заказ #${o.code} (${o.name}) из CRM?\n\nОн пропадёт с доски и из отчётов. PDF и сообщение в чате останутся, в чате появится пометка «Удалён из CRM».`,
+    );
+    if (!ok) return;
+    setSaving(true);
+    try {
+      await api(`/api/crm/orders/${o.code}/trash`, { method: "POST", body: JSON.stringify({ confirm: o.code }) });
+      webApp()?.HapticFeedback?.notificationOccurred?.("success");
+      onDeleted(o.code);
+    } catch (e) {
+      notify(e instanceof ApiError ? e.message : "Не удалось удалить, попробуйте ещё раз");
     } finally {
       setSaving(false);
     }
@@ -401,12 +422,24 @@ export default function OrderSheet({
                             ? "заказ с сайта"
                             : h.action === "imported"
                               ? "перенесён из чата"
-                              : h.action}
+                              : h.action === "deleted"
+                                ? "удалил из CRM"
+                                : h.action}
                     </li>
                   ))}
                 </ul>
               )}
             </section>
+
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void askHideOrder()}
+              className="mt-8 min-h-[44px] w-full rounded-xl border border-[#B42318]/50 bg-white text-sm font-medium text-[#B42318] disabled:opacity-60"
+            >
+              🗑 Удалить заказ из CRM
+            </button>
+            <p className="mt-1 text-center text-xs text-[#5C564E]">Для тестовых и ошибочных заказов. PDF и сообщение в чате останутся.</p>
           </>
         )}
       </div>

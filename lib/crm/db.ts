@@ -34,7 +34,7 @@ function fail(what: string, error: { message: string } | null): never {
   throw new Error(`CRM ${what}: ${error?.message ?? "unknown error"}`);
 }
 
-type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid">;
+type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt">;
 
 export async function insertOrder(o: NewOrder): Promise<void> {
   const { error } = await db().from("crm_orders").insert(orderToRow(o));
@@ -52,6 +52,7 @@ export async function listOrders(opts: { doneDays: number; q?: string }): Promis
   let query = db()
     .from("crm_orders")
     .select(ORDER_SELECT)
+    .is("deleted_at", null)
     .or(`stage.neq.done,stage_changed_at.gte."${since}"`)
     .order("created_at", { ascending: false })
     .limit(500);
@@ -75,7 +76,7 @@ async function orderId(code: string): Promise<string> {
   return data.id as string;
 }
 
-export type HistoryAction = "created" | "imported" | "stage" | "field" | "comment";
+export type HistoryAction = "created" | "imported" | "stage" | "field" | "comment" | "deleted";
 
 export async function addHistory(code: string, actor: CrmUser | null, action: HistoryAction, details: object): Promise<void> {
   const { error } = await db()
@@ -153,6 +154,7 @@ export async function reportRows(fromDay: string, toDay: string): Promise<Report
     const { data, error } = await db()
       .from("crm_orders")
       .select("code, created_at, stage_changed_at, qty, urgent, price, stage, method, boxes, extra_cost")
+      .is("deleted_at", null)
       .or(
         `and(created_at.gte."${since}",created_at.lt."${until}"),and(stage.eq.done,stage_changed_at.gte."${since}",stage_changed_at.lt."${until}")`,
       )
@@ -253,4 +255,12 @@ export async function savePrint(print: PrintSettings, actor: CrmUser): Promise<v
     .from("crm_settings")
     .upsert({ key: "print", value: print, updated_at: new Date().toISOString(), updated_by: actor.name });
   if (error) fail("print save", error);
+}
+
+/** «Удалить» = убрать из CRM: только отметка. Строка, PDF и сообщение в чате остаются. */
+export async function hideOrder(code: string, actor: CrmUser): Promise<string> {
+  const at = new Date().toISOString();
+  const { error } = await db().from("crm_orders").update({ deleted_at: at, deleted_by: actor.name }).eq("code", code).is("deleted_at", null);
+  if (error) fail("hide", error);
+  return at;
 }

@@ -27,7 +27,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Мария", phone: "+373 60 024 571", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 1, price: null, lang: "ru", source: null, pdfPath: null, tgChatId: null, tgMessageId: null, tgCaption: null,
-    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, ...p,
+    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, ...p,
   };
 }
 
@@ -165,4 +165,10 @@ test("amountDue: почтой Молдовы +30 лей за доставку, �
   assert.equal(amountDue(order({ method: "posta", price: 500 })), 530);
   assert.equal(amountDue(order({ method: "pickup", qty: 2 })), 400);
   assert.equal(amountDue(order({ method: "novapost" })), 250);
+});
+
+test("rowToOrder/orderToRow: удалён из CRM", () => {
+  assert.equal(rowToOrder({ code: "X" }).deletedAt, null);
+  assert.equal(rowToOrder({ code: "X", deleted_at: "2026-11-16T10:00:00Z" }).deletedAt, "2026-11-16T10:00:00Z");
+  assert.deepEqual(orderToRow({ deletedAt: "2026-11-16T10:00:00Z" }), { deleted_at: "2026-11-16T10:00:00Z" });
 });

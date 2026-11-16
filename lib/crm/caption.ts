@@ -29,7 +29,8 @@ export function buildCrmCaption(o: CrmOrder): string {
   const paid = o.paid
     ? [`${PAID_PREFIX} на карту — ${isPostMethod(o.method) ? "наложенный платёж НЕ оформлять" : "деньги с клиента НЕ брать"}`]
     : [];
-  const top = [`${STAGE_PREFIX} ${stageLabel(o.stage, o.method)}`, ...paid, ...(showQty ? [`${QTY_PREFIX} ${o.qty}`] : [])];
+  const stage = o.deletedAt ? "🗑 Удалён из CRM" : stageLabel(o.stage, o.method);
+  const top = [`${STAGE_PREFIX} ${stage}`, ...paid, ...(showQty ? [`${QTY_PREFIX} ${o.qty}`] : [])];
   lines.splice(headerEnd, 0, ...top);
 
   // Не влезает — выкидываем самые старые строки истории, потом режем хвост.

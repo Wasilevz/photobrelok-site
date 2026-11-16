@@ -11,7 +11,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Виктория", phone: "+373 79 797 981", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 2, price: null, lang: "ro", source: "instagram", pdfPath: null, tgChatId: -1004393765609, tgMessageId: 126,
-    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, ...p,
+    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, ...p,
   };
 }
 
@@ -75,4 +75,10 @@ test("оплачен: строка под стадией — для почты �
   const unpaid = buildCrmCaption(order({ paid: false, tgCaption: pickup }));
   assert.ok(!unpaid.includes("ОПЛАЧЕН"));
   assert.equal(buildCrmCaption(order({ paid: true, tgCaption: pickup })).match(/ОПЛАЧЕН/g)?.length, 1);
+});
+
+test("удалённый из CRM: стадия «Удалён из CRM», остальная подпись на месте", () => {
+  const c = buildCrmCaption(order({ deletedAt: "2026-11-16T10:00:00Z" }));
+  assert.ok(c.includes("📌 Стадия: 🗑 Удалён из CRM"));
+  assert.ok(c.includes("Виктория"));
 });

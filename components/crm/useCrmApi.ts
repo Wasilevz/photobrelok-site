@@ -15,6 +15,7 @@ type TgWebApp = {
   openLink?: (url: string) => void;
   openTelegramLink?: (url: string) => void;
   showAlert?: (message: string) => void;
+  showConfirm?: (message: string, cb: (ok: boolean) => void) => void;
   HapticFeedback?: { notificationOccurred?: (type: "success" | "error" | "warning") => void };
   BackButton?: { show: () => void; hide: () => void; onClick: (cb: () => void) => void; offClick: (cb: () => void) => void };
 };
@@ -149,4 +150,11 @@ export function openTelegram(url: string): void {
   if (tg?.openTelegramLink) tg.openTelegramLink(url);
   else if (tg?.openLink) tg.openLink(url);
   else window.open(url, "_blank", "noopener");
+}
+
+/** Подтверждение: окно Telegram, вне Telegram — обычный confirm. */
+export function confirmDialog(message: string): Promise<boolean> {
+  const tg = webApp();
+  if (tg?.showConfirm && tg.isVersionAtLeast?.("6.2")) return new Promise((resolve) => tg.showConfirm!(message, resolve));
+  return Promise.resolve(window.confirm(message));
 }
