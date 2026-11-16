@@ -1,11 +1,14 @@
-// Обработка апдейтов Telegram. Заказы ведутся в CRM (Mini App), поэтому бот в чате
-// ничего не переносит и не удаляет: кнопки под прошлыми заказами только отправляют в CRM.
-// Запрет владельца: сообщения с заказами и PDF не удаляются никогда (см. lib/no-deletes.test.ts).
+// Обработка апдейтов Telegram. Чат производства: под заказом кнопка следующего шага — стадия меняется
+// в CRM, заказ переезжает в тему стадии (lib/crm/telegram.ts). Старые кнопки заменяются на новые.
 import { after } from "next/server";
 import { tg } from "@/lib/telegram-orders";
-import { crmKeyboard } from "@/lib/crm/links";
+import { parseAllowed } from "@/lib/crm/auth";
+import { chatKeyboard, parseStageCallback } from "@/lib/crm/chat";
+import { getOrder } from "@/lib/crm/db";
+import { stageLabel } from "@/lib/crm/model";
+import { changeStageFromChat } from "@/lib/crm/stage";
 
-type TgUser = { id: number; is_bot?: boolean };
+type TgUser = { id: number; is_bot?: boolean; first_name?: string; last_name?: string; username?: string };
 type TgChat = { id: number; type?: string };
 export type TgMessage = {
   message_id: number;
@@ -47,34 +50,54 @@ function deleteLater(chatId: number, messageId: number, delayMs: number) {
   }
 }
 
-/** Старые кнопки под заказами (Готов, Выдан, Назад, Изменить, Заметка…): только подсказка и кнопка CRM. */
+function answer(cb: NonNullable<TgUpdate["callback_query"]>, text: string, alert = false) {
+  return safe(tg("answerCallbackQuery", { callback_query_id: cb.id, text, show_alert: alert }));
+}
+
+/** Кто может нажимать кнопки заказов: CRM_ALLOWED_USER_IDS и TELEGRAM_ALLOWED_USER_IDS; оба пусты — все в группе. */
+function mayPress(userId: number): boolean {
+  const ids = new Set([...parseAllowed(process.env.CRM_ALLOWED_USER_IDS), ...parseAllowed(process.env.TELEGRAM_ALLOWED_USER_IDS)]);
+  return ids.size === 0 || ids.has(userId);
+}
+
+/** Кнопка стадии под заказом: «В производство», «Готов…», «Завершить», «Назад». */
+async function handleStageButton(cb: NonNullable<TgUpdate["callback_query"]>, code: string, stage: Parameters<typeof changeStageFromChat>[1]) {
+  if (!mayPress(cb.from.id)) return answer(cb, "Нет доступа к заказам", true);
+  const name = [cb.from.first_name, cb.from.last_name].filter(Boolean).join(" ") || cb.from.username || String(cb.from.id);
+  try {
+    const result = await changeStageFromChat(code, stage, { id: cb.from.id, name });
+    if (!result.ok) return answer(cb, result.error, true);
+    return answer(cb, `#${code} → ${stageLabel(result.order.stage, result.order.method)}`);
+  } catch (error) {
+    console.error(`Chat stage ${code}:`, error instanceof Error ? error.message : error);
+    return answer(cb, "Не получилось, попробуйте ещё раз", true);
+  }
+}
+
+/** Старые кнопки (до чата по стадиям): ставим под сообщение новые кнопки и просим нажать ещё раз. */
 async function handleLegacyButton(cb: NonNullable<TgUpdate["callback_query"]>) {
   const msg = cb.message;
   const code = (msg?.caption ?? msg?.text ?? "").match(/#([A-Z0-9]{6})/)?.[1];
-  if (msg && code) {
-    const markup = crmKeyboard(code);
-    if (markup.length > 0) {
-      await safe(
-        tg("editMessageReplyMarkup", {
-          chat_id: msg.chat.id,
-          message_id: msg.message_id,
-          reply_markup: { inline_keyboard: markup },
-        }),
-      );
-    }
+  const order = code ? await getOrder(code).catch(() => null) : null;
+  if (msg && order && !order.deletedAt) {
+    await safe(
+      tg("editMessageReplyMarkup", {
+        chat_id: msg.chat.id,
+        message_id: msg.message_id,
+        reply_markup: { inline_keyboard: chatKeyboard(order, process.env.TELEGRAM_BOT_USERNAME) },
+      }),
+    );
+    return answer(cb, "Кнопки обновлены — нажмите нужную ещё раз", true);
   }
-  await safe(
-    tg("answerCallbackQuery", {
-      callback_query_id: cb.id,
-      text: "Заказы теперь ведутся в CRM — откройте заказ кнопкой «📋 Открыть в CRM» под сообщением",
-      show_alert: true,
-    }),
-  );
+  return answer(cb, "Этого заказа нет в CRM", true);
 }
 
 export async function handleUpdate(update: TgUpdate): Promise<void> {
   if (update.callback_query) {
-    await handleLegacyButton(update.callback_query);
+    const cb = update.callback_query;
+    const stage = parseStageCallback(cb.data);
+    if (stage) await handleStageButton(cb, stage.code, stage.stage);
+    else await handleLegacyButton(cb);
     return;
   }
 

@@ -46,6 +46,8 @@ export type CrmOrder = {
   tgChatId: number | null;
   tgMessageId: number | null;
   tgCaption: string | null;
+  /** Тема группы, где сейчас лежит сообщение; null — тема его стадии (старые заказы). */
+  tgThreadId: number | null;
   flags: string[];
   commentsCount: number;
   /** Подарочных коробок: null — по правилу (orderBoxes), число — вписано вручную. */
@@ -266,7 +268,7 @@ const COLUMN_MAP: [keyof CrmOrder, string][] = [
   ["name", "name"], ["phone", "phone"], ["wantedDate", "wanted_date"], ["urgent", "urgent"], ["method", "method"],
   ["postalCode", "postal_code"], ["city", "city"], ["district", "district"], ["street", "street"], ["branch", "branch"],
   ["address", "address"], ["qty", "qty"], ["price", "price"], ["lang", "lang"], ["source", "source"], ["pdfPath", "pdf_path"],
-  ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["flags", "flags"],
+  ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["tgThreadId", "tg_thread_id"], ["flags", "flags"],
   ["boxes", "boxes"], ["extraCost", "extra_cost"], ["paid", "paid"], ["deletedAt", "deleted_at"],
 ];
 

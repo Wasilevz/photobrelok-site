@@ -8,6 +8,7 @@ import {
   tg,
 } from "@/lib/telegram-orders";
 import { crmKeyboard } from "@/lib/crm/links";
+import { chatKeyboard } from "@/lib/crm/chat";
 import { addHistory, crmEnabled, getOrder, saveOrder } from "@/lib/crm/db";
 
 const ORDER_ID_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
@@ -67,9 +68,11 @@ export async function POST(req: Request) {
     const payload = readUpsellToken((body as Record<string, unknown>).token, orderId);
 
     // CRM: второй брелок → количество 2 (если заказ есть в базе). Сбой CRM не мешает уведомить менеджера.
+    let crmOrder: Awaited<ReturnType<typeof getOrder>> = null;
     if (crmEnabled()) {
       try {
         const order = await getOrder(orderId);
+        crmOrder = order ? { ...order, qty: Math.max(order.qty, 2) } : null;
         if (order && order.qty < 2) {
           await saveOrder(orderId, { qty: 2, ...(payload ? { tg_caption: withUpsell(payload.caption) } : {}) });
           await addHistory(orderId, null, "field", { qty: 2, via: "thanks_page" });
@@ -81,6 +84,8 @@ export async function POST(req: Request) {
     if (payload && payload.refs.length > 0) {
       const topics = getTopicConfig();
       const caption = withUpsell(payload.caption);
+      // Кнопки стадий заказа (как в чате производства); заказа нет в CRM — только ссылка в CRM.
+      const keyboard = crmOrder ? chatKeyboard(crmOrder, process.env.TELEGRAM_BOT_USERNAME) : crmKeyboard(orderId);
       const edits = await Promise.allSettled(
         payload.refs.map(async (ref): Promise<"edited" | "same"> => {
           const withKeyboard = topics && ref.chatId === topics.chatId && ref.threadId !== undefined;
@@ -89,7 +94,7 @@ export async function POST(req: Request) {
               chat_id: ref.chatId,
               message_id: ref.messageId,
               caption,
-              ...(withKeyboard && crmKeyboard(orderId).length > 0 ? { reply_markup: { inline_keyboard: crmKeyboard(orderId) } } : {}),
+              ...(withKeyboard && keyboard.length > 0 ? { reply_markup: { inline_keyboard: keyboard } } : {}),
             });
             return "edited";
           } catch (error) {

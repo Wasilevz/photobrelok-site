@@ -1,6 +1,7 @@
 // Сторож запрета владельца: сообщения с заказами, PDF и записи заказов не удаляются.
-// Единственное исключение (решение владельца): кнопка «Удалить заказ» с подтверждением стирает один заказ
-// полностью — только через lib/crm/telegram.ts#deleteOrderMessage и lib/crm/db.ts#purgeOrder.
+// Исключения (решения владельца): 1) кнопка «Удалить заказ» с подтверждением стирает один заказ полностью —
+// lib/crm/telegram.ts#deleteOrderMessage и lib/crm/db.ts#purgeOrder; 2) перенос заказа в тему его стадии —
+// копия с тем же PDF в новую тему, затем удаление старого сообщения: lib/crm/telegram.ts#relocateOrderMessage.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -24,6 +25,7 @@ const ALLOWED_DELETE_MESSAGE = new Set([
   "lib/telegram-bot.ts#deleteLater",
   "app/api/telegram/route.ts#notifyUpsell",
   "lib/crm/telegram.ts#deleteOrderMessage",
+  "lib/crm/telegram.ts#relocateOrderMessage",
 ]);
 // Стирание файлов хранилища и строк базы — только при полном удалении одного заказа.
 const ALLOWED_PURGE = new Set(["lib/crm/db.ts#purgeOrder"]);
@@ -56,4 +58,14 @@ test("no message moves, storage removals or row deletes", () => {
     }
     assert.ok(!/export\s+(async\s+)?function\s+DELETE/.test(src), `DELETE route in ${rel}`);
   }
+});
+
+test("перенос между темами: старое сообщение удаляется только после копии", () => {
+  const src = readFileSync(join(ROOT, "lib/crm/telegram.ts"), "utf8");
+  const start = src.indexOf("async function relocateOrderMessage");
+  const body = src.slice(start, src.indexOf("\n}\n", start));
+  const copy = body.indexOf('"copyMessage"');
+  const del = body.indexOf('"deleteMessage"');
+  assert.ok(copy !== -1 && del !== -1 && copy < del, "copyMessage должен идти раньше deleteMessage");
+  assert.ok(body.slice(copy, del).includes("return editInPlace"), "при ошибке копии — выход без удаления");
 });

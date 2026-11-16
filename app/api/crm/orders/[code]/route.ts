@@ -1,6 +1,6 @@
 import { addHistory, getOrder, listComments, listHistory, saveOrder } from "@/lib/crm/db";
 import { type OrderPatch, applyPatch, orderToRow } from "@/lib/crm/model";
-import { syncOrderMessage } from "@/lib/crm/telegram";
+import { syncChat } from "@/lib/crm/telegram";
 import { CODE_RE, bad, crash, ok, readJson, requireUser } from "@/lib/crm/api";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +48,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     if (fields.length > 0) {
       await addHistory(code, user, "field", Object.fromEntries(fields.map((k) => [k, [current[k], next[k]]])));
     }
-    await syncOrderMessage(next);
+    await syncChat(current, next);
     return ok({ order: next, warnings });
   } catch (error) {
     return crash("patch", error);

@@ -1,29 +1,79 @@
-// Связь CRM с чатом: правка подписи сообщения заказа и отправка PDF в личку.
-// Запрет владельца: сообщения не удаляются и не переносятся — только editMessageCaption.
+// Связь CRM с чатом производства: заказ лежит в теме своей стадии с кнопками следующего шага.
+// Удаления сообщений — только при переносе между темами (копия с PDF остаётся) и при «Удалить заказ».
 import { tg } from "../telegram-orders.ts";
 import { buildCrmCaption } from "./caption.ts";
-import { crmKeyboard } from "./links.ts";
-import type { CrmOrder } from "./model.ts";
+import { chatKeyboard, threadFor } from "./chat.ts";
+import { type CrmOrder, stageLabel } from "./model.ts";
+import { chatTopics } from "./topics.ts";
 import { downloadPdf, saveOrder } from "./db.ts";
 
-/** Обновляет подпись сообщения заказа в чате. Ошибки Telegram не мешают работе CRM — только в лог. */
-export async function syncOrderMessage(o: CrmOrder): Promise<void> {
-  if (o.tgChatId === null || o.tgMessageId === null) return;
+const bot = () => process.env.TELEGRAM_BOT_USERNAME;
+const NOT_MODIFIED = /message is not modified/i;
+
+/** Подпись и кнопки сообщения на месте. Ошибки Telegram не мешают работе CRM — только в лог. */
+async function editInPlace(o: CrmOrder): Promise<void> {
   const caption = buildCrmCaption(o);
   try {
-    const markup = crmKeyboard(o.code);
     await tg("editMessageCaption", {
       chat_id: o.tgChatId,
       message_id: o.tgMessageId,
       caption,
-      ...(markup.length > 0 ? { reply_markup: { inline_keyboard: markup } } : {}),
+      reply_markup: { inline_keyboard: chatKeyboard(o, bot()) },
     });
     await saveOrder(o.code, { tg_caption: caption });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (/message is not modified/i.test(message)) return;
-    console.error(`CRM ${o.code}: chat caption not updated: ${message}`);
+    if (!NOT_MODIFIED.test(message)) console.error(`CRM ${o.code}: chat caption not updated: ${message}`);
   }
+}
+
+/**
+ * Перенос заказа в тему его стадии (решение владельца): Telegram не умеет двигать сообщения, поэтому
+ * копия с тем же PDF — в нужную тему, затем старое сообщение удаляется. Не удалось удалить (старше 48 ч, нет
+ * права) — старое остаётся с пометкой «перенесён» и без кнопок. Не удалось скопировать — правим на месте.
+ */
+async function relocateOrderMessage(o: CrmOrder, chatId: number, threadId: number): Promise<void> {
+  const caption = buildCrmCaption(o);
+  let copied: { message_id: number };
+  try {
+    copied = await tg<{ message_id: number }>("copyMessage", {
+      chat_id: chatId,
+      from_chat_id: o.tgChatId,
+      message_id: o.tgMessageId,
+      message_thread_id: threadId,
+      caption,
+      reply_markup: { inline_keyboard: chatKeyboard(o, bot()) },
+    });
+  } catch (error) {
+    console.error(`CRM ${o.code}: not moved to topic ${threadId}:`, error instanceof Error ? error.message : error);
+    return editInPlace(o);
+  }
+  await saveOrder(o.code, { tg_chat_id: chatId, tg_message_id: copied.message_id, tg_thread_id: threadId, tg_caption: caption });
+  try {
+    await tg("deleteMessage", { chat_id: o.tgChatId, message_id: o.tgMessageId });
+  } catch (error) {
+    console.error(`CRM ${o.code}: old message not deleted:`, error instanceof Error ? error.message : error);
+    await tg("editMessageCaption", {
+      chat_id: o.tgChatId,
+      message_id: o.tgMessageId,
+      caption: `➡️ Перенесён в тему «${stageLabel(o.stage, o.method)}» — это старая копия\n\n${caption}`.slice(0, 1000),
+      reply_markup: { inline_keyboard: [] },
+    }).catch(() => {});
+  }
+}
+
+/**
+ * Привести сообщение заказа в чате к данным CRM: если стадия требует другую тему — перенести, иначе обновить
+ * подпись и кнопки. prev — заказ до изменения (по нему понимаем, в какой теме лежит старое сообщение).
+ */
+export async function syncChat(prev: CrmOrder | null, next: CrmOrder): Promise<void> {
+  if (next.tgChatId === null || next.tgMessageId === null) return;
+  const topics = await chatTopics().catch(() => null);
+  if (!topics || next.tgChatId !== topics.chatId) return editInPlace(next);
+  const target = threadFor(next, topics.threads);
+  const current = next.tgThreadId ?? threadFor(prev ?? next, topics.threads);
+  if (target && target !== current) return relocateOrderMessage(next, topics.chatId, target);
+  return editInPlace(next);
 }
 
 export type SendPdfResult = "sent" | "start_bot" | "no_pdf";

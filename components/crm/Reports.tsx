@@ -162,6 +162,30 @@ function ExpenseForm({ initial, onDone, onCancel }: { initial?: Expense; onDone:
   );
 }
 
+/** Служебное: проставить кнопки стадий под незавершёнными заказами в чате (после перехода на чат по стадиям). */
+function RefreshChatButtons() {
+  const [state, setState] = useState<"idle" | "busy" | string>("idle");
+  const run = async () => {
+    setState("busy");
+    try {
+      const { updated } = await api<{ updated: number }>("/api/crm/chat/refresh", { method: "POST" });
+      setState(`Готово: обновлено заказов — ${updated}`);
+    } catch (e) {
+      setState(e instanceof ApiError ? e.message : "Не получилось, попробуйте ещё раз");
+    }
+  };
+  return (
+    <section className="mt-6 rounded-2xl bg-white p-3 text-sm">
+      <h2 className="font-semibold">🔄 Кнопки в чате</h2>
+      <p className="mb-2 text-xs text-[#5C564E]">Поставить кнопки стадий («В производство», «Готов», «Завершить») под всеми незавершёнными заказами в чате. Нужно один раз; займёт до минуты.</p>
+      <button type="button" disabled={state === "busy"} onClick={() => void run()} className={`${btn} w-full font-semibold disabled:opacity-60`}>
+        {state === "busy" ? "Обновляем…" : "Обновить кнопки в чате"}
+      </button>
+      {state !== "idle" && state !== "busy" && <p className="mt-2">{state}</p>}
+    </section>
+  );
+}
+
 export default function Reports({ onClose }: { onClose: () => void }) {
   const [period, setPeriod] = useState<Period>("month");
   const [from, setFrom] = useState("");
@@ -353,6 +377,7 @@ export default function Reports({ onClose }: { onClose: () => void }) {
             )}
           </div>
         )}
+        <RefreshChatButtons />
       </div>
     </div>
   );

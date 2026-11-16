@@ -34,7 +34,7 @@ function fail(what: string, error: { message: string } | null): never {
   throw new Error(`CRM ${what}: ${error?.message ?? "unknown error"}`);
 }
 
-type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt">;
+type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt" | "tgThreadId">;
 
 export async function insertOrder(o: NewOrder): Promise<void> {
   const { error } = await db().from("crm_orders").insert(orderToRow(o));
@@ -278,4 +278,16 @@ export async function purgeOrder(code: string): Promise<{ pdfRemoved: boolean }>
   const { error: e } = await db().from("crm_orders").delete().eq("id", row.id);
   if (e) fail("purge order", e);
   return { pdfRemoved };
+}
+
+/** Произвольная настройка CRM (crm_settings) — для служебных значений вроде номера темы «Новые». */
+export async function getSetting<T>(key: string): Promise<T | null> {
+  const { data, error } = await db().from("crm_settings").select("value").eq("key", key).maybeSingle();
+  if (error) fail(`setting ${key}`, error);
+  return (data?.value as T | undefined) ?? null;
+}
+
+export async function saveSetting(key: string, value: unknown): Promise<void> {
+  const { error } = await db().from("crm_settings").upsert({ key, value, updated_at: new Date().toISOString(), updated_by: "CRM" });
+  if (error) fail(`setting ${key} save`, error);
 }

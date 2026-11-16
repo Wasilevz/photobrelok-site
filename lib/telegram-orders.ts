@@ -224,7 +224,9 @@ export function withoutUpsell(caption: string): string {
 export async function tg<T = unknown>(method: string, payload: Record<string, unknown>): Promise<T> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN is not set");
-  const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+  // TELEGRAM_API_BASE — только для локальных проверок с макетом Telegram; по умолчанию настоящий API.
+  const base = process.env.TELEGRAM_API_BASE || "https://api.telegram.org";
+  const res = await fetch(`${base}/bot${token}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

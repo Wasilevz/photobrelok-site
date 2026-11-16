@@ -4,7 +4,8 @@ import { jsPDF } from "jspdf";
 import { sendCapiEvents } from "@/lib/meta-capi";
 import { clientIp, isSameOrigin, rateLimit } from "@/lib/antispam";
 import { readOrderDate, shipBy } from "@/lib/delivery-dates";
-import { crmKeyboard } from "@/lib/crm/links";
+import { chatKeyboard } from "@/lib/crm/chat";
+import { chatTopics } from "@/lib/crm/topics";
 import { addHistory, crmEnabled, insertOrder, saveOrder, uploadPdf } from "@/lib/crm/db";
 import { intakeCaption } from "@/lib/crm/order-intake";
 import { formatMdPhone, normalizeMdPhone } from "@/lib/phone";
@@ -354,15 +355,17 @@ export async function POST(request: Request) {
     }
     const chatCaption = crmOn ? intakeCaption(captionText, savedToCrm) : captionText;
 
-    // Режим тем: заказ падает в тему «В работе» с кнопкой «Открыть в CRM».
+    // Режим тем: заказ падает в тему «🆕 Новые» (нет её — в «В работе») с кнопкой «▶️ В производство».
+    const crmTopics = crmOn && topics ? await chatTopics().catch(() => null) : null;
+    const intakeThread = topics ? (crmTopics?.threads.new ?? topics.threads.work) : undefined;
     let deliveredToAtLeastOne = false;
     const upsellRefs: UpsellRef[] = [];
     for (const chatId of chatIds) {
       const tgFormData = new FormData();
       tgFormData.append("chat_id", chatId);
       if (topics && chatId === topics.chatId) {
-        tgFormData.append("message_thread_id", String(topics.threads.work));
-        const markup = crmKeyboard(orderId);
+        tgFormData.append("message_thread_id", String(intakeThread));
+        const markup = chatKeyboard({ code: orderId, stage: "new", method: deliveryMethod }, process.env.TELEGRAM_BOT_USERNAME);
         if (markup.length > 0) tgFormData.append("reply_markup", JSON.stringify({ inline_keyboard: markup }));
       }
       tgFormData.append("document", new Blob([pdfBuffer], { type: "application/pdf" }), `Brelok_${orderId}.pdf`);
@@ -382,7 +385,7 @@ export async function POST(request: Request) {
             upsellRefs.push({
               chatId,
               messageId,
-              threadId: topics && chatId === topics.chatId ? topics.threads.work : undefined,
+              threadId: topics && chatId === topics.chatId ? intakeThread : undefined,
             });
           }
         } else {
@@ -397,7 +400,12 @@ export async function POST(request: Request) {
     // Запоминаем сообщение заказа в группе с темами: CRM будет править его подпись (без удаления).
     const groupRef = topics ? upsellRefs.find((ref) => ref.chatId === topics.chatId) : undefined;
     if (savedToCrm && groupRef) {
-      await saveOrder(orderId, { tg_chat_id: Number(groupRef.chatId), tg_message_id: groupRef.messageId, tg_caption: chatCaption }).catch(
+      await saveOrder(orderId, {
+        tg_chat_id: Number(groupRef.chatId),
+        tg_message_id: groupRef.messageId,
+        tg_thread_id: intakeThread ?? null,
+        tg_caption: chatCaption,
+      }).catch(
         (error) => console.error(`Order ${orderId}: chat message not linked in CRM`, error),
       );
     }
