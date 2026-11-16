@@ -77,43 +77,51 @@ async function orderId(code: string): Promise<string> {
 }
 
 export type HistoryAction = "created" | "imported" | "stage" | "field" | "comment";
+export type HistoryEntry = { action: HistoryAction; details: object };
 
-export async function addHistory(code: string, actor: CrmUser | null, action: HistoryAction, details: object): Promise<void> {
+/** Записи истории заказа — одним запросом. actor null — действие сайта. */
+export async function addHistory(code: string, actor: CrmUser | null, entries: HistoryEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+  const order_id = await orderId(code);
   const { error } = await db()
     .from("crm_history")
-    .insert({ order_id: await orderId(code), actor_id: actor?.id ?? null, actor_name: actor?.name ?? "Сайт", action, details });
+    .insert(entries.map((e) => ({ order_id, actor_id: actor?.id ?? null, actor_name: actor?.name ?? "Сайт", action: e.action, details: e.details })));
   if (error) fail("history", error);
 }
 
 export type CrmComment = { authorName: string; text: string; createdAt: string };
 export type CrmHistoryItem = { actorName: string; action: HistoryAction; details: Record<string, unknown>; createdAt: string };
+export type OrderDetails = { order: CrmOrder; comments: CrmComment[]; history: CrmHistoryItem[] };
 
-export async function addComment(code: string, actor: CrmUser, text: string): Promise<void> {
-  const { error } = await db()
-    .from("crm_comments")
-    .insert({ order_id: await orderId(code), author_id: actor.id, author_name: actor.name, text });
+type CommentRow = { author_name: string; text: string; created_at: string };
+type HistoryRow = { actor_name: string; action: HistoryAction; details: Record<string, unknown> | null; created_at: string };
+const toComment = (r: CommentRow): CrmComment => ({ authorName: r.author_name, text: r.text, createdAt: r.created_at });
+
+/** Карточка заказа одним запросом: заказ, комментарии (старые сверху) и последние 100 записей истории. */
+export async function getOrderDetails(code: string): Promise<OrderDetails | null> {
+  const { data, error } = await db()
+    .from("crm_orders")
+    .select("*, crm_comments(author_name, text, created_at), crm_history(actor_name, action, details, created_at)")
+    .eq("code", code)
+    .order("created_at", { referencedTable: "crm_comments", ascending: true })
+    .order("created_at", { referencedTable: "crm_history", ascending: false })
+    .limit(100, { referencedTable: "crm_history" })
+    .maybeSingle();
+  if (error) fail("details", error);
+  if (!data) return null;
+  const comments = ((data.crm_comments ?? []) as CommentRow[]).map(toComment);
+  const history = ((data.crm_history ?? []) as HistoryRow[]).map((r) => ({ actorName: r.actor_name, action: r.action, details: r.details ?? {}, createdAt: r.created_at }));
+  return { order: rowToOrder({ ...data, comments_count: comments.length }), comments, history };
+}
+
+/** false — заказа нет. */
+export async function addComment(code: string, actor: CrmUser, text: string): Promise<boolean> {
+  const { data: order, error: e } = await db().from("crm_orders").select("id").eq("code", code).maybeSingle();
+  if (e) fail("comment lookup", e);
+  if (!order) return false;
+  const { error } = await db().from("crm_comments").insert({ order_id: order.id, author_id: actor.id, author_name: actor.name, text });
   if (error) fail("comment", error);
-}
-
-export async function listComments(code: string): Promise<CrmComment[]> {
-  const { data, error } = await db()
-    .from("crm_comments")
-    .select("author_name, text, created_at")
-    .eq("order_id", await orderId(code))
-    .order("created_at", { ascending: true });
-  if (error) fail("comments", error);
-  return (data ?? []).map((r) => ({ authorName: r.author_name, text: r.text, createdAt: r.created_at }));
-}
-
-export async function listHistory(code: string): Promise<CrmHistoryItem[]> {
-  const { data, error } = await db()
-    .from("crm_history")
-    .select("actor_name, action, details, created_at")
-    .eq("order_id", await orderId(code))
-    .order("created_at", { ascending: false })
-    .limit(100);
-  if (error) fail("history list", error);
-  return (data ?? []).map((r) => ({ actorName: r.actor_name, action: r.action, details: r.details ?? {}, createdAt: r.created_at }));
+  return true;
 }
 
 /** Кладёт PDF без перезаписи: если имя занято — <code>-2.pdf, <code>-3.pdf… Возвращает путь. */
@@ -134,12 +142,6 @@ export async function signedPdfUrl(path: string, code: string, view = false): Pr
     .createSignedUrl(path, 600, view ? undefined : { download: `Brelok_${code}.pdf` });
   if (error || !data) fail("pdf link", error);
   return data.signedUrl;
-}
-
-export async function downloadPdf(path: string): Promise<Buffer> {
-  const { data, error } = await db().storage.from(BUCKET).download(path);
-  if (error || !data) fail("pdf download", error);
-  return Buffer.from(await data.arrayBuffer());
 }
 
 /**

@@ -2,21 +2,22 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Script from "next/script";
-import { type Column, type CrmOrder, columnLabel, columnOf, stageOfColumn } from "@/lib/crm/model";
+import { type Column, type CrmOrder, type OrderPatch, columnLabel, columnOf, stageOfColumn } from "@/lib/crm/model";
+import type { QuickAction } from "@/lib/crm/chat";
 import Board from "@/components/crm/Board";
 import OrderSheet from "@/components/crm/OrderSheet";
 import Reports from "@/components/crm/Reports";
-import { ApiError, downloadPdf, openTelegram, patchOrder, useOrders, webApp } from "@/components/crm/useCrmApi";
+import { ApiError, downloadPdf, initData, openTelegram, patchOrder, useOrders, webApp } from "@/components/crm/useCrmApi";
 import { chatMessageUrl } from "@/components/crm/format";
 
 export default function CrmPage() {
-  const [tgReady, setTgReady] = useState(false);
+  const [tgReady, setTgReady] = useState(() => !!initData()); // подпись входа уже в адресе — не ждём скрипт Telegram
   const [tgLoaded, setTgLoaded] = useState(false);
   const [query, setQuery] = useState("");
   const [doneDays, setDoneDays] = useState(30);
   const [openCode, setOpenCode] = useState<string | null>(null);
   const [reportsOpen, setReportsOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Страница запустилась — аварийная плашка из app/legacy-script.ts больше не нужна.
@@ -26,7 +27,7 @@ export default function CrmPage() {
     if (banner) banner.style.display = "none";
   }, []);
 
-  // Вне Telegram (локальная разработка) скрипт Telegram может не загрузиться — не ждём его дольше 2 секунд.
+  // Вне Telegram (локальная разработка) скрипта может не быть вовсе — не ждём его дольше 2 секунд.
   useEffect(() => {
     const t = setTimeout(() => setTgReady(true), 2000);
     return () => clearTimeout(t);
@@ -42,17 +43,17 @@ export default function CrmPage() {
     setTgLoaded(true);
   };
 
-  const { orders, setOrders, error, reload } = useOrders(query, doneDays, tgReady);
+  const { orders, setOrders, error, reload, track } = useOrders(query, doneDays, tgReady);
 
-  // Скрипт Telegram догрузился после первого запроса (медленный компьютер) — запрашиваем заново, уже со входом.
+  // Первый запрос ушёл раньше, чем Telegram отдал подпись входа (медленный компьютер), — повторяем уже со входом.
   useEffect(() => {
-    if (tgLoaded) void reload();
-  }, [tgLoaded, reload]);
+    if (tgLoaded && error?.status === 401) void reload();
+  }, [tgLoaded, error, reload]);
 
-  const notify = useCallback((text: string) => {
-    setToast(text);
+  const notify = useCallback((text: string, undo?: () => void) => {
+    setToast({ text, undo });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 4000);
+    toastTimer.current = setTimeout(() => setToast(null), undo ? 6000 : 4000);
   }, []);
 
   const upsert = useCallback(
@@ -71,14 +72,33 @@ export default function CrmPage() {
     }
   };
 
-  const drop = async (code: string, column: Column) => {
+  /** Сохранить правку из списка: заказ сразу встаёт на новое место, сервер подтверждает; ошибка — вернуть как было. */
+  const change = async (order: CrmOrder, patch: OrderPatch): Promise<CrmOrder | null> => {
+    if (patch.stage) upsert({ ...order, stage: patch.stage });
     try {
-      const { order } = await patchOrder(code, { stage: stageOfColumn(column) });
-      upsert(order);
-      if (columnOf(order) !== column) notify(`Способ получения — ${order.method === "pickup" || order.method === "taxi" ? "выдача" : "почта"}, заказ в «${columnLabel(columnOf(order))}»`);
+      const { order: saved } = await track(patchOrder(order.code, patch));
+      upsert(saved);
+      webApp()?.HapticFeedback?.notificationOccurred?.("success");
+      return saved;
     } catch (e) {
-      notify(e instanceof ApiError ? e.message : "Не получилось перенести заказ");
+      upsert(order);
+      notify(e instanceof ApiError ? e.message : "Не сохранилось, попробуйте ещё раз");
       void reload();
+      return null;
+    }
+  };
+
+  const act = async (order: CrmOrder, action: QuickAction) => {
+    const saved = await change(order, action.patch);
+    if (saved) notify(`#${order.code} · ${order.name} → ${action.done}`, () => void change(saved, action.undo));
+  };
+
+  const drop = async (code: string, column: Column) => {
+    const order = orders?.find((o) => o.code === code);
+    if (!order) return;
+    const saved = await change(order, { stage: stageOfColumn(column) });
+    if (saved && columnOf(saved) !== column) {
+      notify(`Способ получения — ${saved.method === "pickup" || saved.method === "taxi" ? "выдача" : "почта"}, заказ в «${columnLabel(columnOf(saved))}»`);
     }
   };
 
@@ -139,6 +159,7 @@ export default function CrmPage() {
             orders={orders}
             onOpen={setOpenCode}
             onDownload={download}
+            onAction={act}
             onDrop={drop}
             onMoreDone={() => setDoneDays((d) => d + 60)}
             notify={notify}
@@ -149,6 +170,7 @@ export default function CrmPage() {
       {openCode && (
         <OrderSheet
           code={openCode}
+          initial={orders?.find((o) => o.code === openCode)}
           onClose={() => setOpenCode(null)}
           onChanged={upsert}
           onDeleted={(code) => {
@@ -163,8 +185,20 @@ export default function CrmPage() {
       {reportsOpen && <Reports onClose={() => setReportsOpen(false)} />}
 
       {toast && (
-        <div role="status" className="fixed inset-x-4 bottom-24 z-[60] mx-auto max-w-md rounded-xl bg-[#191715] px-4 py-3 text-center text-sm text-white shadow-lg">
-          {toast}
+        <div role="status" className="fixed inset-x-4 bottom-24 z-[60] mx-auto flex max-w-md items-center gap-3 rounded-xl bg-[#191715] px-4 py-3 text-sm text-white shadow-lg">
+          <span className="min-w-0 flex-1">{toast.text}</span>
+          {toast.undo && (
+            <button
+              type="button"
+              onClick={() => {
+                toast.undo?.();
+                setToast(null);
+              }}
+              className="min-h-[36px] shrink-0 rounded-lg bg-white/15 px-3 font-semibold text-[#FFC400]"
+            >
+              Отменить
+            </button>
+          )}
         </div>
       )}
     </>

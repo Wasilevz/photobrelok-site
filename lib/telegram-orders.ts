@@ -1,36 +1,16 @@
-// Общая логика Telegram-воркфлоу заказов: темы-стадии, подпись заказа, кнопки.
-// Используется и формой заказа (app/api/order), и вебхуком бота (app/api/telegram-webhook).
+// Telegram для заказов: темы группы, подпись нового заказа, второй брелок, вызов Bot API.
+// Используется формой заказа (app/api/order), страницей «спасибо» (app/api/telegram) и CRM (lib/crm).
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { type DeliveryMethod, fieldsFromCaption, replaceDelivery, setFieldLines } from "./order-fields.ts";
 
-export {
-  type DeliveryDetails,
-  type DeliveryMethod,
-  buildDeliveryText,
-  cleanText,
-  methodFromCaption,
-  replaceDelivery,
-} from "./order-fields.ts";
+export { type DeliveryMethod, buildDeliveryText, cleanText } from "./order-fields.ts";
 
-export type Stage = "work" | "pickup" | "ship" | "done";
+type Stage = "work" | "pickup" | "ship" | "done";
 
-export type InlineButton = { text: string; callback_data: string };
-
-export const METHOD_CODE: Record<DeliveryMethod, string> = {
-  pickup: "p",
-  posta: "s",
-  novapost: "n",
-  taxi: "t",
-  later: "l",
-};
-
-export function methodFromCode(code: string): DeliveryMethod | null {
-  const entry = (Object.entries(METHOD_CODE) as [DeliveryMethod, string][]).find(([, c]) => c === code);
-  return entry ? entry[0] : null;
-}
+const DELIVERY_METHODS: DeliveryMethod[] = ["pickup", "posta", "novapost", "taxi", "later"];
 
 export function isDeliveryMethod(value: unknown): value is DeliveryMethod {
-  return typeof value === "string" && value in METHOD_CODE;
+  return DELIVERY_METHODS.includes(value as DeliveryMethod);
 }
 
 /* ------------------------------ Конфигурация ------------------------------ */
@@ -78,27 +58,7 @@ export function getOrderRecipients(): { chatId: string; threadId?: number }[] {
   }));
 }
 
-export function stageOfThread(cfg: TopicConfig, threadId: number | undefined): Stage | null {
-  if (threadId === undefined) return null;
-  for (const stage of Object.keys(cfg.threads) as Stage[]) {
-    if (cfg.threads[stage] === threadId) return stage;
-  }
-  return null;
-}
-
-/** Стадия «готов» зависит от способа получения. */
-export function readyStage(method: DeliveryMethod): "pickup" | "ship" {
-  return method === "pickup" ? "pickup" : "ship";
-}
-
 /* ------------------------------ Текст заказа ------------------------------ */
-
-/** Заметки менеджера: свободный текст, убираем только управляющие символы. */
-export function cleanNote(value: unknown, maxLength = 200): string {
-  return typeof value === "string"
-    ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, maxLength)
-    : "";
-}
 
 export function buildOrderCaption(o: {
   orderId: string;
@@ -117,30 +77,6 @@ export function buildOrderCaption(o: {
   // Срочность и дату ставит та же функция, что и правка в боте: вид подписи один.
   const fields = { ...fieldsFromCaption(caption, new Date()), urgent: !!o.urgent, wantedDate: o.wantedDate };
   return setFieldLines(caption, fields, o.shipBy);
-}
-
-const CAPTION_LIMIT = 1000; // у Telegram лимит 1024
-
-export function appendLine(caption: string, line: string): string {
-  const lines = [...caption.split("\n"), line];
-  // Если подпись разрослась — сначала выкидываем самые старые строки истории.
-  while (lines.join("\n").length > CAPTION_LIMIT) {
-    const idx = lines.findIndex((l) => l.startsWith("🕒"));
-    if (idx === -1) break;
-    lines.splice(idx, 1);
-  }
-  return lines.join("\n").slice(0, CAPTION_LIMIT);
-}
-
-export function historyLine(label: string, date = new Date()): string {
-  const stamp = new Intl.DateTimeFormat("ru-RU", {
-    timeZone: "Europe/Chisinau",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-  return `🕒 ${stamp.replace(",", "")} · ${label}`;
 }
 
 /* -------------------- Подписанная ссылка на сообщение заказа -------------------- */

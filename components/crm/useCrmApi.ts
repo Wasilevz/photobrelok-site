@@ -48,8 +48,8 @@ export function initData(): string {
   return webApp()?.initData || HASH_INIT_DATA;
 }
 
-export type CrmComment = { authorName: string; text: string; createdAt: string };
-export type CrmHistoryItem = { actorName: string; action: string; details: Record<string, unknown>; createdAt: string };
+type CrmComment = { authorName: string; text: string; createdAt: string };
+type CrmHistoryItem = { actorName: string; action: string; details: Record<string, unknown>; createdAt: string };
 export type OrderDetails = { order: CrmOrder; comments: CrmComment[]; history: CrmHistoryItem[] };
 
 export class ApiError extends Error {
@@ -77,29 +77,38 @@ export function patchOrder(code: string, patch: OrderPatch) {
   return api<{ order: CrmOrder; warnings: string[] }>(`/api/crm/orders/${code}`, { method: "PATCH", body: JSON.stringify(patch) });
 }
 
-/** Список заказов с опросом каждые 20 секунд, пока вкладка видима. */
+/**
+ * Список заказов с опросом каждые 20 секунд, пока вкладка видима. track(promise) — пока идёт сохранение,
+ * ответы опроса не применяются (иначе заказ на секунду «прыгает» обратно в старую колонку).
+ */
 export function useOrders(query: string, doneDays: number, enabled: boolean) {
   const [orders, setOrders] = useState<CrmOrder[] | null>(null);
-  const [me, setMe] = useState<{ id: number; name: string } | null>(null);
-  const [bot, setBot] = useState<string | undefined>(undefined);
   const [error, setError] = useState<ApiError | null>(null);
   const seq = useRef(0);
+  const saving = useRef(0);
 
   const reload = useCallback(async () => {
     const mine = ++seq.current;
     try {
       const params = new URLSearchParams({ doneDays: String(doneDays) });
       if (query.trim()) params.set("q", query.trim());
-      const data = await api<{ orders: CrmOrder[]; me: { id: number; name: string }; bot?: string }>(`/api/crm/orders?${params}`);
-      if (mine !== seq.current) return; // пришёл ответ на устаревший запрос
+      const data = await api<{ orders: CrmOrder[] }>(`/api/crm/orders?${params}`);
+      if (mine !== seq.current || saving.current > 0) return; // устаревший ответ или идёт сохранение
       setOrders(data.orders);
-      setMe(data.me);
-      setBot(data.bot || undefined);
       setError(null);
     } catch (e) {
       if (mine === seq.current) setError(e instanceof ApiError ? e : new ApiError("Ошибка сети", 0));
     }
   }, [query, doneDays]);
+
+  const track = useCallback(async <T,>(work: Promise<T>): Promise<T> => {
+    saving.current++;
+    try {
+      return await work;
+    } finally {
+      saving.current--;
+    }
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -116,7 +125,7 @@ export function useOrders(query: string, doneDays: number, enabled: boolean) {
     };
   }, [reload, query, enabled]);
 
-  return { orders, setOrders, me, bot, error, reload };
+  return { orders, setOrders, error, reload, track };
 }
 
 /** «Нажал — сохранил»: родной диалог сохранения Telegram, на старых клиентах — открыть ссылку. */

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chatKeyboard, parseMoneyCallback, parseStageCallback, threadFor, topicRenames } from "./chat.ts";
+import { chatKeyboard, moveMessage, quickAction, parseMoneyCallback, parseStageCallback, stepLabel, threadFor, topicRenames } from "./chat.ts";
 
 const btns = (o: Parameters<typeof chatKeyboard>[0]) => chatKeyboard(o, "photobrelok_bot").flat().map((b) => b.text);
 
@@ -54,4 +54,70 @@ test("почта отправлена — кнопки денег; деньги 
   assert.deepEqual(btns({ ...sent, returnedAt: "2026-11-16T10:00:00Z" }), ["💰 Деньги всё же получены", "↩️ Вернуть в работу", "📋 Открыть в CRM"]);
   assert.deepEqual(parseMoneyCallback("mn:AAAAAA:returned"), { code: "AAAAAA", money: "returned" });
   assert.equal(parseMoneyCallback("mn:AAAAAA:pending"), null);
+});
+
+test("moveMessage: копия → старое удалено → заказ в новом сообщении", async () => {
+  const log: string[] = [];
+  const id = await moveMessage({
+    copy: async () => (log.push("copy"), 77),
+    deleteOld: async () => void log.push("deleteOld"),
+    deleteCopy: async (m) => void log.push(`deleteCopy ${m}`),
+  });
+  assert.equal(id, 77);
+  assert.deepEqual(log, ["copy", "deleteOld"]);
+});
+
+test("moveMessage: старое не удаляется (старше 48 ч) — копия убирается, дубля нет", async () => {
+  const log: string[] = [];
+  const id = await moveMessage({
+    copy: async () => (log.push("copy"), 77),
+    deleteOld: async () => {
+      throw new Error("Bad Request: message can't be deleted");
+    },
+    deleteCopy: async (m) => void log.push(`deleteCopy ${m}`),
+  });
+  assert.equal(id, null); // заказ остаётся в прежнем сообщении
+  assert.deepEqual(log, ["copy", "deleteCopy 77"]);
+});
+
+test("moveMessage: копия не получилась — ничего не удаляется", async () => {
+  const log: string[] = [];
+  const id = await moveMessage({
+    copy: async () => {
+      throw new Error("Bad Request: message to copy not found");
+    },
+    deleteOld: async () => void log.push("deleteOld"),
+    deleteCopy: async (m) => void log.push(`deleteCopy ${m}`),
+  });
+  assert.equal(id, null);
+  assert.deepEqual(log, []);
+});
+
+test("moveMessage: старого уже нет в чате — считаем перенос удачным", async () => {
+  const id = await moveMessage({
+    copy: async () => 78,
+    deleteOld: async () => {
+      throw new Error("Bad Request: message to delete not found");
+    },
+    deleteCopy: async () => assert.fail("копию трогать нельзя"),
+  });
+  assert.equal(id, 78);
+});
+
+test("stepLabel: подписи шага одинаковые в чате и в CRM", () => {
+  assert.equal(stepLabel({ stage: "new", method: "pickup" }, "production"), "▶️ В производство");
+  assert.equal(stepLabel({ stage: "production", method: "taxi" }, "ready"), "🏪 Готов к выдаче");
+  assert.equal(stepLabel({ stage: "ready", method: "posta" }, "done"), "🏁 Отправлен — завершить");
+  assert.equal(stepLabel({ stage: "done", method: "posta" }, "production"), "↩️ Вернуть в работу");
+});
+
+test("quickAction: шаг вперёд; у отправленного почтой — «деньги получены»; у завершённого — ничего", () => {
+  const base = { moneyAt: null, returnedAt: null };
+  assert.deepEqual(quickAction({ ...base, stage: "new", method: "pickup" }), {
+    label: "▶️ В производство", patch: { stage: "production" }, undo: { stage: "new" }, done: "🛠 В производстве",
+  });
+  assert.equal(quickAction({ ...base, stage: "ready", method: "posta" })?.done, "✅ Завершён");
+  assert.deepEqual(quickAction({ ...base, stage: "done", method: "posta" })?.patch, { money: "received" });
+  assert.equal(quickAction({ ...base, stage: "done", method: "posta", moneyAt: "2026-11-16T10:00:00Z" }), null);
+  assert.equal(quickAction({ ...base, stage: "done", method: "pickup", moneyAt: "2026-11-16T10:00:00Z" }), null);
 });

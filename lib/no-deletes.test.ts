@@ -26,7 +26,6 @@ const ALLOWED_DELETE_MESSAGE = new Set([
   "app/api/telegram/route.ts#notifyUpsell",
   "lib/crm/telegram.ts#deleteOrderMessage",
   "lib/crm/telegram.ts#relocateOrderMessage",
-  "lib/crm/telegram.ts#deleteStaleCopies", // те же старые копии после переноса — повторная попытка
 ]);
 // Стирание файлов хранилища и строк базы — только при полном удалении одного заказа.
 const ALLOWED_PURGE = new Set(["lib/crm/db.ts#purgeOrder"]);
@@ -61,12 +60,13 @@ test("no message moves, storage removals or row deletes", () => {
   }
 });
 
-test("перенос между темами: старое сообщение удаляется только после копии", () => {
+test("перенос между темами: удаление — только через moveMessage (сначала копия, потом старое)", () => {
   const src = readFileSync(join(ROOT, "lib/crm/telegram.ts"), "utf8");
   const start = src.indexOf("async function relocateOrderMessage");
   const body = src.slice(start, src.indexOf("\n}\n", start));
+  assert.ok(body.includes("await moveMessage({"), "перенос идёт через moveMessage");
   const copy = body.indexOf('"copyMessage"');
   const del = body.indexOf('"deleteMessage"');
   assert.ok(copy !== -1 && del !== -1 && copy < del, "copyMessage должен идти раньше deleteMessage");
-  assert.ok(body.slice(copy, del).includes("return editInPlace"), "при ошибке копии — выход без удаления");
+  assert.equal(src.split('"deleteMessage"').length - 1, 3, "удалений в чате ровно три: старое, неудачная копия, «Удалить заказ»");
 });

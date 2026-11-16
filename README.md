@@ -68,8 +68,6 @@ Dev: `npm run dev --webpack`
 3. Redeploy в Vercel, чтобы переменные подхватились.
 
 База: таблицы `crm_orders`, `crm_comments`, `crm_history` и приватный бакет `order-pdfs` (миграции в `supabase/migrations`).
-Прошлые заказы из выгрузки чата: `node scripts/import-telegram-export.mjs result.json > import.sql` и выполнить SQL
-(повторный запуск дублей не создаёт). Файл выгрузки с телефонами клиентов в репозиторий не класть.
 
 Локально без Telegram: `CRM_DEV_USER_ID=<id из CRM_ALLOWED_USER_IDS> npm run dev` (в production не работает).
 

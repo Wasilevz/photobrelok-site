@@ -348,7 +348,7 @@ export async function POST(request: Request) {
           tgCaption: null,
           flags: honeypotHit ? ["honeypot"] : [],
         });
-        await addHistory(orderId, null, "created", { source: safeSource || null });
+        await addHistory(orderId, null, [{ action: "created", details: { source: safeSource || null } }]);
         savedToCrm = true;
       } catch (error) {
         console.error(`Order ${orderId}: not saved to CRM`, error);

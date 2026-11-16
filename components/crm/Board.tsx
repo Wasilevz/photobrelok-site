@@ -1,22 +1,35 @@
 "use client";
 
 // Доска: телефон — вкладки колонок со счётчиками; компьютер (≥1024px) — 5 колонок и перетаскивание.
+// Под каждым заказом — кнопка следующего шага (та же, что в чате производства): карточку открывать не нужно.
 import { useState } from "react";
-import { type Column, type CrmOrder, COLUMNS, columnLabel, columnOf, moneyState, sortOrders } from "@/lib/crm/model";
+import { type Column, type CrmOrder, COLUMNS, amountDue, columnLabel, columnOf, moneyState, sortOrders } from "@/lib/crm/model";
+import { type QuickAction, quickAction } from "@/lib/crm/chat";
+import { chisinauToday } from "@/lib/delivery-dates";
 import { METHOD_LABEL, chatMessageUrl, dateLabel } from "./format";
 import { PostFormsButtons } from "./PostForms";
+import { badge, btnPlain, btnPrimary, card } from "./ui";
 
 function OrderListItem({
   order,
+  today,
   onOpen,
   onDownload,
+  onAction,
   draggable,
 }: {
   order: CrmOrder;
+  today: string;
   onOpen: () => void;
   onDownload: () => void;
+  onAction: (action: QuickAction) => void;
   draggable?: boolean;
 }) {
+  const money = moneyState(order);
+  const action = quickAction(order);
+  const hasPdf = !!order.pdfPath || !!chatMessageUrl(order);
+  const late = order.stage !== "done" && !!order.wantedDate && order.wantedDate < today;
+  const isToday = order.stage !== "done" && order.wantedDate === today;
   return (
     <li
       draggable={draggable}
@@ -24,33 +37,45 @@ function OrderListItem({
         e.dataTransfer.setData("text/plain", order.code);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className={`relative rounded-xl border bg-white ${order.urgent ? "border-[#B42318] border-2" : "border-[#E5DCCB]"} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+      className={`${card} overflow-hidden ${order.urgent ? "ring-2 ring-[#B42318]" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
     >
-      <button type="button" onClick={onOpen} className="block w-full px-3 py-2.5 pr-14 text-left">
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-xs text-[#5C564E]">#{order.code}</span>
-          {order.urgent && <span className="text-xs font-bold text-[#B42318]">⚡ СРОЧНО</span>}
-          {order.paid && <span className="rounded bg-[#ECFDF3] px-1.5 text-xs font-bold text-[#067647]">💳 ОПЛАЧЕН</span>}
-          {moneyState(order) === "pending" && <span className="rounded bg-[#FFFAEB] px-1.5 text-xs font-bold text-[#B54708]">⏳ ждём деньги</span>}
-          {moneyState(order) === "returned" && <span className="rounded bg-[#FEF3F2] px-1.5 text-xs font-bold text-[#B42318]">↩️ возврат</span>}
+      <button type="button" onClick={onOpen} className="block w-full px-3 pb-2 pt-2.5 text-left">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="truncate font-semibold">{order.name}</span>
+          <span className="shrink-0 text-sm font-semibold tabular-nums">{amountDue(order)} лей</span>
         </div>
-        <div className="truncate font-semibold">{order.name}</div>
-        <div className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-[#3D3832]">
-          <span>📅 {dateLabel(order.wantedDate)}</span>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-[#5C564E]">
+          <span className="font-mono">#{order.code}</span>
+          <span className={late ? "font-bold text-[#B42318]" : isToday ? "font-bold text-[#191715]" : ""}>
+            📅 {dateLabel(order.wantedDate)}
+            {late ? " · просрочен" : isToday ? " · сегодня" : ""}
+          </span>
           <span>{METHOD_LABEL[order.method]}</span>
-          {order.qty > 1 && <span className="font-semibold">🔑 {order.qty} шт.</span>}
-          {order.commentsCount > 0 && <span>💬 {order.commentsCount}</span>}
         </div>
+        {(order.urgent || order.paid || money === "pending" || money === "returned" || order.qty > 1 || order.commentsCount > 0) && (
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {order.urgent && <span className={`${badge} bg-[#B42318] text-white`}>⚡ СРОЧНО</span>}
+            {order.paid && <span className={`${badge} bg-[#ECFDF3] text-[#067647]`}>💳 ОПЛАЧЕН</span>}
+            {money === "pending" && <span className={`${badge} bg-[#FFFAEB] text-[#B54708]`}>⏳ ждём деньги</span>}
+            {money === "returned" && <span className={`${badge} bg-[#FEF3F2] text-[#B42318]`}>↩️ возврат</span>}
+            {order.qty > 1 && <span className={`${badge} bg-[#F5F1E8] text-[#191715]`}>🔑 {order.qty} шт.</span>}
+            {order.commentsCount > 0 && <span className={`${badge} bg-[#F5F1E8] text-[#191715]`}>💬 {order.commentsCount}</span>}
+          </div>
+        )}
       </button>
-      {(order.pdfPath || chatMessageUrl(order)) && (
-        <button
-          type="button"
-          onClick={onDownload}
-          aria-label={`Скачать PDF заказа ${order.code}`}
-          className="absolute right-1.5 top-1.5 flex size-11 items-center justify-center rounded-lg bg-[#FFC400]/50 text-lg hover:bg-[#FFC400]"
-        >
-          ⬇️
-        </button>
+      {(action || hasPdf) && (
+        <div className="flex gap-2 border-t border-[#F0EADD] px-2 py-2">
+          {hasPdf && (
+            <button type="button" onClick={onDownload} aria-label={`Скачать PDF заказа ${order.code}`} title="Скачать PDF" className={`${btnPlain} shrink-0`}>
+              ⬇️<span className="lg:hidden"> PDF</span>
+            </button>
+          )}
+          {action && (
+            <button type="button" onClick={() => onAction(action)} className={`${btnPrimary} min-w-0 flex-1 py-1 leading-tight lg:px-2 lg:text-[13px]`}>
+              {action.label}
+            </button>
+          )}
+        </div>
       )}
     </li>
   );
@@ -60,6 +85,7 @@ export default function Board({
   orders,
   onOpen,
   onDownload,
+  onAction,
   onDrop,
   onMoreDone,
   notify,
@@ -67,12 +93,14 @@ export default function Board({
   orders: CrmOrder[];
   onOpen: (code: string) => void;
   onDownload: (code: string) => void;
+  onAction: (order: CrmOrder, action: QuickAction) => void;
   onDrop: (code: string, column: Column) => void;
   onMoreDone: () => void;
   notify: (text: string) => void;
 }) {
   const [tab, setTab] = useState<Column>("new");
   const [over, setOver] = useState<Column | null>(null);
+  const today = chisinauToday(new Date());
   const byColumn = Object.fromEntries(COLUMNS.map((c) => [c, sortOrders(orders.filter((o) => columnOf(o) === c))])) as Record<Column, CrmOrder[]>;
 
   const postOrders = byColumn.ship.filter((o) => o.method === "posta");
@@ -86,14 +114,22 @@ export default function Board({
           <PostFormsButtons codes={postCodes} codCodes={codCodes} notify={notify} countInLabel primary />
         </div>
       )}
-      {byColumn[c].length === 0 && <p className="px-1 py-6 text-center text-sm text-[#5C564E]">Пусто</p>}
+      {byColumn[c].length === 0 && <p className="px-1 py-8 text-center text-sm text-[#8A8275]">Здесь пока пусто</p>}
       <ul className="flex flex-col gap-2">
         {byColumn[c].map((o) => (
-          <OrderListItem key={o.code} order={o} draggable={draggable} onOpen={() => onOpen(o.code)} onDownload={() => onDownload(o.code)} />
+          <OrderListItem
+            key={o.code}
+            order={o}
+            today={today}
+            draggable={draggable}
+            onOpen={() => onOpen(o.code)}
+            onDownload={() => onDownload(o.code)}
+            onAction={(action) => onAction(o, action)}
+          />
         ))}
       </ul>
       {c === "done" && (
-        <button type="button" onClick={onMoreDone} className="mt-2 min-h-[44px] w-full rounded-xl border border-[#D9D0BF] bg-white text-sm">
+        <button type="button" onClick={onMoreDone} className={`${btnPlain} mt-2 w-full`}>
           Показать более старые
         </button>
       )}
@@ -112,8 +148,8 @@ export default function Board({
               role="tab"
               aria-selected={tab === c}
               onClick={() => setTab(c)}
-              className={`shrink-0 min-h-[40px] rounded-full border-2 px-3 text-sm font-medium ${
-                tab === c ? "border-[#191715] bg-[#FFC400]" : "border-[#D9D0BF] bg-white"
+              className={`min-h-[40px] shrink-0 rounded-full border-2 px-3 text-sm font-medium ${
+                tab === c ? "border-[#191715] bg-[#FFC400]" : "border-transparent bg-white"
               }`}
             >
               {columnLabel(c)} <span className="ml-0.5 tabular-nums opacity-70">{byColumn[c].length}</span>
@@ -124,7 +160,7 @@ export default function Board({
       </div>
 
       {/* Компьютер: колонки рядом */}
-      <div className="hidden lg:grid lg:grid-cols-5 lg:gap-3">
+      <div className="hidden pt-3 lg:grid lg:grid-cols-5 lg:gap-3">
         {COLUMNS.map((c) => (
           <section
             key={c}

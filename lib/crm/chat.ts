@@ -1,6 +1,6 @@
 // Чат производства: заказ лежит в теме своей стадии, под ним — кнопка следующего шага (одно нажатие),
 // «Назад» на случай ошибки и ссылка в CRM. Чистые функции — без Telegram и базы.
-import { COLUMNS, type Column, type CrmOrder, type Stage, STAGES, columnLabel, columnOf, moneyState, nextStage, prevStage } from "./model.ts";
+import { COLUMNS, type Column, type CrmOrder, type OrderPatch, type Stage, STAGES, columnLabel, columnOf, moneyState, nextStage, prevStage } from "./model.ts";
 import { isPostMethod } from "../delivery-dates.ts";
 import { crmAppUrl } from "./links.ts";
 
@@ -9,11 +9,24 @@ export type StageThreads = Record<Column, number | undefined>;
 
 type O = Pick<CrmOrder, "code" | "stage" | "method"> & Partial<Pick<CrmOrder, "moneyAt" | "returnedAt">>;
 
-function nextLabel(o: O, to: Stage): string {
+/** Подпись кнопки шага — одна и та же в чате и в CRM. */
+export function stepLabel(o: Pick<CrmOrder, "stage" | "method">, to: Stage): string {
   if (to === "production") return o.stage === "done" ? "↩️ Вернуть в работу" : "▶️ В производство";
   if (to === "ready") return isPostMethod(o.method) ? "📦 Готов к отправке" : "🏪 Готов к выдаче";
   if (to === "done") return isPostMethod(o.method) ? "🏁 Отправлен — завершить" : "🏁 Выдан — завершить";
   return "↩️ Назад";
+}
+
+/** Быстрое действие под заказом в списке CRM: следующий шаг или «деньги получены» для отправленного почтой. */
+export type QuickAction = { label: string; patch: OrderPatch; undo: OrderPatch; done: string };
+
+export function quickAction(o: Pick<CrmOrder, "stage" | "method" | "moneyAt" | "returnedAt">): QuickAction | null {
+  const next = nextStage(o.stage);
+  if (next) return { label: stepLabel(o, next), patch: { stage: next }, undo: { stage: o.stage }, done: columnLabel(columnOf({ stage: next, method: o.method })) };
+  if (isPostMethod(o.method) && moneyState(o) === "pending") {
+    return { label: "💰 Деньги получены", patch: { money: "received" }, undo: { money: "pending" }, done: "💰 деньги получены" };
+  }
+  return null;
 }
 
 export function chatKeyboard(o: O, botUsername: string | undefined): ChatButton[][] {
@@ -27,11 +40,11 @@ export function chatKeyboard(o: O, botUsername: string | undefined): ChatButton[
     const state = moneyState({ stage: o.stage, moneyAt: o.moneyAt ?? null, returnedAt: o.returnedAt ?? null });
     if (isPostMethod(o.method) && state === "pending") rows.push([money("received", "💰 Деньги получены"), money("returned", "↩️ Не забрали (возврат)")]);
     if (state === "returned") rows.push([money("received", "💰 Деньги всё же получены")]);
-    rows.push([step("production", nextLabel(o, "production"))]);
+    rows.push([step("production", stepLabel(o, "production"))]);
   }
   else {
     const row: ChatButton[] = [];
-    if (next) row.push(step(next, nextLabel(o, next)));
+    if (next) row.push(step(next, stepLabel(o, next)));
     if (prev) row.push(step(prev, "↩️ Назад"));
     rows.push(row);
   }
@@ -64,4 +77,32 @@ export function topicRenames(threads: StageThreads, saved: Record<string, string
     const name = columnLabel(c);
     return thread && saved[thread] !== name ? [{ thread, name }] : [];
   });
+}
+
+const GONE = /message to delete not found/i;
+
+/**
+ * Перенос сообщения заказа в другую тему без дублей. Telegram не умеет двигать сообщения и не даёт боту удалять
+ * сообщения старше 48 часов, поэтому: копия → удалить старое; старое не удалилось — убрать копию и оставить заказ
+ * на месте. Возвращает номер нового сообщения или null (заказ остался в прежнем сообщении).
+ */
+export async function moveMessage(io: {
+  copy: () => Promise<number>;
+  deleteOld: () => Promise<unknown>;
+  deleteCopy: (messageId: number) => Promise<unknown>;
+}): Promise<number | null> {
+  let copy: number;
+  try {
+    copy = await io.copy();
+  } catch {
+    return null;
+  }
+  try {
+    await io.deleteOld();
+    return copy;
+  } catch (error) {
+    if (GONE.test(error instanceof Error ? error.message : String(error))) return copy;
+    await io.deleteCopy(copy).catch(() => {});
+    return null;
+  }
 }

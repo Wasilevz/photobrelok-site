@@ -75,7 +75,7 @@ export async function POST(req: Request) {
         crmOrder = order ? { ...order, qty: Math.max(order.qty, 2) } : null;
         if (order && order.qty < 2) {
           await saveOrder(orderId, { qty: 2, ...(payload ? { tg_caption: withUpsell(payload.caption) } : {}) });
-          await addHistory(orderId, null, "field", { qty: 2, via: "thanks_page" });
+          await addHistory(orderId, null, [{ action: "field", details: { qty: 2, via: "thanks_page" } }]);
         }
       } catch (error) {
         console.error(`Upsell ${orderId}: CRM not updated`, error);
