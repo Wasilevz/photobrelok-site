@@ -48,6 +48,8 @@ export type CrmOrder = {
   tgCaption: string | null;
   /** Тема группы, где сейчас лежит сообщение; null — тема его стадии (старые заказы). */
   tgThreadId: number | null;
+  /** Когда сообщение отправлено в чат (бот удаляет только моложе 48 ч). null — неизвестно (старые заказы). */
+  tgPostedAt: string | null;
   /** Когда деньги реально у нас (предоплата, выдача, деньги с почты). Только такие заказы — в выручке. */
   moneyAt: string | null;
   /** Посылку не забрали — вернулась (убыток). */
@@ -309,7 +311,7 @@ const COLUMN_MAP: [keyof CrmOrder, string][] = [
   ["name", "name"], ["phone", "phone"], ["wantedDate", "wanted_date"], ["urgent", "urgent"], ["method", "method"],
   ["postalCode", "postal_code"], ["city", "city"], ["district", "district"], ["street", "street"], ["branch", "branch"],
   ["address", "address"], ["qty", "qty"], ["price", "price"], ["lang", "lang"], ["source", "source"], ["pdfPath", "pdf_path"],
-  ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["tgThreadId", "tg_thread_id"], ["flags", "flags"],
+  ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["tgThreadId", "tg_thread_id"], ["tgPostedAt", "tg_posted_at"], ["flags", "flags"],
   ["boxes", "boxes"], ["extraCost", "extra_cost"], ["moneyAt", "money_at"], ["returnedAt", "returned_at"], ["paid", "paid"], ["deletedAt", "deleted_at"],
 ];
 

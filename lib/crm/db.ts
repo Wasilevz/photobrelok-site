@@ -34,7 +34,7 @@ function fail(what: string, error: { message: string } | null): never {
   throw new Error(`CRM ${what}: ${error?.message ?? "unknown error"}`);
 }
 
-type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt" | "tgThreadId" | "moneyAt" | "returnedAt">;
+type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt" | "tgThreadId" | "tgPostedAt" | "moneyAt" | "returnedAt">;
 
 export async function insertOrder(o: NewOrder): Promise<void> {
   const { error } = await db().from("crm_orders").insert(orderToRow(o));

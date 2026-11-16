@@ -28,7 +28,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Мария", phone: "+373 60 024 571", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 1, price: null, lang: "ru", source: null, pdfPath: null, tgChatId: null, tgMessageId: null, tgCaption: null,
-    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, moneyAt: null, returnedAt: null, ...p,
+    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, tgPostedAt: null, moneyAt: null, returnedAt: null, ...p,
   };
 }
 
