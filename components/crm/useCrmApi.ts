@@ -130,6 +130,14 @@ export function saveFile(url: string, fileName: string): void {
   }
 }
 
+/** Просмотр без сохранения: встроенный просмотрщик (телефон) или браузер (компьютер). */
+export async function viewPdf(code: string): Promise<void> {
+  const { url } = await api<{ url: string }>(`/api/crm/orders/${code}/pdf?view=1`);
+  const tg = webApp();
+  if (tg?.openLink) tg.openLink(url);
+  else window.open(url, "_blank", "noopener");
+}
+
 export async function downloadPdf(code: string): Promise<void> {
   const { url, fileName } = await api<{ url: string; fileName: string }>(`/api/crm/orders/${code}/pdf`);
   saveFile(url, fileName);

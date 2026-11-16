@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ApiError, downloadPdf, openTelegram } from "./useCrmApi";
+import { ApiError, downloadPdf, openTelegram, viewPdf } from "./useCrmApi";
 
 /** Главное требование владельца: PDF — «нажал, открыл, сохранил». */
 /** PDF в хранилище CRM — скачать сразу; заказ, перенесённый из чата, — открыть его сообщение, PDF там. */
 export default function PdfButtons({ code, hasPdf, chatUrl }: { code: string; hasPdf: boolean; chatUrl?: string | null }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"down" | "view" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   if (!hasPdf) {
     if (!chatUrl) return null;
@@ -24,28 +24,39 @@ export default function PdfButtons({ code, hasPdf, chatUrl }: { code: string; ha
     );
   }
 
-  const run = async () => {
-    setBusy(true);
+  const run = async (kind: "down" | "view") => {
+    setBusy(kind);
     setNote(null);
     try {
-      await downloadPdf(code);
+      if (kind === "down") await downloadPdf(code);
+      else await viewPdf(code);
     } catch (e) {
       setNote(e instanceof ApiError ? e.message : "Не получилось, попробуйте ещё раз");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
   return (
     <div className="mb-4 flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={run}
-        disabled={busy}
-        className="min-h-[52px] rounded-xl bg-[#FFC400] border-2 border-[#191715] font-bold text-base active:scale-[0.98] disabled:opacity-60"
-      >
-        {busy ? "Готовим…" : "⬇️ Скачать PDF"}
-      </button>
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <button
+          type="button"
+          onClick={() => void run("down")}
+          disabled={busy !== null}
+          className="min-h-[52px] rounded-xl bg-[#FFC400] border-2 border-[#191715] font-bold text-base active:scale-[0.98] disabled:opacity-60"
+        >
+          {busy === "down" ? "Готовим…" : "⬇️ Скачать PDF"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void run("view")}
+          disabled={busy !== null}
+          className="min-h-[52px] rounded-xl bg-white border-2 border-[#191715] px-4 font-semibold text-base active:scale-[0.98] disabled:opacity-60"
+        >
+          {busy === "view" ? "Открываем…" : "👁 Посмотреть"}
+        </button>
+      </div>
       {note && <p className="text-sm text-[#5C564E]" role="status">{note}</p>}
     </div>
   );

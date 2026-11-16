@@ -126,9 +126,11 @@ export async function uploadPdf(code: string, pdf: Buffer): Promise<string> {
   throw new Error(`CRM pdf upload: no free name for ${code}`);
 }
 
-/** Ссылка на 10 минут, браузер/Telegram сохраняет файл как Brelok_<код>.pdf. */
-export async function signedPdfUrl(path: string, code: string): Promise<string> {
-  const { data, error } = await db().storage.from(BUCKET).createSignedUrl(path, 600, { download: `Brelok_${code}.pdf` });
+/** Ссылка на 10 минут: view — открыть для просмотра, иначе браузер/Telegram сохраняет файл как Brelok_<код>.pdf. */
+export async function signedPdfUrl(path: string, code: string, view = false): Promise<string> {
+  const { data, error } = await db()
+    .storage.from(BUCKET)
+    .createSignedUrl(path, 600, view ? undefined : { download: `Brelok_${code}.pdf` });
   if (error || !data) fail("pdf link", error);
   return data.signedUrl;
 }
