@@ -162,6 +162,32 @@ function ExpenseForm({ initial, onDone, onCancel }: { initial?: Expense; onDone:
   );
 }
 
+/** Утренняя сводка приходит в чат сама каждое утро; кнопка — прислать её прямо сейчас. */
+function MorningSummaryButton() {
+  const [state, setState] = useState<"idle" | "busy" | string>("idle");
+  const run = async () => {
+    setState("busy");
+    try {
+      await api("/api/cron/morning", { method: "POST" });
+      setState("Отправлено — смотрите тему «🛠 В производстве»");
+    } catch (e) {
+      setState(e instanceof ApiError ? e.message : "Не получилось, попробуйте ещё раз");
+    }
+  };
+  return (
+    <section className="mt-6 rounded-2xl bg-white p-3 text-sm">
+      <h2 className="font-semibold">☀️ Утренняя сводка</h2>
+      <p className="mb-2 text-xs text-[#5C564E]">
+        Каждое утро в 8–9 часов бот присылает в тему «🛠 В производстве»: что просрочено, что выдать и отправить сегодня, что на завтра и по каким посылкам давно ждём деньги.
+      </p>
+      <button type="button" disabled={state === "busy"} onClick={() => void run()} className={`${btn} w-full font-semibold disabled:opacity-60`}>
+        {state === "busy" ? "Отправляем…" : "Прислать сводку сейчас"}
+      </button>
+      {state !== "idle" && state !== "busy" && <p className="mt-2">{state}</p>}
+    </section>
+  );
+}
+
 export default function Reports({ onClose }: { onClose: () => void }) {
   const [period, setPeriod] = useState<Period>("month");
   const [from, setFrom] = useState("");
@@ -364,6 +390,7 @@ export default function Reports({ onClose }: { onClose: () => void }) {
             )}
           </div>
         )}
+        <MorningSummaryButton />
       </div>
     </div>
   );
