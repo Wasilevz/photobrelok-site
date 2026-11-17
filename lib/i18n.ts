@@ -84,7 +84,6 @@ export interface Dict {
       pickupTitle: string;
       postTitle: string;
       postHint: string;
-      tomorrow: string;
       dayAfter: string;
       otherDate: string;
       otherDateLabel: string;
@@ -238,7 +237,6 @@ export const translations: Record<Locale, Dict> = {
         pickupTitle: "Когда заберёте?",
         postTitle: "К какой дате хотите получить?",
         postHint: "Изготовим и отправим за 1–2 рабочих дня, почта идёт до 3 дней",
-        tomorrow: "Завтра",
         dayAfter: "Послезавтра",
         otherDate: "Другая дата 📅",
         otherDateLabel: "Выберите дату",
@@ -395,7 +393,6 @@ export const translations: Record<Locale, Dict> = {
         pickupTitle: "Când ridici?",
         postTitle: "Până când vrei să primești?",
         postHint: "Facem și expediem în 1–2 zile lucrătoare, poșta merge până la 3 zile",
-        tomorrow: "Mâine",
         dayAfter: "Poimâine",
         otherDate: "Altă dată 📅",
         otherDateLabel: "Alege data",

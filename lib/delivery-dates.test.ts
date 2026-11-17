@@ -16,16 +16,21 @@ const at = (iso: string) => new Date(iso); // UTC
 
 test("chisinau today differs from UTC late evening", () =>
   assert.equal(chisinauToday(at("2026-11-15T22:30:00Z")), "2026-11-16")); // 00:30 Кишинёв
-test("pickup earliest is tomorrow", () =>
-  assert.equal(earliestDate("pickup", at("2026-11-15T10:00:00Z")), "2026-11-16"));
+test("самовывоз: заказ 17.11 — получить не раньше 19.11", () => {
+  assert.equal(earliestDate("pickup", at("2026-11-17T10:00:00Z")), "2026-11-19");
+  assert.equal(earliestDate("pickup", at("2026-11-17T21:30:00Z")), "2026-11-19"); // 23:30 17.11 по Кишинёву — ещё 17.11
+  assert.equal(earliestDate("pickup", at("2026-11-17T22:30:00Z")), "2026-11-20"); // 00:30 18.11 по Кишинёву
+  assert.equal(validateWanted({ method: "pickup", wantedDate: "2026-11-18", urgent: false, now: at("2026-11-17T10:00:00Z") }), "too_early");
+  assert.equal(validateWanted({ method: "pickup", wantedDate: "2026-11-19", urgent: false, now: at("2026-11-17T10:00:00Z") }), null);
+});
 test("post: Monday order -> receive from Saturday", () =>
   assert.equal(earliestDate("posta", at("2026-11-16T10:00:00Z")), "2026-11-21"));
 test("post: Friday order -> receive from next Friday", () =>
   assert.equal(earliestDate("novapost", at("2026-11-20T10:00:00Z")), "2026-11-27"));
 test("post: Saturday order counts workdays from Monday", () =>
   assert.equal(shipBy(at("2026-11-21T10:00:00Z")), "2026-11-24"));
-test("DST change does not shift tomorrow", () => {
-  assert.equal(earliestDate("pickup", at("2026-03-28T22:30:00Z")), "2026-03-30"); // 00:30 29.03 по Кишинёву
+test("переход на летнее время не сдвигает даты", () => {
+  assert.equal(earliestDate("pickup", at("2026-03-28T22:30:00Z")), "2026-03-31"); // 00:30 29.03 по Кишинёву
   assert.equal(addDays("2026-10-24", 1), "2026-10-25");
 });
 test("urgent closes at 18:00, server grace until 18:30", () => {

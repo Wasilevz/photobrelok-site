@@ -19,7 +19,7 @@ const pillClass =
 
 /**
  * «Когда нужен брелок?» — кнопками, календарь только по «Другая дата».
- * Варианты зависят от способа: самовывоз — с завтра (и «сегодня срочно» до 18:00),
+ * Варианты зависят от способа: самовывоз — с послезавтра (и «сегодня срочно» до 18:00),
  * почта — с ближайшей реальной даты получения. Правила — lib/delivery-dates.ts (их же проверяет сервер).
  */
 export default function WantedDatePicker({ id, method, value, onChange, error }: Props) {
@@ -38,7 +38,7 @@ export default function WantedDatePicker({ id, method, value, onChange, error }:
   const selected = value?.urgent ? "urgent" : value && quick.includes(value.date) && !otherOpen ? value.date : value || otherOpen ? "other" : "";
 
   const quickLabel = (day: string, i: number) =>
-    isPost ? formatDay(day, lang) : `${i === 0 ? w.tomorrow : w.dayAfter}, ${formatDay(day, lang)}`;
+    isPost || i > 0 ? formatDay(day, lang) : `${w.dayAfter}, ${formatDay(day, lang)}`;
 
   const errorId = `${id}-err`;
 

@@ -8,6 +8,7 @@ export type DateMethod = "pickup" | "taxi" | "posta" | "novapost" | "later";
 const TZ = "Europe/Chisinau";
 const URGENT_CLOSE_MINUTES = 18 * 60; // срочно «на сегодня» — до 18:00
 const MAX_DAYS_AHEAD = 90;
+const PICKUP_DAYS = 2; // самовывоз: заказ 17.11 — получить не раньше 19.11 (решение владельца)
 const POST_WORKDAYS = 2; // изготовить и отправить
 const POST_TRANSIT_DAYS = 3; // почта в пути
 
@@ -81,7 +82,7 @@ export function isPostMethod(method: DateMethod): boolean {
 export function earliestDate(method: DateMethod, now: Date): string {
   const today = chisinauToday(now);
   if (isPostMethod(method)) return addDays(addWorkdays(today, POST_WORKDAYS), POST_TRANSIT_DAYS);
-  return addDays(today, 1);
+  return addDays(today, PICKUP_DAYS);
 }
 
 /** До какой даты отправить посылку, если заказ сделан сейчас. */
