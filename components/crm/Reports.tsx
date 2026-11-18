@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import type { Costs } from "@/lib/crm/model";
 import type { Expense } from "@/lib/crm/expenses";
 import type { Period, Report } from "@/lib/crm/reports";
-import { ApiError, api, webApp } from "./useCrmApi";
+import { ApiError, api, openTelegram, webApp } from "./useCrmApi";
 import { METHOD_LABEL, dateLabel } from "./format";
 
 const PERIODS: { id: Period; label: string }[] = [
@@ -159,6 +159,60 @@ function ExpenseForm({ initial, onDone, onCancel }: { initial?: Expense; onDone:
         <button type="button" disabled={saving || !amount} onClick={save} className={btnMain}>{saving ? "Сохраняем…" : "Сохранить"}</button>
       </div>
     </div>
+  );
+}
+
+type RepairResult = { checked: number; alreadyOk: number; moved: number; stuck: { code: string; name: string; url: string | null }[]; failed: number };
+
+/** Выровнять чат по CRM: заказы, которые в чате лежат не в теме своей стадии, переносятся в нужную. */
+function RepairChatButton() {
+  const [state, setState] = useState<"idle" | "busy" | { error: string } | RepairResult>("idle");
+  const run = async () => {
+    setState("busy");
+    try {
+      setState(await api<RepairResult>("/api/crm/chat/repair", { method: "POST" }));
+    } catch (e) {
+      setState({ error: e instanceof ApiError ? e.message : "Не получилось, попробуйте ещё раз" });
+    }
+  };
+  return (
+    <section className="mt-6 rounded-2xl bg-white p-3 text-sm">
+      <h2 className="font-semibold">🔧 Выровнять чат по CRM</h2>
+      <p className="mb-2 text-xs text-[#5C564E]">
+        Если заказ в чате лежит не в той теме, что в CRM, — бот переносит его в тему своей стадии. Занимает до минуты; можно нажимать повторно.
+      </p>
+      <button type="button" disabled={state === "busy"} onClick={() => void run()} className={`${btn} w-full font-semibold disabled:opacity-60`}>
+        {state === "busy" ? "Проверяем чат…" : "Выровнять чат"}
+      </button>
+      {typeof state === "object" && "error" in state && <p className="mt-2 text-[#B42318]">{state.error}</p>}
+      {typeof state === "object" && "checked" in state && (
+        <div className="mt-2 space-y-1">
+          <p>
+            Проверено заказов: {state.checked}. Уже на месте: {state.alreadyOk}. Перенесено: {state.moved}.
+            {state.failed > 0 && ` Не удалось: ${state.failed} — нажмите ещё раз.`}
+          </p>
+          {state.stuck.length > 0 && (
+            <div className="rounded-lg bg-[#FFFAEB] p-2">
+              <p className="font-semibold">Перенесено, но Telegram не дал удалить старое сообщение ({state.stuck.length}):</p>
+              <p className="text-xs text-[#5C564E]">Заказ уже в нужной теме. Старое сообщение помечено «перенесён» — удалите его вручную:</p>
+              <ul className="mt-1 space-y-1">
+                {state.stuck.map((x) => (
+                  <li key={x.code}>
+                    {x.url ? (
+                      <button type="button" className="underline underline-offset-2" onClick={() => openTelegram(x.url as string)}>
+                        #{x.code} {x.name}
+                      </button>
+                    ) : (
+                      <span>#{x.code} {x.name}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -390,6 +444,7 @@ export default function Reports({ onClose }: { onClose: () => void }) {
             )}
           </div>
         )}
+        <RepairChatButton />
         <MorningSummaryButton />
       </div>
     </div>

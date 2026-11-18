@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chatKeyboard, moveMessage, quickAction, parseMoneyCallback, parseStageCallback, stepLabel, threadFor, topicRenames } from "./chat.ts";
+import { actualThread, chatKeyboard, moveMessage, quickAction, parseMoneyCallback, parseStageCallback, stepLabel, threadFor, topicRenames } from "./chat.ts";
 
 const btns = (o: Parameters<typeof chatKeyboard>[0]) => chatKeyboard(o, "photobrelok_bot").flat().map((b) => b.text);
 
@@ -120,4 +120,25 @@ test("quickAction: шаг вперёд; у отправленного почто
   assert.deepEqual(quickAction({ ...base, stage: "done", method: "posta" })?.patch, { money: "received" });
   assert.equal(quickAction({ ...base, stage: "done", method: "posta", moneyAt: "2026-11-16T10:00:00Z" }), null);
   assert.equal(quickAction({ ...base, stage: "done", method: "pickup", moneyAt: "2026-11-16T10:00:00Z" }), null);
+});
+
+test("moveMessage с onStuck (разовая починка чата): старое не удалилось — копия остаётся, старое помечается, дубль не удаляется молча", async () => {
+  const log: string[] = [];
+  const id = await moveMessage({
+    copy: async () => (log.push("copy"), 77),
+    deleteOld: async () => {
+      throw new Error("Bad Request: message can't be deleted");
+    },
+    deleteCopy: async () => void log.push("deleteCopy"),
+    onStuck: async () => void log.push("onStuck"),
+  });
+  assert.equal(id, 77);
+  assert.deepEqual(log, ["copy", "onStuck"]);
+});
+
+test("actualThread: тема из ответа Telegram; без номера (общая тема) — 1; нет ответа — неизвестно", () => {
+  assert.equal(actualThread({ message_thread_id: 17 }), 17);
+  assert.equal(actualThread({}), 1);
+  assert.equal(actualThread(null), null);
+  assert.equal(actualThread(true), null); // Telegram вернул true, а не сообщение
 });

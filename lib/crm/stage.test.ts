@@ -14,6 +14,9 @@ let history: { action: string; details: Record<string, unknown> }[] = [];
 let calls: { method: string; body: Record<string, unknown> }[] = [];
 let failDelete = new Set<number>(); // сообщения, которые Telegram «не даёт удалить» (старше 48 часов)
 let nextMessageId = 500;
+let editThread: number | undefined = 16; // в какой теме на самом деле лежит сообщение (ответ на editMessageCaption)
+let messageThreads: Record<number, number> = {}; // тема отдельных сообщений (перекрывает editThread)
+let rows: Record<string, Record<string, unknown>> = {}; // несколько заказов сразу (починка чата); иначе — один row
 
 function order(patch: Partial<CrmOrder>): CrmOrder {
   return {
@@ -39,11 +42,16 @@ const server = http.createServer((req, res) => {
     if (tgMethod) {
       calls.push({ method: tgMethod, body });
       if (tgMethod === "deleteMessage" && failDelete.has(body.message_id)) return json({ ok: false, description: "Bad Request: message can't be deleted" }, 400);
+      if (tgMethod === "editMessageCaption") {
+        const thread = messageThreads[body.message_id] ?? editThread;
+        return json({ ok: true, result: { message_id: body.message_id, ...(thread ? { message_thread_id: thread } : {}) } });
+      }
       return json({ ok: true, result: tgMethod === "copyMessage" ? { message_id: nextMessageId++ } : true });
     }
-    if (url.pathname === "/rest/v1/crm_orders" && req.method === "GET") return json(row);
+    const code = /^eq\.(\w+)$/.exec(url.searchParams.get("code") ?? "")?.[1];
+    if (url.pathname === "/rest/v1/crm_orders" && req.method === "GET") return json((code && rows[code]) || row);
     if (url.pathname === "/rest/v1/crm_orders" && req.method === "PATCH") {
-      Object.assign(row, body);
+      Object.assign((code && rows[code]) || row, body);
       return json(null, 204);
     }
     if (url.pathname === "/rest/v1/crm_history" && req.method === "POST") {
@@ -79,6 +87,9 @@ beforeEach(() => {
   calls = [];
   failDelete = new Set();
   nextMessageId = 500;
+  editThread = 16;
+  messageThreads = {};
+  rows = {};
 });
 
 const set = (o: CrmOrder) => (row = { id: "id-1", ...orderToRow(o) });
@@ -101,6 +112,7 @@ test("шаг вперёд: заказ переезжает в тему стад�
 test("старое сообщение не удаляется (старше 48 ч): копия убирается, заказ остаётся на месте с новой стадией", async () => {
   set(order({ stage: "ready", method: "pickup", tgMessageId: 200, tgThreadId: TOPICS.pickup, stageChangedAt: "2026-11-01T08:00:00.000Z" }));
   failDelete.add(200);
+  editThread = TOPICS.pickup; // сообщение лежит в «Готов к выдаче»
   const r = await changeOrder("AAAAAA", { stage: "done" }, actor, { via: "chat" });
   assert.ok(r.ok && r.changed);
   assert.deepEqual(methods(), ["copyMessage", "deleteMessage", "deleteMessage", "editMessageCaption"]);
@@ -133,4 +145,47 @@ test("ничего не изменилось — ни базы, ни чата; �
   assert.ok(!bad.ok && bad.status === 400);
   assert.deepEqual(methods(), []);
   assert.deepEqual(history, []);
+});
+
+test("старый заказ без записанной темы: бот узнаёт реальную тему и не переносит, если заказ уже на месте", async () => {
+  set(order({ stage: "production", tgMessageId: 133, tgThreadId: null, method: "pickup" }));
+  editThread = TOPICS.pickup; // по факту сообщение лежит в «Готов к выдаче»
+  const r = await changeOrder("AAAAAA", { stage: "ready" }, actor);
+  assert.ok(r.ok && r.changed);
+  assert.ok(!methods().includes("copyMessage") && !methods().includes("deleteMessage"), "заказ уже в нужной теме — копий и удалений нет");
+  assert.equal(row.tg_thread_id, TOPICS.pickup); // тема запомнена
+  assert.match(String(calls.at(-1)?.body.caption), /📌 Стадия: 🏪 Готов к выдаче/);
+});
+
+test("старый заказ без записанной темы лежит не там: перенос в тему стадии (копия → удалить старое)", async () => {
+  set(order({ stage: "production", tgMessageId: 134, tgThreadId: null, method: "pickup" }));
+  editThread = TOPICS.work; // по факту сообщение лежит в «В производстве», а нужно — «Готов к выдаче»
+  const r = await changeOrder("AAAAAA", { stage: "ready" }, actor);
+  assert.ok(r.ok && r.changed);
+  assert.ok(methods().includes("copyMessage") && methods().includes("deleteMessage"));
+  assert.equal(calls.find((c) => c.method === "copyMessage")?.body.message_thread_id, TOPICS.pickup);
+  assert.equal(row.tg_message_id, 500);
+  assert.equal(row.tg_thread_id, TOPICS.pickup);
+});
+
+test("починка чата: заказы в чужих темах переносятся, на месте — только запоминаются; не удалилось — копия остаётся, старое помечено", async () => {
+  const { repairChat } = await import("./telegram.ts");
+  const fine = order({ code: "AAAAAA", stage: "ready", tgMessageId: 10, tgThreadId: null, method: "pickup" });
+  const wrong = order({ code: "BBBBBB", stage: "done", tgMessageId: 20, tgThreadId: null, method: "pickup" });
+  const stuck = order({ code: "CCCCCC", stage: "ready", tgMessageId: 30, tgThreadId: null, method: "posta", postalCode: "2001", city: "Кишинёв", district: "Центр" });
+  const known = order({ code: "DDDDDD", stage: "production", tgMessageId: 40, tgThreadId: TOPICS.work, method: "pickup" });
+  for (const o of [fine, wrong, stuck, known]) rows[o.code] = { id: o.code, ...orderToRow(o) };
+  messageThreads = { 10: TOPICS.pickup, 20: TOPICS.pickup, 30: TOPICS.pickup }; // 10 — на месте; 20 и 30 лежат в «Готов к выдаче»
+  failDelete.add(30);
+  const result = await repairChat([fine, wrong, stuck, known]);
+  assert.equal(result.checked, 4);
+  assert.equal(result.alreadyOk, 2); // 10 (узнали тему) и 40 (тема уже известна и верна)
+  assert.equal(result.moved, 1); // 20 → «Завершён»
+  assert.deepEqual(result.stuck.map((x) => x.code), ["CCCCCC"]);
+  assert.equal(rows.AAAAAA.tg_thread_id, TOPICS.pickup);
+  assert.equal(rows.BBBBBB.tg_thread_id, TOPICS.done);
+  assert.equal(rows.CCCCCC.tg_thread_id, TOPICS.ship); // копия в нужной теме остаётся
+  assert.deepEqual(calls.filter((c) => c.method === "copyMessage").map((c) => c.body.message_thread_id), [TOPICS.done, TOPICS.ship]);
+  assert.ok(!calls.some((c) => c.method === "deleteMessage" && c.body.message_id === rows.CCCCCC.tg_message_id), "копия застрявшего заказа не удаляется");
+  assert.ok(calls.some((c) => c.method === "editMessageCaption" && c.body.message_id === 30 && /перенесён/.test(String(c.body.caption))), "старое сообщение помечено");
 });

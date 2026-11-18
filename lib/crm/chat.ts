@@ -82,14 +82,26 @@ export function topicRenames(threads: StageThreads, saved: Record<string, string
 const GONE = /message to delete not found/i;
 
 /**
+ * Тема, где реально лежит сообщение, — по ответу Telegram на правку: у сообщения в теме есть message_thread_id,
+ * у сообщения в общей теме его нет (это тема 1). Нет сообщения в ответе (ошибка, true) — неизвестно.
+ */
+export function actualThread(result: unknown): number | null {
+  if (!result || typeof result !== "object") return null;
+  const id = (result as { message_thread_id?: unknown }).message_thread_id;
+  return typeof id === "number" ? id : 1;
+}
+
+/**
  * Перенос сообщения заказа в другую тему без дублей. Telegram не умеет двигать сообщения и не даёт боту удалять
  * сообщения старше 48 часов, поэтому: копия → удалить старое; старое не удалилось — убрать копию и оставить заказ
  * на месте. Возвращает номер нового сообщения или null (заказ остался в прежнем сообщении).
+ * onStuck — режим разовой починки чата: старое не удалилось, копия остаётся (старое помечают, владелец удалит вручную).
  */
 export async function moveMessage(io: {
   copy: () => Promise<number>;
   deleteOld: () => Promise<unknown>;
   deleteCopy: (messageId: number) => Promise<unknown>;
+  onStuck?: () => Promise<unknown>;
 }): Promise<number | null> {
   let copy: number;
   try {
@@ -102,6 +114,10 @@ export async function moveMessage(io: {
     return copy;
   } catch (error) {
     if (GONE.test(error instanceof Error ? error.message : String(error))) return copy;
+    if (io.onStuck) {
+      await io.onStuck().catch(() => {});
+      return copy;
+    }
     await io.deleteCopy(copy).catch(() => {});
     return null;
   }
