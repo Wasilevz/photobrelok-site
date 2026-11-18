@@ -4,6 +4,7 @@
 // Под каждым заказом — кнопка следующего шага (та же, что в чате производства): карточку открывать не нужно.
 import { useState } from "react";
 import { type Column, type CrmOrder, COLUMNS, amountDue, columnLabel, columnOf, moneyState, sortOrders } from "@/lib/crm/model";
+import { isPostMethod } from "@/lib/delivery-dates";
 import { type QuickAction, quickAction } from "@/lib/crm/chat";
 import { chisinauToday } from "@/lib/delivery-dates";
 import { METHOD_LABEL, chatMessageUrl, dateLabel } from "./format";
@@ -30,6 +31,8 @@ function OrderListItem({
   const hasPdf = !!order.pdfPath || !!chatMessageUrl(order);
   const late = order.stage !== "done" && !!order.wantedDate && order.wantedDate < today;
   const isToday = order.stage !== "done" && order.wantedDate === today;
+  // Трек-код нужен, как только посылка готова к отправке: по нему узнаём заказ из SMS почты.
+  const needTrack = isPostMethod(order.method) && (order.stage === "ready" || money === "pending");
   return (
     <li
       draggable={draggable}
@@ -52,6 +55,11 @@ function OrderListItem({
           </span>
           <span>{METHOD_LABEL[order.method]}</span>
         </div>
+        {needTrack && (
+          <div className={`mt-1 text-xs ${order.track ? "font-mono font-semibold text-[#191715]" : "text-[#B54708]"}`}>
+            🔎 {order.track ?? "трек-код не указан"}
+          </div>
+        )}
         {(order.urgent || order.paid || money === "pending" || money === "returned" || order.qty > 1 || order.commentsCount > 0) && (
           <div className="mt-1.5 flex flex-wrap gap-1">
             {order.urgent && <span className={`${badge} bg-[#B42318] text-white`}>⚡ СРОЧНО</span>}
@@ -89,8 +97,11 @@ export default function Board({
   onDrop,
   onMoreDone,
   notify,
+  searching,
 }: {
   orders: CrmOrder[];
+  /** Идёт поиск: на телефоне сразу показываем вкладку, где нашёлся заказ. */
+  searching?: boolean;
   onOpen: (code: string) => void;
   onDownload: (code: string) => void;
   onAction: (order: CrmOrder, action: QuickAction) => void;
@@ -106,6 +117,9 @@ export default function Board({
   const postOrders = byColumn.ship.filter((o) => o.method === "posta");
   const postCodes = postOrders.map((o) => o.code);
   const codCodes = postOrders.filter((o) => !o.paid).map((o) => o.code);
+
+  // Поиск: если в открытой вкладке ничего не нашлось — показываем первую, где нашлось.
+  const shown = (searching && byColumn[tab].length === 0 ? COLUMNS.find((c) => byColumn[c].length > 0) : undefined) ?? tab;
 
   const list = (c: Column, draggable: boolean) => (
     <>
@@ -146,17 +160,17 @@ export default function Board({
               key={c}
               type="button"
               role="tab"
-              aria-selected={tab === c}
+              aria-selected={shown === c}
               onClick={() => setTab(c)}
               className={`min-h-[40px] shrink-0 rounded-full border-2 px-3 text-sm font-medium ${
-                tab === c ? "border-[#191715] bg-[#FFC400]" : "border-transparent bg-white"
+                shown === c ? "border-[#191715] bg-[#FFC400]" : "border-transparent bg-white"
               }`}
             >
               {columnLabel(c)} <span className="ml-0.5 tabular-nums opacity-70">{byColumn[c].length}</span>
             </button>
           ))}
         </div>
-        <div className="pt-2">{list(tab, false)}</div>
+        <div className="pt-2">{list(shown, false)}</div>
       </div>
 
       {/* Компьютер: колонки рядом */}

@@ -11,7 +11,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Виктория", phone: "+373 79 797 981", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 2, price: null, lang: "ro", source: "instagram", pdfPath: null, tgChatId: -1004393765609, tgMessageId: 126,
-    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, moneyAt: null, returnedAt: null, ...p,
+    tgCaption: UPSELL, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, moneyAt: null, returnedAt: null, track: null, ...p,
   };
 }
 
@@ -98,4 +98,12 @@ test("деньги в подписи: ждём с почты / получены 
   const back = buildCrmCaption(order({ ...post, returnedAt: "2026-11-16T10:00:00Z", tgCaption: got }));
   assert.ok(back.includes("↩️ Посылку не забрали — возврат") && !back.includes("💰 Деньги получены"));
   assert.ok(!buildCrmCaption(order({ stage: "production" })).includes("Деньги"));
+});
+
+test("трек-код: строка в подписи у отправленных почтой, без дублей; стёрли трек — строка исчезает", () => {
+  const post = { method: "posta" as const, postalCode: "MD-2001", city: "Chișinău", district: "Chișinău" };
+  const withTrack = buildCrmCaption(order({ ...post, track: "RR123456789MD" }));
+  assert.ok(withTrack.includes("🔎 Трек: RR123456789MD"));
+  assert.equal(buildCrmCaption(order({ ...post, track: "RR123456789MD", tgCaption: withTrack })).match(/🔎 Трек/g)?.length, 1);
+  assert.ok(!buildCrmCaption(order({ ...post, track: null, tgCaption: withTrack })).includes("Трек"));
 });

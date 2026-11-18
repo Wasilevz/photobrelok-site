@@ -115,7 +115,7 @@ export default function CrmPage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск: имя, телефон, код"
+            placeholder="Поиск: имя, телефон, код, трек"
             aria-label="Поиск заказов"
             autoComplete="off"
             className="min-h-[40px] w-full min-w-0 rounded-full border border-[#D9D0BF] bg-white px-4 text-sm"
@@ -162,6 +162,7 @@ export default function CrmPage() {
             onAction={act}
             onDrop={drop}
             onMoreDone={() => setDoneDays((d) => d + 60)}
+            searching={query.trim().length > 0}
             notify={notify}
           />
         )}

@@ -33,7 +33,7 @@ const input =
 const FIELD_NAME: Record<string, string> = {
   name: "имя", phone: "телефон", wantedDate: "дата", urgent: "срочно", method: "способ получения", postalCode: "индекс",
   city: "город", district: "район", street: "улица", branch: "отделение", address: "адрес", qty: "брелков", price: "цена",
-  boxes: "коробки", extraCost: "доп. расходы", paid: "оплата", moneyAt: "деньги получены", returnedAt: "возврат",
+  boxes: "коробки", extraCost: "доп. расходы", paid: "оплата", moneyAt: "деньги получены", returnedAt: "возврат", track: "трек-код",
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -110,6 +110,7 @@ function Payment({ o, saving, save }: { o: CrmOrder; saving: boolean; save: (pat
     return (
       <div className="my-2.5 rounded-xl border-2 border-dashed border-[#B54708] bg-[#FFFAEB] px-3 py-2">
         <div className="font-semibold">⏳ Ждём деньги с почты · {amountDue(o)} лей</div>
+        {o.track && <div className="font-mono text-sm">🔎 {o.track}</div>}
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button type="button" disabled={saving} onClick={() => save({ money: "received" })} className="min-h-[44px] rounded-lg border-2 border-[#067647] bg-white text-sm font-semibold">
             💰 Деньги получены
@@ -397,6 +398,33 @@ export default function OrderSheet({
                 >
                   <DeliveryEditor order={o} onSave={save} onCancel={() => setEditing(null)} />
                 </Row>
+
+                {isPostMethod(o.method) && (
+                  <Row
+                    label="Трек-код посылки"
+                    value={
+                      o.track ? (
+                        <span className="font-mono font-semibold tracking-wide">{o.track}</span>
+                      ) : (
+                        <span className="text-[#B54708]">не указан — впишите после отправки</span>
+                      )
+                    }
+                    editing={editing === "track"}
+                    onEdit={() => startEdit("track", { track: o.track ?? "" })}
+                  >
+                    <input
+                      className={`${input} font-mono uppercase`}
+                      value={String(draft.track ?? "")}
+                      onChange={(e) => setDraft({ track: e.target.value })}
+                      placeholder={o.method === "posta" ? "RR123456789MD" : "20450012345678"}
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                    />
+                    <p className="mt-1 text-xs text-[#8A8275]">С чека почты. Когда придёт SMS об оплате — найдите заказ по трек-коду в поиске.</p>
+                    <SaveCancel saving={saving} onCancel={() => setEditing(null)} onSave={() => save({ track: String(draft.track ?? "") })} />
+                  </Row>
+                )}
               </Section>
 
               <Section title="Клиент">

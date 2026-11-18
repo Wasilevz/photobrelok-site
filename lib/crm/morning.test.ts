@@ -14,7 +14,7 @@ function order(p: Partial<CrmOrder>): CrmOrder {
     name: `Клиент ${n}`, phone: "+373 60 000 000", wantedDate: null, urgent: false, method: "pickup", postalCode: null, city: null, district: null,
     street: null, branch: null, address: null, qty: 1, price: null, lang: "ru", source: null, pdfPath: null, tgChatId: null, tgMessageId: null,
     tgCaption: null, tgThreadId: null, moneyAt: null, returnedAt: null, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false,
-    deletedAt: null, ...p,
+    deletedAt: null, track: null, ...p,
   };
 }
 
@@ -24,7 +24,7 @@ test("сводка: просрочено, выдать сегодня, отпр�
     order({ name: "Ион", wantedDate: "2026-11-17", stage: "ready", qty: 2 }), // выдать сегодня
     order({ name: "Анна", wantedDate: "2026-11-20", method: "posta" }), // отправить до 17.11 (20 − 3)
     order({ name: "Пётр", wantedDate: "2026-11-18", urgent: true, paid: true }), // на завтра
-    order({ name: "Ольга", stage: "done", method: "posta", stageChangedAt: "2026-11-01T10:00:00Z" }), // ждём деньги 16 дней
+    order({ name: "Ольга", stage: "done", method: "posta", stageChangedAt: "2026-11-01T10:00:00Z", track: "RR123456789MD" }), // ждём деньги 16 дней
     order({ name: "Свежая почта", stage: "done", method: "posta", stageChangedAt: "2026-11-14T10:00:00Z" }), // ждём 3 дня — рано
     order({ name: "Завершён", stage: "done", wantedDate: "2026-11-10", moneyAt: "2026-11-10T10:00:00Z" }), // не в сводке
     order({ name: "Без даты" }), // не в сводке
@@ -49,7 +49,7 @@ test("сводка: просрочено, выдать сегодня, отпр�
       "• #AAAA04 Пётр · ⚡ срочно · 💳 оплачен · 🛠 В производстве",
       "",
       "💰 Ждём деньги с почты больше 10 дней — 1:",
-      "• #AAAA05 Ольга · отправлен вс 01.11",
+      "• #AAAA05 Ольга · отправлен вс 01.11 · трек RR123456789MD",
     ].join("\n"),
   );
 });

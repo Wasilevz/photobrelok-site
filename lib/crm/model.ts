@@ -62,6 +62,8 @@ export type CrmOrder = {
   paid: boolean;
   /** Убран из CRM (тестовый/ошибочный): строка, PDF и сообщение в чате остаются. null — активный. */
   deletedAt: string | null;
+  /** Трек-код посылки (Poșta Moldovei / Nova Poshta): по нему узнаём заказ из SMS почты об оплате. */
+  track: string | null;
 };
 
 export function columnOf(o: Pick<CrmOrder, "stage" | "method">): Column {
@@ -147,7 +149,7 @@ export function sortOrders(list: CrmOrder[]): CrmOrder[] {
 export type OrderPatch = Partial<
   Pick<
     CrmOrder,
-    "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage" | "boxes" | "extraCost" | "paid"
+    "name" | "phone" | "wantedDate" | "urgent" | "method" | "postalCode" | "city" | "district" | "street" | "branch" | "address" | "qty" | "price" | "stage" | "boxes" | "extraCost" | "paid" | "track"
   >
 > & {
   /** Деньги по заказу: получены / посылку вернули (не забрали) / снова ждём. */
@@ -155,7 +157,7 @@ export type OrderPatch = Partial<
 };
 
 const PATCH_KEYS: FieldKey[] = [
-  "name", "phone", "wantedDate", "urgent", "method", "postalCode", "city", "district", "street", "branch", "address", "qty", "price", "stage", "boxes", "extraCost", "paid",
+  "name", "phone", "wantedDate", "urgent", "method", "postalCode", "city", "district", "street", "branch", "address", "qty", "price", "stage", "boxes", "extraCost", "paid", "track",
 ];
 const TEXT_LIMIT: Partial<Record<FieldKey, number>> = {
   postalCode: 20, city: 80, district: 80, street: 100, branch: 40, address: 150,
@@ -230,6 +232,13 @@ export function applyPatch(current: CrmOrder, patch: OrderPatch, now: Date): Pat
         if (!STAGES.includes(value as Stage)) return fail("Неизвестная стадия");
         next.stage = value as Stage;
         break;
+      case "track": {
+        const track = typeof value === "string" ? value.replace(/\s+/g, "").toUpperCase() : "";
+        if (!track) next.track = null;
+        else if (!/^[A-Z0-9]{4,40}$/.test(track)) return fail("Трек-код — латинские буквы и цифры");
+        else next.track = track;
+        break;
+      }
       default:
         next[key] = cleanLine(value, TEXT_LIMIT[key] ?? 100);
     }
@@ -240,7 +249,9 @@ export function applyPatch(current: CrmOrder, patch: OrderPatch, now: Date): Pat
     if (next.method !== "posta") next.postalCode = next.city = next.district = next.street = null;
     if (next.method !== "novapost") next.branch = null;
     if (next.method !== "taxi") next.address = null;
+    if (!isPostMethod(next.method)) next.track = null;
   }
+  if (next.track && !isPostMethod(next.method)) return fail("Трек-код — только для отправки почтой");
 
   // Обязательные поля способа проверяем, только когда правят доставку: правка имени у старого
   // заказа с неполным адресом не должна блокироваться.
@@ -310,7 +321,7 @@ const COLUMN_MAP: [keyof CrmOrder, string][] = [
   ["postalCode", "postal_code"], ["city", "city"], ["district", "district"], ["street", "street"], ["branch", "branch"],
   ["address", "address"], ["qty", "qty"], ["price", "price"], ["lang", "lang"], ["source", "source"], ["pdfPath", "pdf_path"],
   ["tgChatId", "tg_chat_id"], ["tgMessageId", "tg_message_id"], ["tgCaption", "tg_caption"], ["tgThreadId", "tg_thread_id"], ["flags", "flags"],
-  ["boxes", "boxes"], ["extraCost", "extra_cost"], ["moneyAt", "money_at"], ["returnedAt", "returned_at"], ["paid", "paid"], ["deletedAt", "deleted_at"],
+  ["boxes", "boxes"], ["extraCost", "extra_cost"], ["moneyAt", "money_at"], ["returnedAt", "returned_at"], ["paid", "paid"], ["deletedAt", "deleted_at"], ["track", "track"],
 ];
 
 export function rowToOrder(row: Record<string, unknown>): CrmOrder {

@@ -34,7 +34,7 @@ function fail(what: string, error: { message: string } | null): never {
   throw new Error(`CRM ${what}: ${error?.message ?? "unknown error"}`);
 }
 
-type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt" | "tgThreadId" | "moneyAt" | "returnedAt">;
+type NewOrder = Omit<CrmOrder, "commentsCount" | "boxes" | "extraCost" | "paid" | "deletedAt" | "tgThreadId" | "moneyAt" | "returnedAt" | "track">;
 
 export async function insertOrder(o: NewOrder): Promise<void> {
   const { error } = await db().from("crm_orders").insert(orderToRow(o));
@@ -47,17 +47,18 @@ export async function getOrder(code: string): Promise<CrmOrder | null> {
   return data ? rowToOrder(withCount(data)) : null;
 }
 
+/** Доска: все незавершённые и завершённые за doneDays. С поиском — по всем заказам, без ограничения по сроку. */
 export async function listOrders(opts: { doneDays: number; q?: string }): Promise<CrmOrder[]> {
-  const since = new Date(Date.now() - opts.doneDays * 86400_000).toISOString();
-  let query = db()
-    .from("crm_orders")
-    .select(ORDER_SELECT)
-    .is("deleted_at", null)
-    .or(`stage.neq.done,stage_changed_at.gte."${since}"`)
-    .order("created_at", { ascending: false })
-    .limit(500);
+  let query = db().from("crm_orders").select(ORDER_SELECT).is("deleted_at", null).order("created_at", { ascending: false }).limit(500);
   const q = (opts.q ?? "").replace(/[^\p{L}\p{N}\s+]/gu, "").trim().slice(0, 40);
-  if (q) query = query.or(`name.ilike."*${q}*",phone.ilike."*${q}*",code.ilike."*${q}*"`); // значения в кавычках: в них бывают точки и пробелы
+  if (q) {
+    // Трек-код ищем и без пробелов: в SMS почты его могут написать «RR 123 456 789 MD». Значения в кавычках: в них бывают пробелы.
+    const track = q.replace(/\s+/g, "");
+    query = query.or(`name.ilike."*${q}*",phone.ilike."*${q}*",code.ilike."*${q}*",track.ilike."*${track}*"`);
+  } else {
+    const since = new Date(Date.now() - opts.doneDays * 86400_000).toISOString();
+    query = query.or(`stage.neq.done,stage_changed_at.gte."${since}"`);
+  }
   const { data, error } = await query;
   if (error) fail("list", error);
   return (data ?? []).map((row) => rowToOrder(withCount(row)));

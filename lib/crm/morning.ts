@@ -55,7 +55,7 @@ export function morningSummary(orders: CrmOrder[], now: Date): string {
     ...section("🏪 Выдать сегодня", giveToday, (o) => line(o)),
     ...section("📦 Отправить сегодня", shipToday, (o) => line(o, receive(o))),
     ...section("📅 Завтра", soon, (o) => line(o, receive(o))),
-    ...section(`💰 Ждём деньги с почты больше ${MONEY_WAIT_DAYS} дней`, money, (o) => `• #${o.code} ${o.name} · отправлен ${day(chisinauToday(new Date(o.stageChangedAt)))}`),
+    ...section(`💰 Ждём деньги с почты больше ${MONEY_WAIT_DAYS} дней`, money, (o) => `• #${o.code} ${o.name} · отправлен ${day(chisinauToday(new Date(o.stageChangedAt)))}${o.track ? ` · трек ${o.track}` : ""}`),
   ];
   const header = `☀️ Доброе утро! Заказы на ${day(today)}`;
   return body.length > 0 ? [header, ...body].join("\n") : `${header}\n\nНа сегодня и завтра сроков нет 👍`;

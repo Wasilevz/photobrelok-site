@@ -28,7 +28,7 @@ function order(p: Partial<CrmOrder> = {}): CrmOrder {
     name: "Мария", phone: "+373 60 024 571", wantedDate: null, urgent: false, method: "pickup",
     postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 1, price: null, lang: "ru", source: null, pdfPath: null, tgChatId: null, tgMessageId: null, tgCaption: null,
-    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, moneyAt: null, returnedAt: null, ...p,
+    flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, tgThreadId: null, moneyAt: null, returnedAt: null, track: null, ...p,
   };
 }
 
@@ -202,4 +202,24 @@ test("деньги: предоплата на карту — получены с
   const reopenedPaid = applyPatch(order({ stage: "done", paid: true, moneyAt: "2026-11-16T10:00:00Z" }), { stage: "production" }, later);
   assert.ok(reopenedPaid.ok && reopenedPaid.next.moneyAt === "2026-11-16T10:00:00Z"); // предоплата остаётся
   assert.equal(moneyState(order({ stage: "production" })), "none");
+});
+
+test("трек-код: только для почты, без пробелов, заглавными; смена способа на самовывоз стирает трек", () => {
+  const post = order({ method: "posta", postalCode: "2001", city: "Кишинёв", district: "Центр" });
+  const r = applyPatch(post, { track: "  rr 123 456 789 md " }, now);
+  assert.ok(r.ok);
+  assert.equal(r.next.track, "RR123456789MD");
+  assert.deepEqual(r.changed, ["track"]);
+  const np = applyPatch(order({ method: "novapost", branch: "12" }), { track: "2045 0012 3456 78" }, now);
+  assert.ok(np.ok && np.next.track === "20450012345678");
+  const cleared = applyPatch(post, { track: "" }, now);
+  assert.ok(cleared.ok && cleared.next.track === null);
+  const pickup = applyPatch(order(), { track: "RR1MD" }, now);
+  assert.ok(!pickup.ok && pickup.error === "Трек-код — только для отправки почтой");
+  const moved = applyPatch({ ...post, track: "RR123456789MD" }, { method: "pickup" }, now);
+  assert.ok(moved.ok && moved.next.track === null);
+  const bad = applyPatch(post, { track: "RR-123/<b>" }, now);
+  assert.ok(!bad.ok && bad.error === "Трек-код — латинские буквы и цифры");
+  assert.equal(orderToRow({ track: "RR1MD" }).track, "RR1MD");
+  assert.equal(rowToOrder({ code: "X", track: "RR1MD" }).track, "RR1MD");
 });

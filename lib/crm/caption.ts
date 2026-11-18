@@ -13,6 +13,7 @@ const QTY_PREFIX = "🔑 Брелков:";
 const PAID_PREFIX = "💳 ОПЛАЧЕН";
 const NOT_SAVED = "⚠️ Не записан в CRM";
 const MONEY_LINES = ["⏳ Ждём деньги с почты", "💰 Деньги получены", "↩️ Посылку не забрали — возврат"];
+const TRACK_PREFIX = "🔎 Трек:";
 const SOURCE_PREFIX = "📣 Источник:"; // источник перехода в чате не показываем (владелец: лишняя информация)
 
 export function buildCrmCaption(o: CrmOrder): string {
@@ -23,7 +24,7 @@ export function buildCrmCaption(o: CrmOrder): string {
   const shipBy = o.wantedDate && isPostMethod(o.method) ? addDays(o.wantedDate, -3) : undefined;
   const lines = setFieldLines(base, toFields(o), shipBy)
     .split("\n")
-    .filter((l) => !l.startsWith(STAGE_PREFIX) && !l.startsWith(QTY_PREFIX) && !l.startsWith(PAID_PREFIX) && !l.startsWith(NOT_SAVED) && !l.startsWith(SOURCE_PREFIX) && !MONEY_LINES.some((m) => l.startsWith(m)));
+    .filter((l) => !l.startsWith(STAGE_PREFIX) && !l.startsWith(QTY_PREFIX) && !l.startsWith(PAID_PREFIX) && !l.startsWith(NOT_SAVED) && !l.startsWith(SOURCE_PREFIX) && !l.startsWith(TRACK_PREFIX) && !MONEY_LINES.some((m) => l.startsWith(m)));
 
   // Сразу под заголовком (или под блоком второго брелка) — стадия и количество.
   const rules = lines.map((l, i) => (l.startsWith("━") ? i : -1)).filter((i) => i !== -1);
@@ -34,7 +35,7 @@ export function buildCrmCaption(o: CrmOrder): string {
   const stage = o.deletedAt ? "🗑 Удалён из CRM" : stageLabel(o.stage, o.method);
   const state = moneyState(o);
   const money = state === "pending" ? [MONEY_LINES[0]] : state === "returned" ? [MONEY_LINES[2]] : state === "received" && o.stage === "done" && !o.paid ? [MONEY_LINES[1]] : [];
-  const top = [`${STAGE_PREFIX} ${stage}`, ...paid, ...money, ...(showQty ? [`${QTY_PREFIX} ${o.qty}`] : [])];
+  const top = [`${STAGE_PREFIX} ${stage}`, ...paid, ...money, ...(showQty ? [`${QTY_PREFIX} ${o.qty}`] : []), ...(o.track ? [`${TRACK_PREFIX} ${o.track}`] : [])];
   lines.splice(headerEnd, 0, ...top);
 
   // Не влезает — выкидываем самые старые строки истории, потом режем хвост.

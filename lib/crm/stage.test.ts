@@ -20,7 +20,7 @@ function order(patch: Partial<CrmOrder>): CrmOrder {
     code: "AAAAAA", createdAt: "2026-11-10T08:00:00.000Z", stage: "new", stageChangedAt: new Date().toISOString(), name: "Ион", phone: "+373 60 000 000",
     wantedDate: null, urgent: false, method: "pickup", postalCode: null, city: null, district: null, street: null, branch: null, address: null,
     qty: 1, price: null, lang: "ru", source: null, pdfPath: "AAAAAA.pdf", tgChatId: CHAT, tgMessageId: 100, tgCaption: "🔥 Новый заказ #AAAAAA\n👤 Клиент: Ион\n📞 Тел: +373 60 000 000",
-    tgThreadId: TOPICS.new, moneyAt: null, returnedAt: null, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null,
+    tgThreadId: TOPICS.new, moneyAt: null, returnedAt: null, flags: [], commentsCount: 0, boxes: null, extraCost: null, paid: false, deletedAt: null, track: null,
     ...patch,
   };
 }
