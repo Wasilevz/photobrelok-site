@@ -16,6 +16,7 @@ let failDelete = new Set<number>(); // сообщения, которые Telegr
 let nextMessageId = 500;
 let editThread: number | undefined = 16; // в какой теме на самом деле лежит сообщение (ответ на editMessageCaption)
 let messageThreads: Record<number, number> = {}; // тема отдельных сообщений (перекрывает editThread)
+let captions: Record<number, string> = {}; // текущая подпись сообщений: правка на ту же подпись — ошибка «message is not modified», как в Telegram
 let rows: Record<string, Record<string, unknown>> = {}; // несколько заказов сразу (починка чата); иначе — один row
 
 function order(patch: Partial<CrmOrder>): CrmOrder {
@@ -43,6 +44,8 @@ const server = http.createServer((req, res) => {
       calls.push({ method: tgMethod, body });
       if (tgMethod === "deleteMessage" && failDelete.has(body.message_id)) return json({ ok: false, description: "Bad Request: message can't be deleted" }, 400);
       if (tgMethod === "editMessageCaption") {
+        if (captions[body.message_id] === body.caption) return json({ ok: false, description: "Bad Request: message is not modified: specified new message content and reply markup are exactly the same" }, 400);
+        captions[body.message_id] = body.caption;
         const thread = messageThreads[body.message_id] ?? editThread;
         return json({ ok: true, result: { message_id: body.message_id, ...(thread ? { message_thread_id: thread } : {}) } });
       }
@@ -89,6 +92,7 @@ beforeEach(() => {
   nextMessageId = 500;
   editThread = 16;
   messageThreads = {};
+  captions = {};
   rows = {};
 });
 
@@ -188,4 +192,18 @@ test("починка чата: заказы в чужих темах перен�
   assert.deepEqual(calls.filter((c) => c.method === "copyMessage").map((c) => c.body.message_thread_id), [TOPICS.done, TOPICS.ship]);
   assert.ok(!calls.some((c) => c.method === "deleteMessage" && c.body.message_id === rows.CCCCCC.tg_message_id), "копия застрявшего заказа не удаляется");
   assert.ok(calls.some((c) => c.method === "editMessageCaption" && c.body.message_id === 30 && /перенесён/.test(String(c.body.caption))), "старое сообщение помечено");
+});
+
+test("починка чата: на сообщении остался невидимый символ прошлой пробы — тема всё равно определяется", async () => {
+  const { repairChat } = await import("./telegram.ts");
+  const { buildCrmCaption } = await import("./caption.ts");
+  const o = order({ code: "EEEEEE", stage: "ready", tgMessageId: 50, tgThreadId: null, method: "pickup" });
+  rows.EEEEEE = { id: "EEEEEE", ...orderToRow(o) };
+  messageThreads = { 50: TOPICS.pickup };
+  captions[50] = `${buildCrmCaption(o)}\u200b`; // прошлый запуск поставил пробу и не успел её убрать (лимит Telegram)
+  const result = await repairChat([o]);
+  assert.equal(result.failed, 0);
+  assert.equal(result.alreadyOk, 1);
+  assert.equal(rows.EEEEEE.tg_thread_id, TOPICS.pickup);
+  assert.equal(captions[50], buildCrmCaption(o), "невидимый символ убран");
 });

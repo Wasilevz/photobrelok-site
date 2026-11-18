@@ -37,18 +37,27 @@ async function editInPlace(o: CrmOrder): Promise<number | null> {
  * null — не удалось узнать.
  */
 async function probeThread(o: CrmOrder): Promise<number | null> {
-  try {
-    const result = await tg("editMessageCaption", {
-      chat_id: o.tgChatId,
-      message_id: o.tgMessageId,
-      caption: `${buildCrmCaption(o)}\u200b`.slice(0, 1024),
-      reply_markup: { inline_keyboard: chatKeyboard(o, bot()) },
-    });
-    return actualThread(result);
-  } catch (error) {
-    console.error(`CRM ${o.code}: thread not detected:`, error instanceof Error ? error.message : error);
-    return null;
+  const base = buildCrmCaption(o);
+  // Прошлая проба могла не успеть убрать невидимый символ (лимит Telegram) — тогда та же правка «не изменила» бы сообщение.
+  // Поэтому вторая попытка — подпись без символа: она точно отличается от оставшейся.
+  for (const caption of [`${base}\u200b`.slice(0, 1024), base]) {
+    try {
+      const result = await tg("editMessageCaption", {
+        chat_id: o.tgChatId,
+        message_id: o.tgMessageId,
+        caption,
+        reply_markup: { inline_keyboard: chatKeyboard(o, bot()) },
+      });
+      return actualThread(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (NOT_MODIFIED.test(message)) continue;
+      console.error(`CRM ${o.code}: thread not detected:`, message);
+      return null;
+    }
   }
+  console.error(`CRM ${o.code}: thread not detected: caption not modified`);
+  return null;
 }
 
 type Relocated = "moved" | "stuck" | "stayed";
