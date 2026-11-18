@@ -6,7 +6,14 @@ const KEY = "current";
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type DraftItem = { index: number; blob: Blob; hash: string | null };
-type Stored = { savedAt: number; items: DraftItem[] };
+/**
+ * Фото хранится как байты (ArrayBuffer), а не как Blob: Blob в IndexedDB — файл, который встроенные браузеры
+ * (Instagram, Facebook на iPhone) со временем теряют, и фото на экране есть, а прочитать его при отправке нельзя.
+ * Старый формат (поле blob) читается и проверяется при возврате.
+ */
+type StoredItem = { index: number; hash: string | null; data?: ArrayBuffer; type?: string; blob?: Blob };
+type Stored = { savedAt: number; items: StoredItem[] };
+export type Draft = { savedAt: number; items: DraftItem[]; /** сколько фото не удалось вернуть (нечитаемые) */ lost: number };
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -39,7 +46,16 @@ function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequ
 /** true — сохранено; false — хранилище недоступно (например, приватный режим) */
 export async function saveDraft(items: DraftItem[]): Promise<boolean> {
   try {
-    const value: Stored = { savedAt: Date.now(), items };
+    const stored: StoredItem[] = [];
+    for (const it of items) {
+      try {
+        stored.push({ index: it.index, hash: it.hash, data: await it.blob.arrayBuffer(), type: it.blob.type || "image/jpeg" });
+      } catch {
+        // фото уже нечитаемо — в черновик не кладём
+      }
+    }
+    if (stored.length === 0) return items.length === 0;
+    const value: Stored = { savedAt: Date.now(), items: stored };
     await run("readwrite", (s) => s.put(value, KEY));
     return true;
   } catch {
@@ -47,7 +63,8 @@ export async function saveDraft(items: DraftItem[]): Promise<boolean> {
   }
 }
 
-export async function loadDraft(): Promise<Stored | null> {
+/** Возвращает только читаемые фото; нечитаемые отбрасываются и считаются в lost. */
+export async function loadDraft(): Promise<Draft | null> {
   try {
     const value = (await run("readonly", (s) => s.get(KEY))) as Stored | undefined;
     if (!value || !Array.isArray(value.items)) return null;
@@ -55,7 +72,24 @@ export async function loadDraft(): Promise<Stored | null> {
       await clearDraft();
       return null;
     }
-    return value;
+    const items: DraftItem[] = [];
+    let lost = 0;
+    for (const it of value.items) {
+      try {
+        if (it.data instanceof ArrayBuffer) {
+          items.push({ index: it.index, hash: it.hash, blob: new Blob([it.data], { type: it.type || "image/jpeg" }) });
+        } else if (it.blob instanceof Blob) {
+          // старый формат: проверяем, что файл ещё читается, и переписываем байтами
+          const data = await it.blob.arrayBuffer();
+          items.push({ index: it.index, hash: it.hash, blob: new Blob([data], { type: it.blob.type || "image/jpeg" }) });
+        } else {
+          lost++;
+        }
+      } catch {
+        lost++;
+      }
+    }
+    return { savedAt: value.savedAt, items, lost };
   } catch {
     return null;
   }

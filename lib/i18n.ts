@@ -26,6 +26,7 @@ export interface Dict {
     uploadTruncated: (added: number, total: number) => string;
     draftRestored: (n: number) => string;
     draftClear: string;
+    draftLost: (n: number) => string;
   };
   cropper: {
     progress: (cur: number, total: number) => string;
@@ -113,6 +114,7 @@ export interface Dict {
     unknown: string;
     uploadFailed: string;
     uploadTimeout: string;
+    photoUnreadable: (numbers: string) => string;
   };
   thanks: {
     orderAccepted: string;
@@ -178,6 +180,7 @@ export const translations: Record<Locale, Dict> = {
         `Добавлено ${added} из ${total} фото — все слоты заполнены (максимум 10)`,
       draftRestored: (n: number) => `Вернули ваши фото: ${n}`,
       draftClear: "Начать заново",
+      draftLost: (n: number) => `Не удалось вернуть фото: ${n}. Добавьте их заново.`,
     },
     cropper: {
       progress: (cur: number, total: number) => `Фото ${cur} из ${total}`,
@@ -268,6 +271,8 @@ export const translations: Record<Locale, Dict> = {
       unknown: "Неизвестная ошибка",
       uploadFailed: "Не удалось загрузить фото. Попробуйте ещё раз.",
       uploadTimeout: "Загрузка зависла. Проверьте интернет и нажмите ещё раз: уже загруженные фото не пропадут.",
+      photoUnreadable: (numbers: string) =>
+        `Не удалось прочитать фото ${numbers} на вашем телефоне — мы их убрали. Закройте форму, добавьте эти кадры заново и оформите заказ ещё раз.`,
     },
     thanks: {
       orderAccepted: "Заявка",
@@ -334,6 +339,7 @@ export const translations: Record<Locale, Dict> = {
         `Adăugate ${added} din ${total} poze — toate sloturile sunt ocupate (maxim 10)`,
       draftRestored: (n: number) => `Ți-am păstrat pozele: ${n}`,
       draftClear: "O iau de la capăt",
+      draftLost: (n: number) => `Nu am putut recupera pozele: ${n}. Adaugă-le din nou.`,
     },
     cropper: {
       progress: (cur: number, total: number) => `Poza ${cur} din ${total}`,
@@ -424,6 +430,8 @@ export const translations: Record<Locale, Dict> = {
       unknown: "Eroare necunoscută",
       uploadFailed: "Nu s-a putut încărca poza. Încearcă din nou.",
       uploadTimeout: "Încărcarea s-a blocat. Verifică internetul și încearcă din nou: pozele deja încărcate nu se pierd.",
+      photoUnreadable: (numbers: string) =>
+        `Nu am putut citi pozele ${numbers} de pe telefon — le-am scos. Închide formularul, adaugă-le din nou și trimite comanda încă o dată.`,
     },
     thanks: {
       orderAccepted: "Cererea",

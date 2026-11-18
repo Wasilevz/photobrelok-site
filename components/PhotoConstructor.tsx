@@ -99,6 +99,8 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
 
   const slotsRef = useRef(slots);
   slotsRef.current = slots;
+  const dictRef = useRef(dict); // чтобы смена языка не перезапускала возврат черновика
+  dictRef.current = dict;
 
   /** Хэш содержимого файла — одинаковое фото даёт одинаковый хэш даже с разными именами */
   const hashFile = async (file: File): Promise<string> => {
@@ -131,6 +133,11 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
         setSlots(nextSlots);
         setSlotHashes(nextHashes);
         setRestoredCount(nextSlots.filter(Boolean).length);
+      }
+      // Часть фото из черновика устройство уже не отдаёт — говорим об этом сразу, а не при отправке заказа
+      if (draft && draft.lost > 0) {
+        setShowError(dictRef.current.home.draftLost(draft.lost));
+        if (draft.items.length === 0) void clearDraft();
       }
       draftReady.current = true;
     })();
@@ -456,6 +463,31 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
         );
       }
 
+      // Читаем все фото заранее. Фото, которое браузер потерял (бывает во встроенных браузерах Instagram/Facebook),
+      // называем по номеру и убираем, а не показываем общую ошибку без объяснений.
+      const readable = new Map<string, Blob>();
+      const unreadable: number[] = [];
+      await Promise.all(
+        slots.map(async (url, i) => {
+          if (!url || uploadedUrls.current.has(url)) return;
+          try {
+            const blob = await (await fetch(url)).blob();
+            if (blob.size === 0) throw new Error("empty");
+            readable.set(url, blob);
+          } catch {
+            unreadable.push(i + 1);
+          }
+        }),
+      );
+      if (unreadable.length > 0) {
+        unreadable.sort((a, b) => a - b);
+        const bad = new Set(unreadable);
+        slots.forEach((url, i) => bad.has(i + 1) && revokeOldUrl(url));
+        setSlots((prev) => prev.map((u, i) => (bad.has(i + 1) ? null : u)));
+        setSlotHashes((prev) => prev.map((h, i) => (bad.has(i + 1) ? null : h)));
+        throw new Error(dict.errors.photoUnreadable(unreadable.map((n) => `№${n}`).join(", ")));
+      }
+
       const filled = slots.filter((url): url is string => !!url);
       if (filled.length < 6) {
         throw new Error(
@@ -478,10 +510,7 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
           setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
           return cached;
         }
-        uploadDetail = "фото на устройстве";
-        const res = await fetch(blobUrl);
-        const blob = await res.blob();
-        uploadDetail = "";
+        const blob = readable.get(blobUrl) ?? (await (await fetch(blobUrl)).blob());
         const formData = new FormData();
         formData.append("file", blob, `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`);
         formData.append("upload_preset", uploadPreset);
