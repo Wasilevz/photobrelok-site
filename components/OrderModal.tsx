@@ -30,6 +30,12 @@ interface OrderModalProps {
   onSubmit: (data: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string; wantedDate: string; urgent: boolean }) => void;
   isSubmitting: boolean;
   uploadProgress?: UploadProgress | null;
+  /** Ошибка отправки. Показывается внутри формы: окно поверх страницы закрывает всё, что вне его. */
+  submitError?: string | null;
+  /** Ссылка «написать в Telegram», если отправить с сайта не вышло. */
+  telegramFallback?: string | null;
+  onDismissError?: () => void;
+  onTelegramClick?: () => void;
 }
 
 type FieldKey = 'name' | 'phone' | 'surname' | 'postalCode' | 'city' | 'district' | 'novaPostBranch' | 'when' | 'taxiAddress' | 'consent';
@@ -65,7 +71,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, uploadProgress }: OrderModalProps) {
+export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, uploadProgress, submitError, telegramFallback, onDismissError, onTelegramClick }: OrderModalProps) {
   const { dict, lang } = useLanguage();
   const d = dict.orderModal.delivery;
 
@@ -95,6 +101,12 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
   const [website, setWebsite] = useState(''); // honeypot
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const submitErrorRef = useRef<HTMLDivElement>(null);
+
+  // Ошибка отправки появилась — прокручиваем к ней: форма длинная, кнопка и ошибка могут быть ниже экрана
+  useEffect(() => {
+    if (submitError) submitErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [submitError]);
 
   const isDirty =
     name.trim() !== '' || phone.trim() !== '' || surname !== '' || postalCode !== '' ||
@@ -603,6 +615,35 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                 ? 'Пожалуйста, не закрывайте вкладку — идёт загрузка фото'
                 : 'Nu închide pagina — se încarcă pozele'}
             </p>
+          </div>
+        )}
+
+        {submitError && !isSubmitting && (
+          <div ref={submitErrorRef} role="alert" className="mt-2 rounded-xl border-2 border-[#B42318] bg-[#FEF3F2] p-4 text-[#7A271A] flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-3">
+              <span className="text-sm font-semibold leading-snug">{submitError}</span>
+              {onDismissError && (
+                <button
+                  type="button"
+                  onClick={onDismissError}
+                  className="-mt-2 -mr-2 flex size-11 shrink-0 items-center justify-center text-lg font-bold"
+                  aria-label={dict.orderModal.close}
+                >
+                  <span aria-hidden="true">✕</span>
+                </button>
+              )}
+            </div>
+            {telegramFallback && (
+              <a
+                href={telegramFallback}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onTelegramClick}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border-2 border-[#B42318] bg-white px-4 text-sm font-bold text-[#B42318]"
+              >
+                {lang === 'ru' ? 'Отправить фото в Telegram' : 'Trimite pozele pe Telegram'}
+              </a>
+            )}
           </div>
         )}
 

@@ -442,6 +442,9 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
 
   const handleFinalSubmit = async (userData: { name: string; phone: string; delivery: DeliveryData; marketingConsent: boolean; second: boolean; website: string; wantedDate: string; urgent: boolean }) => {
     setIsSubmitting(true);
+    setShowError(null);
+    setTelegramFallback(null);
+    let uploadDetail = "";
     try {
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
@@ -475,8 +478,10 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
           setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
           return cached;
         }
+        uploadDetail = "фото на устройстве";
         const res = await fetch(blobUrl);
         const blob = await res.blob();
+        uploadDetail = "";
         const formData = new FormData();
         formData.append("file", blob, `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`);
         formData.append("upload_preset", uploadPreset);
@@ -484,8 +489,12 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
           `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
           { method: "POST", body: formData, ...(v2 ? { signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS) } : {}) }
         );
-        const data = await cloudRes.json();
-        if (!cloudRes.ok) throw new Error(dict.errors.uploadFailed);
+        const data = await cloudRes.json().catch(() => null);
+        if (!cloudRes.ok || !data?.secure_url) {
+          // Что именно ответил Cloudinary — в сообщение: так понятно, лимит это, настройки или сеть
+          uploadDetail = `Cloudinary ${cloudRes.status}${data?.error?.message ? `: ${String(data.error.message).slice(0, 80)}` : ""}`;
+          throw new Error(dict.errors.uploadFailed);
+        }
         uploadedCounter += 1;
         setUploadProgress({ uploaded: uploadedCounter, total: filled.length, stage: "uploading" });
         uploadedUrls.current.set(blobUrl, data.secure_url as string);
@@ -501,9 +510,11 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
           return url;
         } catch (e) {
           if (e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError")) {
+            uploadDetail = "таймаут";
             throw new Error(dict.errors.uploadTimeout);
           }
           if (e instanceof Error && e.message === dict.errors.uploadFailed) throw e;
+          uploadDetail ||= e instanceof Error ? `${e.name}: ${e.message}`.slice(0, 80) : "сеть";
           throw new Error(dict.errors.uploadFailed);
         }
       };
@@ -568,7 +579,8 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
 
     } catch (err: unknown) {
       setUploadProgress(null);
-      const msg = err instanceof Error ? err.message : dict.errors.unknown;
+      let msg = err instanceof Error ? err.message : dict.errors.unknown;
+      if (uploadDetail && (msg === dict.errors.uploadFailed || msg === dict.errors.uploadTimeout)) msg = `${msg} (${uploadDetail})`;
       track("submit_error", { message: msg.slice(0, 100) });
       setShowError(msg);
       setTelegramFallback(
@@ -1051,13 +1063,17 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
                 onSubmit={handleFinalSubmit}
                 isSubmitting={isSubmitting}
                 uploadProgress={uploadProgress}
+                submitError={showError}
+                telegramFallback={telegramFallback}
+                onDismissError={() => { setShowError(null); setTelegramFallback(null); }}
+                onTelegramClick={() => track("telegram_click", { source: "error_fallback" })}
               />
             )}
           </>,
           document.body
         )}
 
-      {showError && (
+      {showError && !isModalOpen && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] max-w-md w-[90%]">
           <div role="alert" className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
