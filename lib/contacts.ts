@@ -9,7 +9,7 @@ export const MAX_PHOTOS = 10;
 export const LEAD_TIME = "1–2 дня";
 /** Сколько подарков уже сделано — строка «Уже N подарков» на первом экране. null = строка без числа.
  *  Ставьте только реальное число (все каналы: сайт, Instagram, Telegram). */
-export const ORDERS_DONE: number | null = null;
+export const ORDERS_DONE: number | null = 1350;
 export const WORK_HOURS = "12:00–21:00";
 
 /** Messengers — same number. Instagram handle: confirm with owner if it differs. */

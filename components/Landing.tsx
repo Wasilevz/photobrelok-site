@@ -422,7 +422,7 @@ export default function Landing() {
                 <p className="hero-conditions">{t.conditionsLine}</p>
                 <p className="hero-trust">{t.trustLine}</p>
                 <a className="hero-proof" href="#reviews">
-                  {ORDERS_DONE ? <strong>{t.proofCount.replace("{n}", String(ORDERS_DONE))}</strong> : null}
+                  {ORDERS_DONE ? <strong>{t.proofCount.replace("{n}", ORDERS_DONE.toLocaleString(lang === "ru" ? "ru-RU" : "ro-RO"))}</strong> : null}
                   <span>{t.proofLink}</span>
                   <span aria-hidden="true">→</span>
                 </a>
