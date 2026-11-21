@@ -8,8 +8,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import {
   ADDRESS,
   EMAIL,
-  TELEGRAM_PHONE,
-  TELEGRAM_PHONE_DISPLAY,
+  CONTACT_PHONE,
+  CONTACT_PHONE_DISPLAY,
   TELEGRAM_URL,
   INSTAGRAM_URL,
   INSTAGRAM_DM_URL,
@@ -929,7 +929,7 @@ export default function Landing() {
                   <path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 006 6l1.5-2 4 1.5v3a2 2 0 01-2 2A15.5 15.5 0 014.5 5.5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
                 </svg>
                 <span>{t.finalCallLabel}</span>
-                <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+                <a href={`tel:${CONTACT_PHONE}`}>{CONTACT_PHONE_DISPLAY}</a>
               </p>
               <p className="final-note">{t.finalNote}</p>
             </div>
@@ -973,7 +973,7 @@ export default function Landing() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 006 6l1.5-2 4 1.5v3a2 2 0 01-2 2A15.5 15.5 0 014.5 5.5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
               </svg>
-              <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+              <a href={`tel:${CONTACT_PHONE}`}>{CONTACT_PHONE_DISPLAY}</a>
             </li>
           </ul>
           <div className="foot-social">

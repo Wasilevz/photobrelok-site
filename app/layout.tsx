@@ -78,7 +78,7 @@ const jsonLd = {
       "@type": "LocalBusiness",
       name: "PHOTOBRELOK",
       url: siteUrl,
-      telephone: "+37378238455",
+      telephone: "+37378126726",
       email: "fotobrelokmd@gmail.com",
       address: {
         "@type": "PostalAddress",

@@ -12,8 +12,8 @@ import PhotoConstructor from "@/components/PhotoConstructor";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   EMAIL,
-  TELEGRAM_PHONE,
-  TELEGRAM_PHONE_DISPLAY,
+  CONTACT_PHONE,
+  CONTACT_PHONE_DISPLAY,
   TELEGRAM_URL,
   INSTAGRAM_URL,
   INSTAGRAM_DM_URL,
@@ -542,7 +542,7 @@ export default function LandingV2() {
                 <a href={INSTAGRAM_DM_URL} target="_blank" rel="noopener noreferrer" onClick={() => track("instagram_click", { source: "final" })}>
                   Instagram
                 </a>
-                <a href={`tel:${TELEGRAM_PHONE}`}>{TELEGRAM_PHONE_DISPLAY}</a>
+                <a href={`tel:${CONTACT_PHONE}`}>{CONTACT_PHONE_DISPLAY}</a>
               </p>
             </div>
           </div>

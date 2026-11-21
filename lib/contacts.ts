@@ -1,6 +1,9 @@
 export const TELEGRAM_URL = "https://t.me/+37378238455";
 export const TELEGRAM_PHONE = "+37378238455";
 export const TELEGRAM_PHONE_DISPLAY = "078 238 455";
+/** Контактный телефон для звонков (на сайте, в tel:-ссылках и разметке для поиска). Telegram — на номере выше. */
+export const CONTACT_PHONE = "+37378126726";
+export const CONTACT_PHONE_DISPLAY = "078 126 726";
 export const EMAIL = "fotobrelokmd@gmail.com";
 export const ADDRESS = "ул. Alexander Bernardazzi, 64, Кишинёв";
 export const PRICE_MDL = 250;
