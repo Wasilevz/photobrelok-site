@@ -64,7 +64,7 @@ export default function CookieBanner() {
     <div
       role="region"
       aria-label={c.title}
-      className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-3 sm:px-6 sm:pb-6"
+      className="pb-sheet-in fixed inset-x-0 bottom-0 z-[100] px-3 pb-3 sm:px-6 sm:pb-6"
     >
       <div className="mx-auto w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border-2 border-[#191715] bg-[#FFFDF8] p-3 shadow-[0_-4px_24px_rgba(25,23,21,0.16)] sm:rounded-[20px] sm:p-6">
         <h2 className="sr-only sm:not-sr-only text-[#191715] text-base sm:text-lg font-bold leading-tight">{c.title}</h2>

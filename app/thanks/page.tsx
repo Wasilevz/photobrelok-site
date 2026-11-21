@@ -47,11 +47,11 @@ function ThankYouContent() {
       <div className="mx-auto w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
       {/* 1. Блок успеха */}
-      <div className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-1 text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-1000">
+      <div className="w-full max-w-md lg:max-w-none mx-auto lg:col-start-1 lg:row-start-1 text-center space-y-4 pb-success-in">
         <div className="flex justify-center">
           <div className="relative inline-flex">
-            <CheckCircle2 className="w-20 h-20 text-[#191715]" />
-            <Sparkles className="absolute -top-2 -right-2 text-[#191715]" />
+            <CheckCircle2 className="pb-check-pop w-20 h-20 text-[#191715]" />
+            <Sparkles className="pb-sparkle absolute -top-2 -right-2 text-[#191715]" />
           </div>
         </div>
         <h1 className="text-4xl font-bold leading-none">
@@ -67,7 +67,7 @@ function ThankYouContent() {
 
       {/* 2. Оффер-апселл — без таймера и ложной срочности */}
       {status === 'pending' ? (
-        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFDF8] border-[3px] border-[#191715] rounded-[40px] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-700">
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#FFFDF8] border-[3px] border-[#191715] rounded-[40px] p-8 shadow-2xl relative overflow-hidden pb-card-in">
           <div className="absolute top-0 right-0 bg-[#FFC400] text-[#191715] px-6 py-2 rounded-bl-3xl font-black text-xs uppercase tracking-widest">
             {dict.thanks.sameOrderBadge}
           </div>
@@ -133,7 +133,7 @@ function ThankYouContent() {
           </button>
         </div>
       ) : status === 'accepted' ? (
-        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#191715] text-[#F5F1E8] rounded-[40px] p-10 text-center animate-in fade-in zoom-in duration-500">
+        <div className="w-full max-w-md lg:max-w-none lg:col-start-2 lg:row-start-1 lg:row-span-3 bg-[#191715] text-[#F5F1E8] rounded-[40px] p-10 text-center pb-card-in">
           <div className="w-20 h-20 bg-[#FFC400]/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Package className="w-10 h-10 text-[#FFC400]" />
           </div>

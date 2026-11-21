@@ -3091,3 +3091,151 @@ body {
   overflow-x: hidden;
   overflow-x: clip;
 }
+
+/* ===================================================================
+   Motion layer: появление блоков, отклик кнопок, мобильная панель, FAQ.
+   Тайминги по руководству Subframe Motion: отклик 100–200 мс, появление 300–500 мс,
+   очередь 45 мс и не дольше ~0.5 с, уход быстрее появления. Всё выключается при prefers-reduced-motion (правило в начале файла
+   сводит длительности к нулю, а скрытие блоков ставится только из JS).
+   =================================================================== */
+:root {
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+
+@keyframes pb-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pb-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pb-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes pb-glow {
+  0%, 100% { box-shadow: 2px 2px 0 var(--ink), 0 0 0 0 rgba(255, 196, 0, 0.55); }
+  50% { box-shadow: 2px 2px 0 var(--ink), 0 0 0 8px rgba(255, 196, 0, 0); }
+}
+@keyframes pb-swap {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Появление при прокрутке: дети [data-stagger] выезжают по очереди */
+.pb.motion-ready [data-stagger]:not(.is-in) > * {
+  opacity: 0;
+}
+.pb.motion-ready [data-stagger].is-in > * {
+  animation: pb-rise 0.45s var(--ease-out-soft) backwards;
+  animation-delay: calc(var(--n, 0) * 45ms);
+}
+.pb [data-stagger] > :nth-child(2) { --n: 1; }
+.pb [data-stagger] > :nth-child(3) { --n: 2; }
+.pb [data-stagger] > :nth-child(4) { --n: 3; }
+.pb [data-stagger] > :nth-child(5) { --n: 4; }
+.pb [data-stagger] > :nth-child(6) { --n: 5; }
+.pb [data-stagger] > :nth-child(7) { --n: 6; }
+.pb [data-stagger] > :nth-child(n + 7) { --n: 6; }
+
+/* Первый экран: мягкий выезд текста и видео сразу при загрузке */
+@media (prefers-reduced-motion: no-preference) {
+  .pb .hero-unified-copy > * {
+    animation: pb-rise 0.45s var(--ease-out-soft) backwards;
+  }
+  .pb .hero-unified-copy > :nth-child(2) { animation-delay: 40ms; }
+  .pb .hero-unified-copy > :nth-child(3) { animation-delay: 80ms; }
+  .pb .hero-unified-copy > :nth-child(n + 4) { animation-delay: 120ms; }
+  .pb .hero-unified-media {
+    animation: pb-fade-in 0.5s var(--ease-out-soft) 0.08s backwards;
+  }
+  .pb .eyebrow-dot {
+    animation: pb-pulse-dot 2.4s ease-in-out 3;
+  }
+}
+@keyframes pb-pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.6; }
+}
+
+/* Кнопки: стрелка «зовёт» вперёд, нажатие ощущается */
+.pb .hero-cta-btn .cta-arrow {
+  display: inline-block;
+  transition: transform 0.15s var(--ease-out-soft);
+}
+.pb .hero-cta-btn:hover .cta-arrow,
+.pb .hero-cta-btn:focus-visible .cta-arrow {
+  transform: translateX(4px);
+}
+.pb .hero-cta-btn:active,
+.pb .btn:active,
+.pb .occ-btn:active {
+  transform: scale(0.97);
+  transition-duration: 0.06s;
+}
+.pb .cta-swap {
+  display: inline-block;
+  animation: pb-swap 0.35s var(--ease-out-soft);
+}
+
+/* Карточки: лёгкий подъём и увеличение фото при наведении (только мышь) */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .pb .gallery figure img,
+  .pb .review-shot img,
+  .pb .memories-rail figure img {
+    transition: transform 0.35s var(--ease-out-soft);
+  }
+  .pb .gallery figure:hover img,
+  .pb .review-shot:hover img,
+  .pb .memories-rail figure:hover img {
+    transform: scale(1.04);
+  }
+  .pb .gallery figure,
+  .pb .review-shot,
+  .pb .memories-rail figure {
+    overflow: hidden;
+  }
+  .pb .step {
+    transition: transform 0.15s var(--ease-out-soft);
+  }
+  .pb .step:hover { transform: translateY(-3px); }
+  .pb .step:hover .step-num { animation: pb-pop 0.4s var(--ease-spring); }
+}
+
+/* FAQ: плюс поворачивается в крестик, ответ плавно раскрывается */
+.pb .faq-q .faq-sign {
+  transition: transform 0.18s var(--ease-out-soft), background 0.15s ease;
+}
+.pb .faq-q[aria-expanded="true"] .faq-sign {
+  transform: rotate(45deg);
+  background: var(--accent);
+}
+.pb .faq-q:hover .faq-sign { background: rgba(25, 23, 21, 0.06); }
+.pb .faq-q[aria-expanded="true"]:hover .faq-sign { background: var(--accent); }
+.pb .faq-a:not([hidden]) {
+  animation: pb-swap 0.25s var(--ease-out-soft);
+}
+
+/* Мобильная панель заказа выезжает снизу, а не появляется рывком */
+@media (max-width: 767px) {
+  .pb .mobile-cta {
+    transition: transform 0.35s var(--ease-out-soft), visibility 0s linear 0s;
+  }
+  .pb .mobile-cta.hidden {
+    display: flex;
+    transform: translateY(110%);
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.22s var(--ease-out-soft), visibility 0s linear 0.22s;
+  }
+  .pb .mobile-cta-note {
+    animation: pb-swap 0.3s var(--ease-out-soft);
+  }
+  /* Набрано 6+ фото: кнопка один раз «подмигивает», что можно заказывать */
+  .pb .mobile-cta-button.is-ready {
+    animation: pb-pop 0.45s var(--ease-spring), pb-glow 1.6s ease-out 0.45s 2;
+  }
+}

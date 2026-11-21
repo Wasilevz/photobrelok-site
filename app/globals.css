@@ -17,3 +17,111 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Форма заказа открывается с мягким появлением */
+@media (prefers-reduced-motion: no-preference) {
+  dialog.order-dialog[open] {
+    animation: order-dialog-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  dialog.order-dialog[open]::backdrop {
+    animation: order-backdrop-in 0.28s ease-out;
+  }
+}
+@keyframes order-dialog-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes order-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Конструктор: отклик на каждое действие клиента (тайминги по руководству Subframe Motion) */
+@media (prefers-reduced-motion: no-preference) {
+  /* Фото «проявляется» в кадре плёнки: из засвеченного тёплого кадра в обычный */
+  .pb-develop-in {
+    animation: pb-develop-in 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Панель выбранного кадра и сообщение об ошибке появляются, а не возникают рывком */
+  .pb-panel-in {
+    animation: pb-panel-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .pb-toast-in {
+    animation: pb-toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Полоска прогресса растёт через transform, без пересчёта раскладки */
+  .pb-progress-fill {
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Набрано 6 фото: полоска один раз вспыхивает, главная кнопка «подпрыгивает» */
+  .pb-progress.is-full .pb-progress-fill {
+    animation: pb-progress-done 0.7s ease-out 0.35s;
+  }
+  .pb-main-cta {
+    animation: pb-cta-swap 0.4s cubic-bezier(0.34, 1.25, 0.64, 1);
+  }
+}
+.pb-progress-fill {
+  transform-origin: left center;
+}
+.pb-main-cta:active {
+  transform: scale(0.97);
+  transition-duration: 0.06s;
+}
+@keyframes pb-develop-in {
+  0% { opacity: 0.3; filter: brightness(1.9) sepia(0.6) blur(2px); }
+  60% { opacity: 1; filter: brightness(1.15) sepia(0.15) blur(0); }
+  100% { opacity: 1; filter: none; }
+}
+@keyframes pb-panel-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pb-toast-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pb-progress-done {
+  0%, 100% { filter: none; }
+  40% { filter: brightness(1.25) saturate(1.3); }
+}
+@keyframes pb-cta-swap {
+  from { opacity: 0.6; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Плашка cookie выезжает снизу; детали способа доставки раскрываются плавно (pb-panel-in выше) */
+@media (prefers-reduced-motion: no-preference) {
+  .pb-sheet-in {
+    animation: pb-sheet-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.4s backwards;
+  }
+  /* Страница «Спасибо»: редкий момент успеха — можно выразительнее */
+  .pb-success-in {
+    animation: pb-toast-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .pb-check-pop {
+    animation: pb-check-pop 0.5s cubic-bezier(0.34, 1.25, 0.64, 1) 0.15s backwards;
+  }
+  .pb-sparkle {
+    animation: pb-sparkle 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.45s backwards;
+  }
+  .pb-card-in {
+    animation: pb-card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards;
+  }
+}
+@keyframes pb-sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pb-check-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pb-sparkle {
+  from { opacity: 0; transform: scale(0.4) rotate(-30deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pb-card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}

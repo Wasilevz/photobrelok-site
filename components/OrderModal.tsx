@@ -251,7 +251,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
     <dialog
       ref={dialogRef}
       aria-labelledby="order-modal-title"
-      className="m-auto w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border-2 border-[#191715] bg-[#FFFDF8] p-5 sm:p-8 text-[#191715] shadow-2xl backdrop:bg-[#191715]/70"
+      className="order-dialog m-auto w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border-2 border-[#191715] bg-[#FFFDF8] p-5 sm:p-8 text-[#191715] shadow-2xl backdrop:bg-[#191715]/70"
     >
       <button
         type="button"
@@ -334,7 +334,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             </label>
 
             {method === 'posta' && (
-              <div className="pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 sm:col-span-3 sm:row-start-2">
+              <div className="pb-panel-in pl-1 pr-1 pt-1 pb-2 flex flex-col gap-3 sm:col-span-3 sm:row-start-2">
                 <div>
                   <label htmlFor="surname" className="block text-[#5C564E] text-sm mb-1">{d.surnameLabel}</label>
                   <input
@@ -443,7 +443,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             </label>
 
             {method === 'novapost' && (
-              <div className="pl-1 pr-1 pt-1 pb-2 sm:col-span-3 sm:row-start-2">
+              <div className="pb-panel-in pl-1 pr-1 pt-1 pb-2 sm:col-span-3 sm:row-start-2">
                 <label htmlFor="novapost-branch" className="block text-[#5C564E] text-sm mb-1">{d.branchLabel}</label>
                 <input
                   id="novapost-branch"
@@ -471,7 +471,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
             </label>
 
             {method === 'pickup' && (
-              <div className="pl-1 pr-1 pt-1 pb-2 text-sm text-[#5C564E] leading-relaxed sm:col-span-3 sm:row-start-2">
+              <div className="pb-panel-in pl-1 pr-1 pt-1 pb-2 text-sm text-[#5C564E] leading-relaxed sm:col-span-3 sm:row-start-2">
                 <span aria-hidden="true">📍 </span>{d.pickupAddress}<br />
                 <span aria-hidden="true">🕒 </span>{d.pickupHours}
               </div>
@@ -501,7 +501,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
                 <span className="text-[#191715] font-medium text-sm">{w.howTaxi}</span>
               </label>
               {urgentHow === 'taxi' && (
-                <div className="pl-1 pr-1 pt-1">
+                <div className="pb-panel-in pl-1 pr-1 pt-1">
                   <label htmlFor="taxi-address" className="block text-[#5C564E] text-sm mb-1">{w.addressLabel}</label>
                   <input
                     id="taxi-address"
