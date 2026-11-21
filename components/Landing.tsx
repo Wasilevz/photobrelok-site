@@ -287,10 +287,13 @@ export default function Landing() {
 
   // source — какая именно кнопка нажата (hero, reviews, gift, final, sticky): нужно для воронки.
   // builder_start теперь считает только реальное начало выбора фото (в конструкторе).
-  const scrollToBuilder = (source: string) => {
-    track("hero_cta", { source });
+  const scrollToConstructor = () => {
     const el = document.getElementById("constructor") || document.getElementById("builder");
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const scrollToBuilder = (source: string) => {
+    track("hero_cta", { source });
+    scrollToConstructor();
   };
 
   return (
@@ -480,7 +483,7 @@ export default function Landing() {
           <PhotoConstructor />
         </section>
 
-<section id="reviews" className="reviews-sec">
+        <section id="reviews" className="reviews-sec">
           <div className="wrap">
             <h2>{t.reviewsTitle}</h2>
             <p className="lead">{t.reviewsLead}</p>
@@ -510,8 +513,6 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Video instruction — anchor target for «Как это работает» */}
-
         <section className="examples" id="occasions">
           <div className="wrap">
             <h2>{t.occTitle}</h2>
@@ -539,8 +540,7 @@ export default function Landing() {
                         onClick={() => {
                           setOccasion(item.title);
                           track("select_occasion", { occasion: item.title });
-                          const el = document.getElementById("constructor") || document.getElementById("builder");
-                          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          scrollToConstructor();
                         }}
                       >
                         {lang === "ru" ? `Создать — ${item.title.toLowerCase()}` : `Creează — ${item.title.toLowerCase()}`}
@@ -644,11 +644,7 @@ export default function Landing() {
                 <button
                   type="button"
                   className="offer-cta"
-                  onClick={() => {
-                    track("hero_cta", { source: "price" });
-                    const el = document.getElementById("constructor") || document.getElementById("builder");
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
+                  onClick={() => scrollToBuilder("price")}
                 >
                   <span>{t.offerCta}</span>
                   <span aria-hidden="true">→</span>
@@ -668,66 +664,66 @@ export default function Landing() {
             </div>
 
             <div className="offer-chat-links">
-            <a
-              className="offer-tg offer-tg-btn"
-              href={telegramLink(
-                lang === "ru"
-                  ? "Здравствуйте! Хочу такой брелок."
-                  : "Bună ziua! Vreau un astfel de breloc."
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track("telegram_click", { source: "price_secondary" })}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
-              {lang === "ru" ? "Написать в Telegram" : "Scrie pe Telegram"}
-            </a>
-            <a
-              className="offer-tg offer-tg-btn"
-              href={INSTAGRAM_DM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track("instagram_click", { source: "price_secondary" })}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
-                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
-                <circle cx="17" cy="7" r="1.2" fill="currentColor" />
-              </svg>
-              {lang === "ru" ? "Написать в Instagram" : "Scrie pe Instagram"}
-            </a>
+              <a
+                className="offer-tg offer-tg-btn"
+                href={telegramLink(
+                  lang === "ru"
+                    ? "Здравствуйте! Хочу такой брелок."
+                    : "Bună ziua! Vreau un astfel de breloc."
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track("telegram_click", { source: "price_secondary" })}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+                {lang === "ru" ? "Написать в Telegram" : "Scrie pe Telegram"}
+              </a>
+              <a
+                className="offer-tg offer-tg-btn"
+                href={INSTAGRAM_DM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track("instagram_click", { source: "price_secondary" })}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="17" cy="7" r="1.2" fill="currentColor" />
+                </svg>
+                {lang === "ru" ? "Написать в Instagram" : "Scrie pe Instagram"}
+              </a>
             </div>
 
             <div className="offer-bottom">
-            <div className="offer-delivery">
-              <h2 className="offer-delivery-title">{t.deliveryTitle}</h2>
-              <div className="offer-delivery-row">
-                <div>
-                  <div className="offer-delivery-head">
-                    <strong>{t.deliveryPickup}</strong>
-                    <em>{t.deliveryPickupPrice}</em>
+              <div className="offer-delivery">
+                <h2 className="offer-delivery-title">{t.deliveryTitle}</h2>
+                <div className="offer-delivery-row">
+                  <div>
+                    <div className="offer-delivery-head">
+                      <strong>{t.deliveryPickup}</strong>
+                      <em>{t.deliveryPickupPrice}</em>
+                    </div>
+                    <p>{t.deliveryPickupPlace}</p>
                   </div>
-                  <p>{t.deliveryPickupPlace}</p>
                 </div>
-              </div>
-              <div className="offer-delivery-row">
-                <div>
-                  <div className="offer-delivery-head">
-                    <strong>{t.deliveryPosta}</strong>
-                    <em>{t.deliveryPostaPrice}</em>
+                <div className="offer-delivery-row">
+                  <div>
+                    <div className="offer-delivery-head">
+                      <strong>{t.deliveryPosta}</strong>
+                      <em>{t.deliveryPostaPrice}</em>
+                    </div>
+                    <p>{t.deliveryPostaNote}</p>
                   </div>
-                  <p>{t.deliveryPostaNote}</p>
                 </div>
-              </div>
-              <div className="offer-delivery-row">
-                <div>
-                  <div className="offer-delivery-head">
-                    <strong>{t.deliveryNova}</strong>
-                    <em>{t.deliveryNovaPrice}</em>
+                <div className="offer-delivery-row">
+                  <div>
+                    <div className="offer-delivery-head">
+                      <strong>{t.deliveryNova}</strong>
+                      <em>{t.deliveryNovaPrice}</em>
+                    </div>
+                    <p>{t.deliveryNovaNote}</p>
                   </div>
-                  <p>{t.deliveryNovaNote}</p>
                 </div>
-              </div>
             </div>
 
             <div className="offer-facts">

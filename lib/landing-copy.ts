@@ -26,7 +26,6 @@ export const landingCopy = {
     priceChip: "250 лей",
     heroCta: "Собрать брелок",
     reviewsCta: "Собрать брелок",
-    giftCta: "Собрать брелок",
     priceAnchor: "Как букет цветов — но останется на годы",
     trustLine: "Печать на Epson · сделано в Молдове",
     occasionSelected: "Повод",
@@ -37,9 +36,6 @@ export const landingCopy = {
       "В телефоне тысячи фото. Когда вы в последний раз открывали то, где смеялись по-настоящему? Шести кадров достаточно, чтобы тот день снова оказался рядом.",
     occTitle: "О чём будет ваш подарок?",
     occLead: "Выберите, для кого собираете подарок — и мы подскажем, какие кадры трогают сильнее всего.",
-    giftTitle: "Подарок, который достают из кармана",
-    giftLead:
-      "Он или она достанет плёнку, найдёт первый кадр, и вы услышите тихое: «Это же тот самый день…» А потом весь вечер будете вспоминать остальные.",
     builderTitle: "Соберите свой брелок бесплатно",
     builderLead:
       "Примерьте ваши фото на плёнку. Выберите от 6 до 10 кадров. Не знаете, какие взять? Загрузите любые — на макете подскажем, что заменить. Фото остаются на телефоне до отправки заявки.",
@@ -131,7 +127,6 @@ export const landingCopy = {
     priceChip: "250 lei",
     heroCta: "Creează-ți brelocul",
     reviewsCta: "Creează-ți brelocul",
-    giftCta: "Creează-ți brelocul",
     priceAnchor: "Ca un buchet de flori — dar rămâne ani întregi",
     trustLine: "Imprimat pe Epson · făcut în Moldova",
     occasionSelected: "Prilej",
@@ -142,9 +137,6 @@ export const landingCopy = {
       "În telefon ai mii de poze. Când ai deschis ultima oară una în care râdeai cu adevărat? Șase cadre sunt de ajuns ca ziua aceea să fie din nou aproape.",
     occTitle: "Despre ce va fi cadoul tău?",
     occLead: "Alege pentru cine e cadoul — și îți spunem ce cadre emoționează cel mai tare.",
-    giftTitle: "Un cadou care se scoate din buzunar",
-    giftLead:
-      "Ea sau el va scoate filmul, va găsi primul cadru, și vei auzi în șoaptă: „Ăsta e chiar ziua aia…” Apoi toată seara vă veți aminti restul.",
     builderTitle: "Vezi-ți brelocul înainte de comandă",
     builderLead:
       "Încearcă pozele tale pe film. Alege de la 6 la 10 cadre. Nu știi ce să alegi? Încarcă oricare — pe machetă îți spunem ce să schimbi. Pozele rămân pe telefon până la trimitere.",
