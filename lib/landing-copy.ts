@@ -2,6 +2,16 @@ export type LandingLocale = "ru" | "ro";
 
 export const landingCopy = {
   ru: {
+    navHow: "Как заказать",
+    navReviews: "Отзывы",
+    navPrice: "Цена и доставка",
+    navFaq: "Вопросы",
+    headerChat: "Написать нам",
+    stepsEyebrow: "Просто и без предоплаты",
+    stepsTitle: "Как заказать — 3 шага",
+    proofCount: "Больше {n} брелоков с 2023 года",
+    proofLink: "Смотреть отзывы клиентов",
+    offerPhotoCaption: "Так брелок приезжает: в деревянной шкатулке, готовый к вручению.",
     eyebrow: "Подарок, который останется на годы",
     heroTitle: "Брелок из катушки Kodak с вашими фото",
     heroLead: "6–10 ваших кадров на плёнке. Макет бесплатно, платите при получении.",
@@ -16,7 +26,6 @@ export const landingCopy = {
     priceChip: "250 лей",
     heroCta: "Собрать брелок",
     reviewsCta: "Собрать брелок",
-    giftCta: "Собрать брелок",
     priceAnchor: "Как букет цветов — но останется на годы",
     trustLine: "Печать на Epson · сделано в Молдове",
     occasionSelected: "Повод",
@@ -27,9 +36,6 @@ export const landingCopy = {
       "В телефоне тысячи фото. Когда вы в последний раз открывали то, где смеялись по-настоящему? Шести кадров достаточно, чтобы тот день снова оказался рядом.",
     occTitle: "О чём будет ваш подарок?",
     occLead: "Выберите, для кого собираете подарок — и мы подскажем, какие кадры трогают сильнее всего.",
-    giftTitle: "Подарок, который достают из кармана",
-    giftLead:
-      "Он или она достанет плёнку, найдёт первый кадр, и вы услышите тихое: «Это же тот самый день…» А потом весь вечер будете вспоминать остальные.",
     builderTitle: "Соберите свой брелок бесплатно",
     builderLead:
       "Примерьте ваши фото на плёнку. Выберите от 6 до 10 кадров. Не знаете, какие взять? Загрузите любые — на макете подскажем, что заменить. Фото остаются на телефоне до отправки заявки.",
@@ -38,7 +44,7 @@ export const landingCopy = {
       "Не знаете, какие? Пришлите больше — подскажем, какие кадры лучше смотрятся на плёнке.",
     step2: "Скажите «да» макету.",
     step2t:
-      "Соберите плёнку выше — макет уйдёт нам автоматически. Платите только после того, как макет понравился.",
+      "Соберите плёнку в конструкторе ниже — макет уйдёт нам автоматически. Платите только после того, как макет понравился.",
     step3: "Получите брелок за 1–2 дня.",
     step3t:
       "Изготовим за 1–2 дня после вашего «да». Доставка по Молдове — ещё 2–4 дня, самовывоз — сразу. Оплата при получении.",
@@ -97,6 +103,16 @@ export const landingCopy = {
     conditionsLine: "Самовывоз в Кишинёве — бесплатно · Доставка по Молдове",
   },
   ro: {
+    navHow: "Cum comanzi",
+    navReviews: "Recenzii",
+    navPrice: "Preț și livrare",
+    navFaq: "Întrebări",
+    headerChat: "Scrie-ne",
+    stepsEyebrow: "Simplu și fără avans",
+    stepsTitle: "Cum comanzi — 3 pași",
+    proofCount: "Peste {n} de brelocuri din 2023",
+    proofLink: "Vezi recenziile clienților",
+    offerPhotoCaption: "Așa ajunge brelocul: în cutie din lemn, gata de oferit.",
     eyebrow: "Un cadou care rămâne ani întregi",
     heroTitle: "Breloc din casetă Kodak cu pozele tale",
     heroLead: "6–10 cadre ale tale pe film. Machetă gratuită, plătești la primire.",
@@ -111,7 +127,6 @@ export const landingCopy = {
     priceChip: "250 lei",
     heroCta: "Creează-ți brelocul",
     reviewsCta: "Creează-ți brelocul",
-    giftCta: "Creează-ți brelocul",
     priceAnchor: "Ca un buchet de flori — dar rămâne ani întregi",
     trustLine: "Imprimat pe Epson · făcut în Moldova",
     occasionSelected: "Prilej",
@@ -122,9 +137,6 @@ export const landingCopy = {
       "În telefon ai mii de poze. Când ai deschis ultima oară una în care râdeai cu adevărat? Șase cadre sunt de ajuns ca ziua aceea să fie din nou aproape.",
     occTitle: "Despre ce va fi cadoul tău?",
     occLead: "Alege pentru cine e cadoul — și îți spunem ce cadre emoționează cel mai tare.",
-    giftTitle: "Un cadou care se scoate din buzunar",
-    giftLead:
-      "Ea sau el va scoate filmul, va găsi primul cadru, și vei auzi în șoaptă: „Ăsta e chiar ziua aia…” Apoi toată seara vă veți aminti restul.",
     builderTitle: "Vezi-ți brelocul înainte de comandă",
     builderLead:
       "Încearcă pozele tale pe film. Alege de la 6 la 10 cadre. Nu știi ce să alegi? Încarcă oricare — pe machetă îți spunem ce să schimbi. Pozele rămân pe telefon până la trimitere.",
@@ -133,7 +145,7 @@ export const landingCopy = {
       "Nu știi care? Trimite mai multe — îți spunem ce cadre se văd mai bine pe film.",
     step2: "Spune „da” machetei.",
     step2t:
-      "Compune filmul mai sus — macheta ajunge la noi automat. Plătești doar după ce îți place macheta.",
+      "Compune filmul în constructorul de mai jos — macheta ajunge la noi automat. Plătești doar după ce îți place macheta.",
     step3: "Primești brelocul în 1–2 zile.",
     step3t:
       "Îl facem în 1–2 zile după „da”-ul tău. Livrarea în Moldova — încă 2–4 zile, ridicarea personală — imediat. Plata la primire.",
