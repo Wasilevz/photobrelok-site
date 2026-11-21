@@ -251,7 +251,7 @@ export default function OrderModal({ isOpen, onClose, onSubmit, isSubmitting, up
     <dialog
       ref={dialogRef}
       aria-labelledby="order-modal-title"
-      className="m-auto w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border-2 border-[#191715] bg-[#FFFDF8] p-5 sm:p-8 text-[#191715] shadow-2xl backdrop:bg-[#191715]/70"
+      className="order-dialog m-auto w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl border-2 border-[#191715] bg-[#FFFDF8] p-5 sm:p-8 text-[#191715] shadow-2xl backdrop:bg-[#191715]/70"
     >
       <button
         type="button"

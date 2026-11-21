@@ -239,6 +239,34 @@ export default function Landing() {
   // Open price (index 1) + guarantee (index 3) FAQs — these are the top conversion objections
   const [openFaq, setOpenFaq] = useState<number[]>([1, 3]);
   const builderRef = useRef<HTMLElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  // Плавное появление блоков при прокрутке. Класс motion-ready ставится только после запуска JS,
+  // поэтому без скрипта (и при «уменьшить движение») всё видно сразу.
+  // data-stagger стоит только на элементах, которые не пересоздаются при смене языка.
+  useEffect(() => {
+    const root = pageRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-stagger]"));
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add("is-in");
+          io.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" }
+    );
+    // Блоки, которые уже выше экрана (вернулись по якорю или после перезагрузки), показываем сразу
+    for (const el of targets) {
+      if (el.getBoundingClientRect().bottom < 0) el.classList.add("is-in");
+      else io.observe(el);
+    }
+    root.classList.add("motion-ready");
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     track("hero_view");
@@ -293,7 +321,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="pb">
+    <div className="pb" ref={pageRef}>
       <a className="skip-link" href="#top">
         {lang === "ru" ? "Перейти к содержимому" : "Salt la conținut"}
       </a>
@@ -379,8 +407,8 @@ export default function Landing() {
                   </li>
                 </ul>
                 <button type="button" ref={heroCtaRef} className="hero-cta-btn" onClick={() => scrollToBuilder("hero")}>
-                  <span>{photoCount >= 6 ? t.priceCta : t.heroCta}</span>
-                  <span aria-hidden="true">→</span>
+                  <span key={photoCount >= 6 ? "ready" : "start"} className="cta-swap">{photoCount >= 6 ? t.priceCta : t.heroCta}</span>
+                  <span className="cta-arrow" aria-hidden="true">→</span>
                 </button>
                 <p className="hero-conditions">{t.conditionsLine}</p>
                 <p className="hero-trust">{t.trustLine}</p>
@@ -393,7 +421,7 @@ export default function Landing() {
         </section>
 
         <section id="pain">
-          <div className="wrap center">
+          <div className="wrap center" data-stagger>
             <h2>{t.painTitle}</h2>
             <p className="lead">{t.painLead}</p>
             <p className="hand" style={{ fontSize: 32, marginTop: 8 }}>
@@ -418,12 +446,12 @@ export default function Landing() {
           <PhotoConstructor />
         </section>
 
-<section id="reviews" className="reviews-sec">
-          <div className="wrap">
+        <section id="reviews" className="reviews-sec">
+          <div className="wrap" data-stagger>
             <h2>{t.reviewsTitle}</h2>
             <p className="lead">{t.reviewsLead}</p>
 
-            <div className="reviews-wall occ-rail" role="region" tabIndex={0} aria-label={t.reviewsTitle}>
+            <div className="reviews-wall occ-rail" data-stagger role="region" tabIndex={0} aria-label={t.reviewsTitle}>
               {reviewShots.map((shot) => (
                 <figure key={shot.src} className="review-shot">
                   <Image
@@ -451,10 +479,10 @@ export default function Landing() {
         {/* Video instruction — anchor target for «Как это работает» */}
 
         <section className="examples" id="occasions">
-          <div className="wrap">
+          <div className="wrap" data-stagger>
             <h2>{t.occTitle}</h2>
             <p className="lead">{t.occLead}</p>
-            <div className="gallery occ-rail">
+            <div className="gallery occ-rail" data-stagger>
               {occasions.map((item, i) => (
                 <figure key={item.title}>
                   <Image
@@ -492,7 +520,7 @@ export default function Landing() {
         </section>
 
         <section id="gift" className="final" style={{ background: "var(--ink)" }}>
-          <div className="wrap center">
+          <div className="wrap center" data-stagger>
             <h2>{t.giftTitle}</h2>
             <p className="lead">{t.giftLead}</p>
             <div style={{ marginTop: 32 }}>
@@ -506,7 +534,7 @@ export default function Landing() {
 
         <section id="price" className="offer-sec">
           <div className="wrap">
-            <div className="offer-grid">
+            <div className="offer-grid" data-stagger>
               {/* Yellow offer card */}
               <div className="offer-card">
                 <p className="offer-eyebrow">{t.priceTitle}</p>
@@ -661,10 +689,11 @@ export default function Landing() {
 
         {/* Memories — horizontal swipe */}
         <section className="memories" id="memories">
-          <div className="wrap center">
+          <div className="wrap center" data-stagger>
             <h2>{t.memoriesTitle}</h2>
             <div
               className="memories-rail"
+              data-stagger
               tabIndex={0}
               aria-label={lang === "ru" ? "Фотографии готовых брелоков" : "Fotografii brelocuri gata"}
             >
@@ -686,7 +715,7 @@ export default function Landing() {
         </section>
 
         <section id="how" className="video-sec">
-          <div className="wrap center">
+          <div className="wrap center" data-stagger>
             <h2>{t.howUseTitle}</h2>
             <p className="lead">{t.howUseLead}</p>
 
@@ -724,7 +753,7 @@ export default function Landing() {
 
             <p className="video-hint">{t.howUseHint}</p>
 
-            <div className="steps steps-under-video">
+            <div className="steps steps-under-video" data-stagger>
               <article className="step">
                 <div className="step-num">1</div>
                 <h3>{t.step1}</h3>
@@ -745,7 +774,7 @@ export default function Landing() {
         </section>
 
         <section className="faq" id="faq">
-          <div className="wrap-narrow">
+          <div className="wrap-narrow" data-stagger>
             <h2>{t.faqTitle}</h2>
             {faq.map((item, i) => {
               // вопрос «А если не понравится?» (индекс 2) не показываем: обещание «не платите» снято
@@ -766,7 +795,7 @@ export default function Landing() {
                     }
                   >
                     <span>{item.q}</span>
-                    <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                    <span className="faq-sign" aria-hidden="true">+</span>
                   </button>
                   <div className="faq-a" hidden={!isOpen}>
                     <p>{item.a}</p>
@@ -778,7 +807,7 @@ export default function Landing() {
         </section>
 
         <section className="final final-cta" id="order">
-          <div className="wrap final-cta-grid">
+          <div className="wrap final-cta-grid" data-stagger>
             <div className="final-cta-copy">
               <p className="final-eyebrow">{t.finalEyebrow}</p>
               <h2 className="final-title">{t.finalTitle}</h2>
@@ -868,7 +897,7 @@ export default function Landing() {
       <aside className={`mobile-cta ${mobileCtaHidden || heroCtaVisible || !cookiesDecided ? "hidden" : ""}`} aria-label={lang === "ru" ? "Быстрый заказ" : "Comandă rapidă"}>
         <div className="mobile-cta-price">
           <div className="mobile-cta-amount">{t.priceChip}</div>
-          <div className="mobile-cta-note">
+          <div className="mobile-cta-note" key={photoCount >= 6 ? "ready" : photoCount}>
             {photoCount >= 6
               ? (lang === "ru" ? `Фото: ${photoCount} · макет бесплатно` : `Poze: ${photoCount} · machetă gratuită`)
               : photoCount > 0
@@ -878,7 +907,7 @@ export default function Landing() {
         </div>
         <button
           type="button"
-          className="hero-cta-btn mobile-cta-button"
+          className={`hero-cta-btn mobile-cta-button${photoCount >= 6 ? " is-ready" : ""}`}
           onClick={() => {
             // 6 и больше фото: сразу открываем форму заказа, иначе ведём к конструктору
             if (photoCount >= 6) window.dispatchEvent(new CustomEvent("photobrelok_open_order"));
