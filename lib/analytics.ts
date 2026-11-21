@@ -26,7 +26,8 @@ export type AnalyticsEvent =
   | "video_mute"
   | "video_pause"
   | "video_resume"
-  | "video_unmute";
+  | "video_unmute"
+  | "nav_click";
 
 type MetaEventIds = { lead?: string; purchase?: string };
 type Payload = Record<

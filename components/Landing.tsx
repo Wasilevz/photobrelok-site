@@ -241,6 +241,51 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState<number[]>([1, 3]);
   const builderRef = useRef<HTMLElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+  const subnavRef = useRef<HTMLElement>(null);
+  const navItems = [
+    ["steps", t.navHow],
+    ["reviews", t.navReviews],
+    ["price", t.navPrice],
+    ["faq", t.navFaq],
+  ] as const;
+  // Какой раздел сейчас посередине экрана — его ссылка в шапке подсвечивается
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const ids = ["steps", "reviews", "price", "faq"];
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
+        }
+      },
+      { rootMargin: "-45% 0px -50% 0px" }
+    );
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    }
+    // Выше первого раздела ничего не подсвечиваем
+    const onScroll = () => {
+      const first = document.getElementById(ids[0]);
+      if (first && first.getBoundingClientRect().top > window.innerHeight * 0.5) setActiveSection(null);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+  // Активная ссылка в мобильной строке сама подъезжает в видимую часть (страницу при этом не двигаем)
+  useEffect(() => {
+    const row = subnavRef.current;
+    if (!row || !activeSection) return;
+    const link = row.querySelector<HTMLElement>(`[data-section="${activeSection}"]`);
+    if (!link) return;
+    const target = link.offsetLeft - (row.clientWidth - link.offsetWidth) / 2;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row.scrollTo({ left: Math.max(0, target), behavior: reduce ? "auto" : "smooth" });
+  }, [activeSection]);
 
   // Плавное появление блоков при прокрутке. Класс motion-ready ставится только после запуска JS,
   // поэтому без скрипта (и при «уменьшить движение») всё видно сразу.
@@ -335,10 +380,17 @@ export default function Landing() {
             PHOTO<span>BRELOK</span>
           </a>
           <nav className="hd-nav-links" aria-label={lang === "ru" ? "Разделы" : "Secțiuni"}>
-            <a href="#steps">{t.navHow}</a>
-            <a href="#reviews">{t.navReviews}</a>
-            <a href="#price">{t.navPrice}</a>
-            <a href="#faq">{t.navFaq}</a>
+            {navItems.map(([id, label]) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                className={activeSection === id ? "is-active" : undefined}
+                aria-current={activeSection === id ? "location" : undefined}
+                onClick={() => track("nav_click", { section: id, place: "header" })}
+              >
+                {label}
+              </a>
+            ))}
           </nav>
           <div className="hd-actions">
             <button
@@ -386,6 +438,21 @@ export default function Landing() {
             </a>
           </div>
         </div>
+        {/* Телефон и планшет: те же разделы строкой под шапкой, листается пальцем */}
+        <nav className="hd-subnav" ref={subnavRef} aria-label={lang === "ru" ? "Разделы" : "Secțiuni"}>
+          {navItems.map(([id, label]) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              data-section={id}
+              className={activeSection === id ? "is-active" : undefined}
+              aria-current={activeSection === id ? "location" : undefined}
+              onClick={() => track("nav_click", { section: id, place: "subnav" })}
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
       </header>
 
       <main id="top">
