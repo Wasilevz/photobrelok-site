@@ -302,21 +302,47 @@ export default function Landing() {
           <a className="logo" href="#top">
             PHOTO<span>BRELOK</span>
           </a>
-          <nav className="hd-actions" aria-label={lang === "ru" ? "Язык" : "Limbă"}>
-            <button
-              type="button"
-              className="lang-btn"
-              data-testid="lang-switch"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setLang(lang === "ru" ? "ro" : "ru");
-              }}
-              aria-label={lang === "ru" ? "Переключить на румынский" : "Comută pe rusă (Русский)"}
-            >
-              <span lang={lang === "ro" ? "ru" : undefined}>{lang === "ru" ? "Румынский" : "Русский"}</span>
-            </button>
+          <nav className="hd-nav-links" aria-label={lang === "ru" ? "Разделы" : "Secțiuni"}>
+            <a href="#steps">{t.navHow}</a>
+            <a href="#reviews">{t.navReviews}</a>
+            <a href="#price">{t.navPrice}</a>
+            <a href="#faq">{t.navFaq}</a>
           </nav>
+          <div className="hd-actions">
+            <div className="lang-seg" role="group" aria-label={lang === "ru" ? "Язык сайта" : "Limba site-ului"}>
+              {(["ru", "ro"] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  className="lang-seg-btn"
+                  data-testid={code === lang ? undefined : "lang-switch"}
+                  aria-pressed={lang === code}
+                  lang={code}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (lang !== code) setLang(code);
+                  }}
+                  aria-label={code === "ru" ? "Русский" : "Română"}
+                >
+                  {code.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <a
+              className="hd-chat"
+              href={telegramLink(lang === "ru" ? "Здравствуйте! У меня вопрос о брелке." : "Bună ziua! Am o întrebare despre breloc.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("telegram_click", { source: "header" })}
+              aria-label={`${t.headerChat} — Telegram`}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 4L3 11l6 2 2 6 3-4 5 4 2-15z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              <span className="hd-chat-label">{t.headerChat}</span>
+            </a>
+          </div>
         </div>
       </header>
 
@@ -399,6 +425,26 @@ export default function Landing() {
             <p className="hand" style={{ fontSize: 32, marginTop: 8 }}>
               {t.painHand}
             </p>
+          </div>
+        </section>
+
+        <section className="steps-sec" id="steps">
+          <div className="wrap">
+            <p className="steps-eyebrow">{t.stepsEyebrow}</p>
+            <h2>{t.stepsTitle}</h2>
+            <ol className="steps steps-strip">
+              {[
+                [t.step1, t.step1t],
+                [t.step2, t.step2t],
+                [t.step3, t.step3t],
+              ].map(([title, text], i) => (
+                <li className="step" key={title}>
+                  <div className="step-num" aria-hidden="true">{i + 1}</div>
+                  <h3>{title}</h3>
+                  <p>{text}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
@@ -724,23 +770,6 @@ export default function Landing() {
 
             <p className="video-hint">{t.howUseHint}</p>
 
-            <div className="steps steps-under-video">
-              <article className="step">
-                <div className="step-num">1</div>
-                <h3>{t.step1}</h3>
-                <p>{t.step1t}</p>
-              </article>
-              <article className="step">
-                <div className="step-num">2</div>
-                <h3>{t.step2}</h3>
-                <p>{t.step2t}</p>
-              </article>
-              <article className="step">
-                <div className="step-num">3</div>
-                <h3>{t.step3}</h3>
-                <p>{t.step3t}</p>
-              </article>
-            </div>
           </div>
         </section>
 

@@ -4902,3 +4902,193 @@ a { color: inherit; }
 /* === Пакет 3: второй брелок в предложении и две ссылки на чат === */
 .pb .offer-second { margin: 10px 0 0; font-size: 15px; line-height: 1.45; font-weight: 500; }
 .pb .offer-chat-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+
+
+/* ===================================================================
+   Редизайн 2026-11: шапка с разделами и связью, шаги «Как заказать»,
+   первый экран на десктопе, кнопки не на всю ширину, ссылки в чат рядом
+   =================================================================== */
+
+/* --- Шапка --- */
+.pb .hd-bar { gap: 16px; }
+.pb .hd-nav-links { display: none; }
+@media (min-width: 1000px) {
+  .pb .hd-nav-links {
+    display: flex;
+    gap: 4px;
+    margin-inline: auto;
+  }
+  .pb .hd-nav-links a {
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+  .pb .hd-nav-links a:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+  .pb .hd-nav-links a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+}
+.pb .hd-bar .hd-actions { display: flex; align-items: center; gap: 10px; max-width: none; flex-shrink: 0; }
+/* Логотип слева, разделы по центру, язык и связь справа (раньше логотип стоял по центру поверх всего) */
+@media (min-width: 769px) {
+  .pb .hd-bar { justify-content: space-between; overflow: visible; }
+  .pb .hd .wrap.hd-bar { width: min(100% - 48px, var(--max)) !important; margin-inline: auto; padding-inline: 0 !important; }
+  .pb .hd-bar .logo {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    font-size: 26px !important;
+  }
+  .pb .hd-bar .hd-actions { margin-left: auto; }
+}
+@media (min-width: 1000px) {
+  .pb .hd-bar .hd-actions { margin-left: 0; }
+}
+
+/* RU | RO — спокойный переключатель, не спорит с главной кнопкой */
+.pb .lang-seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.pb .lang-seg-btn {
+  min-width: 40px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.pb .lang-seg-btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.pb .lang-seg-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Кнопка «Написать нам»: на телефоне — круглая иконка */
+.pb .hd-chat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pb .hd-chat:hover { background: var(--accent); }
+.pb .hd-chat:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .pb .hd-chat { padding: 0; width: 42px; }
+  .pb .hd-chat-label { display: none; }
+}
+
+/* --- Первый экран на десктопе: заголовок не ломается в столбик, видео крупнее --- */
+@media (min-width: 900px) {
+  .pb .hero-unified { grid-template-columns: 1.15fr 0.85fr; gap: 48px; }
+  .pb .hero-card h1 { max-width: 16ch; font-size: clamp(44px, 4.4vw, 60px); }
+  .pb .hero-unified .hero-video-wrap { max-width: 440px; max-height: 620px; }
+  .pb .hero-unified-copy .hero-cta-btn { width: auto; min-width: 340px; }
+  .pb .hero-unified-copy .hero-feats { max-width: 560px; }
+}
+
+/* --- Главные кнопки на широком экране — по содержимому, а не на 700 px --- */
+@media (min-width: 768px) {
+  .pb #gift .hero-cta-btn,
+  .pb #reviews .hero-cta-btn,
+  .pb .final-cta .hero-cta-btn {
+    width: auto;
+    min-width: 320px;
+    padding-inline: 40px;
+  }
+}
+
+/* --- Шаги «Как заказать» сразу перед конструктором --- */
+.pb .steps-sec {
+  padding: 48px 0 24px;
+  scroll-margin-top: calc(var(--header-h) + 8px);
+}
+.pb .steps-sec .wrap { text-align: center; }
+.pb .steps-eyebrow {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pb .steps-strip {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  text-align: left;
+  counter-reset: none;
+}
+.pb .steps-strip .step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  column-gap: 14px;
+  align-items: start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+}
+.pb .steps-strip .step-num {
+  grid-row: span 2;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  font-size: 17px;
+}
+.pb .steps-strip .step h3 {
+  margin: 6px 0 6px;
+  font-family: var(--font);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-align: left;
+}
+.pb .steps-strip .step p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: left;
+}
+@media (min-width: 800px) {
+  .pb .steps-sec { padding: 72px 0 32px; }
+  .pb .steps-strip { gap: 20px; margin-top: 32px; }
+  .pb .steps-strip .step { grid-template-columns: 1fr; padding: 24px; }
+  .pb .steps-strip .step-num { grid-row: auto; margin-bottom: 14px; }
+}
+
+/* --- Связь: Telegram и Instagram рядом, а не стопкой --- */
+.pb .offer-chat-links { margin-top: 24px; }
+.pb .offer-chat-links .offer-tg-btn {
+  flex: 1 1 240px;
+  max-width: 340px;
+  margin: 0;
+}
+
+/* --- Блок фактов рядом с доставкой не висит пустой плашкой --- */
+@media (min-width: 900px) {
+  .pb .offer-bottom { align-items: stretch; }
+  .pb .offer-facts { align-self: start; height: auto !important; min-height: 0 !important; justify-content: flex-start !important; margin-top: 52px; }
+}

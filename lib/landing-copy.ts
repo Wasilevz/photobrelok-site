@@ -2,6 +2,13 @@ export type LandingLocale = "ru" | "ro";
 
 export const landingCopy = {
   ru: {
+    navHow: "Как заказать",
+    navReviews: "Отзывы",
+    navPrice: "Цена и доставка",
+    navFaq: "Вопросы",
+    headerChat: "Написать нам",
+    stepsEyebrow: "Просто и без предоплаты",
+    stepsTitle: "Как заказать — 3 шага",
     eyebrow: "Подарок, который останется на годы",
     heroTitle: "Брелок из катушки Kodak с вашими фото",
     heroLead: "6–10 ваших кадров на плёнке. Макет бесплатно, платите при получении.",
@@ -38,7 +45,7 @@ export const landingCopy = {
       "Не знаете, какие? Пришлите больше — подскажем, какие кадры лучше смотрятся на плёнке.",
     step2: "Скажите «да» макету.",
     step2t:
-      "Соберите плёнку выше — макет уйдёт нам автоматически. Платите только после того, как макет понравился.",
+      "Соберите плёнку в конструкторе ниже — макет уйдёт нам автоматически. Платите только после того, как макет понравился.",
     step3: "Получите брелок за 1–2 дня.",
     step3t:
       "Изготовим за 1–2 дня после вашего «да». Доставка по Молдове — ещё 2–4 дня, самовывоз — сразу. Оплата при получении.",
@@ -97,6 +104,13 @@ export const landingCopy = {
     conditionsLine: "Самовывоз в Кишинёве — бесплатно · Доставка по Молдове",
   },
   ro: {
+    navHow: "Cum comanzi",
+    navReviews: "Recenzii",
+    navPrice: "Preț și livrare",
+    navFaq: "Întrebări",
+    headerChat: "Scrie-ne",
+    stepsEyebrow: "Simplu și fără avans",
+    stepsTitle: "Cum comanzi — 3 pași",
     eyebrow: "Un cadou care rămâne ani întregi",
     heroTitle: "Breloc din casetă Kodak cu pozele tale",
     heroLead: "6–10 cadre ale tale pe film. Machetă gratuită, plătești la primire.",
@@ -133,7 +147,7 @@ export const landingCopy = {
       "Nu știi care? Trimite mai multe — îți spunem ce cadre se văd mai bine pe film.",
     step2: "Spune „da” machetei.",
     step2t:
-      "Compune filmul mai sus — macheta ajunge la noi automat. Plătești doar după ce îți place macheta.",
+      "Compune filmul în constructorul de mai jos — macheta ajunge la noi automat. Plătești doar după ce îți place macheta.",
     step3: "Primești brelocul în 1–2 zile.",
     step3t:
       "Îl facem în 1–2 zile după „da”-ul tău. Livrarea în Moldova — încă 2–4 zile, ridicarea personală — imediat. Plata la primire.",
