@@ -4912,7 +4912,7 @@ a { color: inherit; }
 /* --- Шапка --- */
 .pb .hd-bar { gap: 16px; }
 .pb .hd-nav-links { display: none; }
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   .pb .hd-nav-links {
     display: flex;
     gap: 4px;
@@ -4943,7 +4943,7 @@ a { color: inherit; }
   }
   .pb .hd-bar .hd-actions { margin-left: auto; }
 }
-@media (min-width: 1000px) {
+@media (min-width: 1100px) {
   .pb .hd-bar .hd-actions { margin-left: 0; }
 }
 
@@ -5092,3 +5092,85 @@ a { color: inherit; }
   .pb .offer-bottom { align-items: stretch; }
   .pb .offer-facts { align-self: start; height: auto !important; min-height: 0 !important; justify-content: flex-start !important; margin-top: 52px; }
 }
+
+/* --- Цена и кнопка в шапке на десктопе, когда главная кнопка ушла с экрана --- */
+.pb .hd-cta { display: none; }
+@media (min-width: 769px) {
+  .pb .hd-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 18px 0 6px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .pb .hd-cta-price {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--accent);
+  }
+  .pb .hd-cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .pb .hd-cta.hd-cta-hidden {
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    position: absolute;
+  }
+}
+
+/* --- Ссылка на отзывы под первой кнопкой --- */
+.pb .hero-proof {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.pb .hero-proof strong { font-weight: 800; }
+.pb .hero-proof:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* --- Фото упаковки под «Без риска для вас» --- */
+.pb .offer-side-photo {
+  margin: 20px 0 0;
+}
+.pb .offer-side-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center 40%;
+  border-radius: 18px;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+.pb .offer-side-photo figcaption {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
+}
+@media (min-width: 900px) {
+  .pb .offer-grid { align-items: start; }
+}
+
+/* Шапка задумана липкой, но overflow-x: hidden на body делал body контейнером прокрутки и sticky не работал.
+   clip режет горизонтальный выход так же, но контейнер прокрутки не создаёт. Старые браузеры оставят hidden. */
+body { overflow-x: clip; }

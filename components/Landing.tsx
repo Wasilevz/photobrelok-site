@@ -13,6 +13,7 @@ import {
   TELEGRAM_URL,
   INSTAGRAM_URL,
   INSTAGRAM_DM_URL,
+  ORDERS_DONE,
   telegramLink,
 } from "@/lib/contacts";
 import { track } from "@/lib/analytics";
@@ -309,6 +310,16 @@ export default function Landing() {
             <a href="#faq">{t.navFaq}</a>
           </nav>
           <div className="hd-actions">
+            <button
+              type="button"
+              className={`hd-cta ${heroCtaVisible || mobileCtaHidden ? "hd-cta-hidden" : ""}`}
+              onClick={() => scrollToBuilder("header")}
+              tabIndex={heroCtaVisible || mobileCtaHidden ? -1 : 0}
+              aria-hidden={heroCtaVisible || mobileCtaHidden}
+            >
+              <span className="hd-cta-price">{t.priceChip}</span>
+              <span>{t.heroCta}</span>
+            </button>
             <div className="lang-seg" role="group" aria-label={lang === "ru" ? "Язык сайта" : "Limba site-ului"}>
               {(["ru", "ro"] as const).map((code) => (
                 <button
@@ -410,6 +421,11 @@ export default function Landing() {
                 </button>
                 <p className="hero-conditions">{t.conditionsLine}</p>
                 <p className="hero-trust">{t.trustLine}</p>
+                <a className="hero-proof" href="#reviews">
+                  {ORDERS_DONE ? <strong>{t.proofCount.replace("{n}", String(ORDERS_DONE))}</strong> : null}
+                  <span>{t.proofLink}</span>
+                  <span aria-hidden="true">→</span>
+                </a>
               </div>
               <div className="hero-unified-media">
                 <HeroProductVideo lang={lang} />
@@ -537,16 +553,29 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="gift" className="final" style={{ background: "var(--ink)" }}>
+        {/* Memories — horizontal swipe */}
+        <section className="memories" id="memories">
           <div className="wrap center">
-            <h2>{t.giftTitle}</h2>
-            <p className="lead">{t.giftLead}</p>
-            <div style={{ marginTop: 32 }}>
-              <button type="button" className="hero-cta-btn" onClick={() => scrollToBuilder("gift")} style={{ display: "inline-flex" }}>
-                <span>{t.giftCta}</span>
-                <span aria-hidden="true">→</span>
-              </button>
+            <h2>{t.memoriesTitle}</h2>
+            <div
+              className="memories-rail"
+              tabIndex={0}
+              aria-label={lang === "ru" ? "Фотографии готовых брелоков" : "Fotografii brelocuri gata"}
+            >
+              {memories.map((item) => (
+                <figure key={item.src}>
+                  <Image
+                    src={item.src}
+                    alt={altFor(item.alt, lang)}
+                    width={800}
+                    height={1000}
+                    sizes="(max-width: 767px) 62vw, 250px"
+                    loading="lazy"
+                  />
+                </figure>
+              ))}
             </div>
+            <p className="memories-hint">{t.memoriesHint}</p>
           </div>
         </section>
 
@@ -624,6 +653,17 @@ export default function Landing() {
                   <span>{t.offerCta}</span>
                   <span aria-hidden="true">→</span>
                 </button>
+                <figure className="offer-side-photo">
+                  <Image
+                    src="/media/hero-poster.jpg"
+                    alt={lang === "ru" ? "Брелок-катушка на деревянной шкатулке" : "Breloc-casetă pe cutia din lemn"}
+                    width={1080}
+                    height={864}
+                    sizes="(max-width: 899px) 100vw, 640px"
+                    loading="lazy"
+                  />
+                  <figcaption>{t.offerPhotoCaption}</figcaption>
+                </figure>
               </div>
             </div>
 
@@ -702,32 +742,6 @@ export default function Landing() {
               <p>{t.factsText2}</p>
             </div>
             </div>
-          </div>
-        </section>
-
-        {/* Memories — horizontal swipe */}
-        <section className="memories" id="memories">
-          <div className="wrap center">
-            <h2>{t.memoriesTitle}</h2>
-            <div
-              className="memories-rail"
-              tabIndex={0}
-              aria-label={lang === "ru" ? "Фотографии готовых брелоков" : "Fotografii brelocuri gata"}
-            >
-              {memories.map((item) => (
-                <figure key={item.src}>
-                  <Image
-                    src={item.src}
-                    alt={altFor(item.alt, lang)}
-                    width={800}
-                    height={1000}
-                    sizes="(max-width: 767px) 62vw, 250px"
-                    loading="lazy"
-                  />
-                </figure>
-              ))}
-            </div>
-            <p className="memories-hint">{t.memoriesHint}</p>
           </div>
         </section>
 
