@@ -847,7 +847,7 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
                   >
                     {url ? (
                       <>
-                        <Image src={url} alt={`${index + 1}`} width={120} height={120} className="w-full h-full object-cover" />
+                        <Image key={url} src={url} alt={`${index + 1}`} width={120} height={120} className="pb-develop-in w-full h-full object-cover" />
                         {selectedSlot === index && (
                           <div className="absolute inset-0 ring-[3px] ring-inset ring-[#FFC400] bg-black/15 pointer-events-none" />
                         )}
@@ -931,7 +931,7 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
 
         {/* Панель управления выделенным кадром — удобные кнопки под палец (44x44px min) */}
         {selectedSlot !== null && slots[selectedSlot] && (
-          <div className="mx-auto mt-3 max-w-[420px] rounded-xl border-2 border-[#191715] bg-white px-3 py-2.5 shadow-md">
+          <div className="pb-panel-in mx-auto mt-3 max-w-[420px] rounded-xl border-2 border-[#191715] bg-white px-3 py-2.5 shadow-md">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[12px] font-semibold text-[#5C564E] shrink-0">
                 {lang === "ru" ? `Кадр ${selectedSlot + 1}` : `Cadrul ${selectedSlot + 1}`}
@@ -1008,7 +1008,7 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
                           : `Adăugate ${count} poze · poți comanda sau adăuga până la 10`}
                 </span>
                 <div
-                  className="mt-2 h-1.5 w-full rounded-full bg-[#E8E0D0] overflow-hidden"
+                  className={`pb-progress mt-2 h-1.5 w-full rounded-full bg-[#E8E0D0] overflow-hidden${count >= 6 ? " is-full" : ""}`}
                   role="progressbar"
                   aria-valuenow={count}
                   aria-valuemin={0}
@@ -1016,8 +1016,8 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
                   aria-label={lang === "ru" ? "Прогресс загрузки фото" : "Progres încărcare poze"}
                 >
                   <div
-                    className="h-full rounded-full bg-[#FFC400] transition-all duration-300"
-                    style={{ width: `${pct}%` }}
+                    className="pb-progress-fill h-full w-full rounded-full bg-[#FFC400]"
+                    style={{ transform: `scaleX(${pct / 100})` }}
                   />
                 </div>
               </div>
@@ -1034,7 +1034,8 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
                   setTelegramFallback(null);
                   setIsModalOpen(true);
                 }}
-                className="w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg relative z-50 bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] active:bg-[#D4A000] shadow-[#FFC400]/40 flex items-center justify-center min-h-[56px]"
+                key={count >= 6 ? "order" : "add"}
+                className="pb-main-cta w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg relative z-50 bg-[#FFC400] text-[#191715] hover:bg-[#E6B000] active:bg-[#D4A000] shadow-[#FFC400]/40 flex items-center justify-center min-h-[56px]"
               >
                 {count === 0
                   ? (lang === "ru" ? "Выбрать фото (минимум 6)" : "Alege pozele (minim 6)")
@@ -1104,7 +1105,7 @@ export default function PhotoConstructor({ compact = false }: { compact?: boolea
 
       {showError && !isModalOpen && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] max-w-md w-[90%]">
-          <div role="alert" className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex flex-col gap-2">
+          <div role="alert" className="pb-toast-in bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-medium">{showError}</span>
               <button onClick={() => { setShowError(null); setTelegramFallback(null); }} className="text-white text-lg font-bold shrink-0 size-11 -mt-2 -mr-2 flex items-center justify-center" aria-label={dict.orderModal.close}>
