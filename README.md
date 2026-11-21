@@ -108,7 +108,7 @@ Dev: `npm run dev --webpack`
 ## Контакты (не менять без подтверждения)
 
 - Telegram: https://t.me/+37378238455  
-- Телефон: 078 238 455  
+- Телефон для звонков: 078 126 726  
 - Адрес: ул. Alexander Bernardazzi, 64, Кишинёв  
 - Почта: fotobrelokmd@gmail.com  
 
