@@ -3239,3 +3239,82 @@ body {
     animation: pb-pop 0.45s var(--ease-spring), pb-glow 1.6s ease-out 0.45s 2;
   }
 }
+
+/* --- Разделы в шапке на телефоне и планшете (на широком экране они в самой шапке) --- */
+.pb .hd-subnav {
+  display: none;
+}
+
+.pb .hd-nav-links a.is-active {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
+@media (max-width: 1099px) {
+  :root {
+    --header-h: 108px;
+  }
+
+  .pb .hd {
+    height: auto;
+  }
+
+  .pb .hd-subnav {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding: 0 var(--pad) 8px;
+    /* края строки мягко гаснут — видно, что её можно листать */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 20px), transparent);
+    mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 20px), transparent);
+  }
+
+  .pb .hd-subnav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pb .hd-subnav a {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: color-mix(in srgb, #fff 70%, transparent);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.18s var(--ease-out-soft), color 0.18s var(--ease-out-soft), border-color 0.18s var(--ease-out-soft), transform 0.06s ease;
+  }
+
+  .pb .hd-subnav a:active {
+    transform: scale(0.96);
+  }
+
+  .pb .hd-subnav a.is-active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+  }
+
+  .pb .hd-subnav a:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --header-h: 118px;
+  }
+}
+
+/* Увеличенная зона нажатия логотипа (.logo::after) должна считаться от самого логотипа.
+   Без position: relative она растягивалась на всю шапку и перекрывала ссылки разделов на десктопе. */
+.pb .hd .logo {
+  position: relative;
+}
